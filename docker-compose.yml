@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  media-janitor:
+    build: .
+    image: media-janitor:latest
+    container_name: media-janitor
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    volumes:
+      # Configuration file
+      - ./config.yaml:/data/config.yaml:ro
+      # Logs
+      - ./logs:/data/logs
+      # Media directories - adjust these to match your setup
+      # Map the same paths that Radarr/Sonarr use
+      - /path/to/movies:/movies:ro
+      - /path/to/tv:/tv:ro
+      # If you have multiple NAS mounts:
+      # - /mnt/nas1/media:/nas1/media:ro
+      # - /mnt/nas2/media:/nas2/media:ro
+    environment:
+      - TZ=America/New_York  # Adjust to your timezone
+    # Optional: limit resources
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '2'
+    #       memory: 2G
+    networks:
+      - media-network
+
+networks:
+  media-network:
+    external: true  # Use existing network with Radarr/Sonarr
+    # Or create a new one:
+    # driver: bridge

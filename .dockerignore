@@ -1,0 +1,32 @@
+# Git
+.git/
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# IDE
+.idea/
+.vscode/
+
+# Config with secrets
+config.yaml
+
+# Logs
+logs/
+*.log
+
+# Docs
+*.md
+!README.md
+
+# Tests (optional - include if you want to run tests in container)
+tests/
+
+# OS
+.DS_Store

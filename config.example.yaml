@@ -1,0 +1,85 @@
+# Media Janitor Configuration
+# Copy this to config.yaml and fill in your values
+
+# Radarr instances (you can have multiple)
+radarr:
+  - name: "radarr"
+    url: "http://localhost:7878"
+    api_key: "your-radarr-api-key"
+
+# Sonarr instances (you can have multiple)
+sonarr:
+  - name: "sonarr-main"
+    url: "http://localhost:8989"
+    api_key: "your-sonarr-api-key"
+  - name: "sonarr-4k"
+    url: "http://localhost:8990"
+    api_key: "your-sonarr-4k-api-key"
+
+# Validation settings
+validation:
+  # Quick checks (fast, catches obvious issues)
+  check_duration_sanity: true
+  max_duration_hours: 12  # Flag files claiming to be longer than this
+
+  # Bitrate sanity checks
+  check_bitrate: true
+  min_bitrate_720p: 1500   # kbps
+  min_bitrate_1080p: 3000  # kbps
+  min_bitrate_4k: 8000     # kbps
+
+  # Deep validation (slower, catches corruption)
+  deep_scan_enabled: true
+  # Decode first, middle, and last X seconds of file
+  sample_duration_seconds: 30
+
+  # Full decode (very slow, most thorough)
+  full_decode_enabled: false  # Only enable if you have CPU to spare
+
+# Background scanner settings
+scanner:
+  enabled: true
+  # How many files to scan per hour (throttling)
+  # At 100 files/hour, a 50,000 file library takes ~3 weeks for initial scan
+  # Increase to 500+ if you want faster initial scan (more CPU usage)
+  files_per_hour: 100
+
+  # Mode:
+  #   "watch_only" - Scan library once, then only validate new imports (recommended for large libraries)
+  #   "continuous" - Keep re-scanning forever (catches files that become corrupted over time)
+  mode: "watch_only"
+
+  # Scan schedule (cron format) - default: run continuously
+  # schedule: "0 2 * * *"  # Uncomment to only run at 2 AM daily
+
+# Webhook server (receives notifications from Radarr/Sonarr)
+webhook:
+  enabled: true
+  host: "0.0.0.0"
+  port: 9000
+
+# Actions
+actions:
+  # Auto-delete bad files and trigger re-download
+  auto_replace: true
+  # Add to blocklist when replacing (prevents re-downloading same bad release)
+  blocklist_bad_releases: true
+  # Max replacements per day (bandwidth control)
+  max_replacements_per_day: 10
+
+# Email notifications
+email:
+  enabled: true
+  smtp_host: "smtp.gmail.com"
+  smtp_port: 587
+  smtp_user: "your-email@gmail.com"
+  smtp_password: "your-app-password"  # Use app password, not regular password
+  from_address: "your-email@gmail.com"
+  to_address: "your-email@gmail.com"
+  # Send daily summary at this time (24h format)
+  daily_summary_time: "08:00"
+
+# Logging
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  file: "/data/logs/media-janitor.log"
