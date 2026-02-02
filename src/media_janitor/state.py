@@ -13,7 +13,7 @@ logger = structlog.get_logger()
 class StateManager:
     """Manages persistent state for the janitor."""
 
-    def __init__(self, state_file: str = "/data/state.json"):
+    def __init__(self, state_file: str = "/data/state/state.json"):
         self.state_file = Path(state_file)
         self.log = logger.bind(component="state")
         self._state: dict[str, Any] = {

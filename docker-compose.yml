@@ -11,23 +11,33 @@ services:
     volumes:
       # Configuration file
       - ./config.yaml:/data/config.yaml:ro
-      # Logs
+      # Logs and persistent state
       - ./logs:/data/logs
-      # Media directories - adjust these to match your setup
-      # Map the same paths that Radarr/Sonarr use
-      - /path/to/movies:/movies:ro
-      - /path/to/tv:/tv:ro
-      # If you have multiple NAS mounts:
-      # - /mnt/nas1/media:/nas1/media:ro
-      # - /mnt/nas2/media:/nas2/media:ro
+      - ./state:/data/state
+
+      # ============================================================
+      # IMPORTANT: Map paths EXACTLY as Radarr/Sonarr see them
+      # ============================================================
+      # Example for Unraid with your NFS mounts:
+      # NAS 1 (192.168.1.2)
+      - /mnt/user/192.168.1.2_video:/mnt/user/192.168.1.2_video:ro
+      - /mnt/user/192.168.1.2_Torrent:/mnt/user/192.168.1.2_Torrent:ro
+      # NAS 2 (192.168.1.5)
+      - /mnt/user/192.168.1.5_video:/mnt/user/192.168.1.5_video:ro
+      - /mnt/user/192.168.1.5_Torrent:/mnt/user/192.168.1.5_Torrent:ro
+
+      # Adjust paths above to match how your Radarr/Sonarr containers
+      # see the files. Check a movie/show in Radarr/Sonarr to see the
+      # exact path format they use.
+
     environment:
       - TZ=America/New_York  # Adjust to your timezone
-    # Optional: limit resources
-    # deploy:
-    #   resources:
-    #     limits:
-    #       cpus: '2'
-    #       memory: 2G
+    # Optional: limit CPU for background scanning
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
     networks:
       - media-network
 
