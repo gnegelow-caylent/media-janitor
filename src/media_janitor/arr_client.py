@@ -81,7 +81,7 @@ class ArrClient:
     async def _get(self, endpoint: str, params: dict | None = None) -> Any:
         """Make a GET request to the API."""
         url = f"{self.base_url}/api/v3/{endpoint}"
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=120.0) as client:
             response = await client.get(url, headers=self._headers(), params=params)
             response.raise_for_status()
             return response.json()
@@ -89,7 +89,7 @@ class ArrClient:
     async def _post(self, endpoint: str, data: dict | None = None) -> Any:
         """Make a POST request to the API."""
         url = f"{self.base_url}/api/v3/{endpoint}"
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=60.0) as client:
             response = await client.post(url, headers=self._headers(), json=data)
             response.raise_for_status()
             return response.json()
@@ -97,7 +97,7 @@ class ArrClient:
     async def _delete(self, endpoint: str, params: dict | None = None) -> bool:
         """Make a DELETE request to the API."""
         url = f"{self.base_url}/api/v3/{endpoint}"
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=60.0) as client:
             response = await client.delete(url, headers=self._headers(), params=params)
             response.raise_for_status()
             return True
