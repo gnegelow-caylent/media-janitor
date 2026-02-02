@@ -115,28 +115,38 @@ async def run_app(config: Config):
     for s in config.sonarr:
         logger.info(f"Sonarr configured: {s.name}", url=s.url, path_mappings=len(s.path_mappings))
 
-    # Initialize janitor
-    logger.info("Initializing janitor...")
+    # Create janitor (don't initialize yet - do it in background)
+    logger.info("Creating janitor...")
     janitor = Janitor(config)
-    await janitor.initialize()
 
-    # Log initial status
-    status = janitor.get_status()
-    logger.info(
-        "Initial scan status",
-        files_previously_scanned=status["scanner"]["scanned_count"],
-        files_in_queue=status["scanner"]["queue_size"],
-        initial_scan_done=status["scanner"]["initial_scan_done"],
-    )
+    # Initialize webhook app first so server can start
+    app = init_webhook_app(config, janitor)
 
     # Start scheduler
     scheduler = await run_scheduler(janitor, config)
     logger.info("Background scheduler started")
 
+    # Initialize janitor in background (fetches library, can take a while)
+    async def background_init():
+        try:
+            logger.info("Initializing janitor in background...")
+            await janitor.initialize()
+            status = janitor.get_status()
+            logger.info(
+                "Initial scan status",
+                files_previously_scanned=status["scanner"]["scanned_count"],
+                files_in_queue=status["scanner"]["queue_size"],
+                initial_scan_done=status["scanner"]["initial_scan_done"],
+            )
+            logger.info("Background initialization complete")
+        except Exception as e:
+            logger.error("Background initialization failed", error=str(e))
+
+    # Start background init
+    asyncio.create_task(background_init())
+
     # Initialize and run webhook server
     if config.webhook.enabled:
-        app = init_webhook_app(config, janitor)
-
         uvicorn_config = uvicorn.Config(
             app,
             host=config.webhook.host,
