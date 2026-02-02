@@ -15,13 +15,10 @@ services:
       - ./logs:/data/logs
       - ./state:/data/state
 
-      # ============================================================
-      # Mount NAS paths - these are the ACTUAL filesystem paths
-      # Path mappings in config.yaml translate Radarr/Sonarr paths
-      # ============================================================
-      # NAS 1 (192.168.1.2) - TV/Sonarr
+      # NAS mounts - path mappings in config.yaml translate Radarr/Sonarr paths
+      # NAS 1 (192.168.1.2) - Sonarr TV
       - /mnt/remotes/192.168.1.2_video:/mnt/remotes/192.168.1.2_video:ro
-      # NAS 2 (192.168.1.5) - Movies/Radarr
+      # NAS 2 (192.168.1.5) - Radarr Movies
       - /mnt/remotes/192.168.1.5_video:/mnt/remotes/192.168.1.5_video:ro
 
     environment:

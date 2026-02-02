@@ -9,7 +9,7 @@
   <Privileged>false</Privileged>
   <Support>https://github.com/gnegelow-caylent/media-janitor</Support>
   <Project>https://github.com/gnegelow-caylent/media-janitor</Project>
-  <Overview>Proactive media library quality monitor for Plex/Radarr/Sonarr. Automatically detects and replaces bad media files (corrupt, wrong duration, encoding errors). Includes library reports showing largest files.</Overview>
+  <Overview>Proactive media library quality monitor for Plex/Radarr/Sonarr. Automatically detects and replaces bad media files. Includes library reports showing largest files.</Overview>
   <Category>MediaServer:Other</Category>
   <WebUI>http://[IP]:[PORT:9000]/report/library?format=html</WebUI>
   <TemplateURL>https://raw.githubusercontent.com/gnegelow-caylent/media-janitor/main/unraid/media-janitor.xml</TemplateURL>
@@ -22,10 +22,10 @@
   <DonateLink/>
   <Requires>Radarr and/or Sonarr</Requires>
   <Config Name="Web UI Port" Target="9000" Default="9000" Mode="tcp" Description="Port for web UI and webhooks" Type="Port" Display="always" Required="true" Mask="false">9000</Config>
-  <Config Name="Config File" Target="/data/config.yaml" Default="/mnt/user/appdata/media-janitor/config.yaml" Mode="rw" Description="Path to your config.yaml file" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/media-janitor/config.yaml</Config>
+  <Config Name="Config File" Target="/data/config.yaml" Default="/mnt/user/appdata/media-janitor/config.yaml" Mode="ro" Description="Path to your config.yaml file" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/media-janitor/config.yaml</Config>
   <Config Name="Logs" Target="/data/logs" Default="/mnt/user/appdata/media-janitor/logs" Mode="rw" Description="Log file location" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/media-janitor/logs</Config>
-  <Config Name="State" Target="/data/state" Default="/mnt/user/appdata/media-janitor/state" Mode="rw" Description="Persistent scan state (survives restarts)" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/media-janitor/state</Config>
-  <Config Name="NAS 1 - Video (192.168.1.2)" Target="/mnt/remotes/192.168.1.2_video" Default="/mnt/remotes/192.168.1.2_video" Mode="ro" Description="Synology NAS 1 video share" Type="Path" Display="always" Required="true" Mask="false">/mnt/remotes/192.168.1.2_video</Config>
-  <Config Name="NAS 2 - Video (192.168.1.5)" Target="/mnt/remotes/192.168.1.5_video" Default="/mnt/remotes/192.168.1.5_video" Mode="ro" Description="Synology NAS 2 video share" Type="Path" Display="always" Required="true" Mask="false">/mnt/remotes/192.168.1.5_video</Config>
+  <Config Name="State" Target="/data/state" Default="/mnt/user/appdata/media-janitor/state" Mode="rw" Description="Persistent scan state" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/media-janitor/state</Config>
+  <Config Name="NAS 1 - Sonarr TV (192.168.1.2)" Target="/mnt/remotes/192.168.1.2_video" Default="/mnt/remotes/192.168.1.2_video" Mode="ro" Description="Synology NAS 1 - TV content" Type="Path" Display="always" Required="true" Mask="false">/mnt/remotes/192.168.1.2_video</Config>
+  <Config Name="NAS 2 - Radarr Movies (192.168.1.5)" Target="/mnt/remotes/192.168.1.5_video" Default="/mnt/remotes/192.168.1.5_video" Mode="ro" Description="Synology NAS 2 - Movie content" Type="Path" Display="always" Required="true" Mask="false">/mnt/remotes/192.168.1.5_video</Config>
   <Config Name="Timezone" Target="TZ" Default="America/New_York" Mode="" Description="Timezone for scheduling" Type="Variable" Display="always" Required="false" Mask="false">America/New_York</Config>
 </Container>
