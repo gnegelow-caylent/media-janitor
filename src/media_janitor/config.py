@@ -48,6 +48,9 @@ class ScannerConfig(BaseModel):
     schedule: str | None = None
     # Mode: "continuous" = keep re-scanning forever, "watch_only" = scan once then only watch new imports
     mode: Literal["continuous", "watch_only"] = "watch_only"
+    # Cron schedule for TV library refresh (slow operation, runs in background)
+    # Default: 3am daily. Set to null to disable automatic TV refresh.
+    tv_refresh_schedule: str | None = "0 3 * * *"
 
 
 class WebhookConfig(BaseModel):

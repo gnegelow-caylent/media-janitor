@@ -60,6 +60,9 @@ scanner:
   # "watch_only" = scan once, then only validate new imports
   # "continuous" = keep re-scanning forever
   mode: "watch_only"
+  # When to refresh TV library (cron format, slow operation)
+  # Default: 3am daily. Movies load on startup, TV loads on this schedule.
+  tv_refresh_schedule: "0 3 * * *"
 
 # Actions
 actions:

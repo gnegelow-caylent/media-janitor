@@ -85,6 +85,14 @@ async def run_scheduler(janitor: Janitor, config: Config):
             id="daily_summary",
         )
 
+    # Scheduled TV library refresh (slow operation, runs at configured time)
+    if config.scanner.enabled and config.scanner.tv_refresh_schedule:
+        scheduler.add_job(
+            janitor.refresh_tv_library,
+            CronTrigger.from_crontab(config.scanner.tv_refresh_schedule),
+            id="tv_refresh",
+        )
+
     scheduler.start()
     return scheduler
 

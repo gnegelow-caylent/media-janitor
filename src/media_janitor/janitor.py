@@ -216,6 +216,15 @@ class Janitor:
             # Small delay between files
             await asyncio.sleep(1)
 
+    async def refresh_tv_library(self):
+        """Refresh TV library in background (slow operation)."""
+        self.log.info("Starting scheduled TV library refresh")
+        try:
+            count = await self.scanner.refresh_library("tv")
+            self.log.info("TV library refresh complete", new_episodes=count)
+        except Exception as e:
+            self.log.error("TV library refresh failed", error=str(e))
+
     async def generate_library_report(self, top_n: int = 50, source: str = "all") -> LibraryReport:
         """Generate a library report with largest files."""
         return await generate_library_report(self.scanner, top_n, source)
