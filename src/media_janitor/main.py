@@ -93,12 +93,45 @@ async def run_app(config: Config):
     """Run the main application."""
     logger = structlog.get_logger()
 
+    # Log startup configuration summary
+    logger.info("=" * 60)
+    logger.info("MEDIA JANITOR STARTING")
+    logger.info("=" * 60)
+    logger.info(
+        "Configuration loaded",
+        radarr_instances=len(config.radarr),
+        sonarr_instances=len(config.sonarr),
+        scanner_enabled=config.scanner.enabled,
+        scanner_mode=config.scanner.mode,
+        files_per_hour=config.scanner.files_per_hour,
+        auto_replace=config.actions.auto_replace,
+        max_replacements_per_day=config.actions.max_replacements_per_day,
+        email_enabled=config.email.enabled,
+        webhook_enabled=config.webhook.enabled,
+    )
+
+    for r in config.radarr:
+        logger.info(f"Radarr configured: {r.name}", url=r.url, path_mappings=len(r.path_mappings))
+    for s in config.sonarr:
+        logger.info(f"Sonarr configured: {s.name}", url=s.url, path_mappings=len(s.path_mappings))
+
     # Initialize janitor
+    logger.info("Initializing janitor...")
     janitor = Janitor(config)
     await janitor.initialize()
 
+    # Log initial status
+    status = janitor.get_status()
+    logger.info(
+        "Initial scan status",
+        files_previously_scanned=status["scanner"]["scanned_count"],
+        files_in_queue=status["scanner"]["queue_size"],
+        initial_scan_done=status["scanner"]["initial_scan_done"],
+    )
+
     # Start scheduler
     scheduler = await run_scheduler(janitor, config)
+    logger.info("Background scheduler started")
 
     # Initialize and run webhook server
     if config.webhook.enabled:
@@ -113,11 +146,13 @@ async def run_app(config: Config):
         server = uvicorn.Server(uvicorn_config)
 
         logger.info(
-            "Starting Media Janitor",
-            webhook_port=config.webhook.port,
-            scanner_enabled=config.scanner.enabled,
-            email_enabled=config.email.enabled,
+            "Starting webhook server",
+            host=config.webhook.host,
+            port=config.webhook.port,
         )
+        logger.info("=" * 60)
+        logger.info("MEDIA JANITOR READY")
+        logger.info("=" * 60)
 
         try:
             await server.serve()

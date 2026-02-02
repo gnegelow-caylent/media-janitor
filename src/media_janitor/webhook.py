@@ -241,3 +241,99 @@ async def clear_state():
 
     _janitor.state.clear()
     return {"status": "ok", "message": "State cleared, will re-scan all files"}
+
+
+# =============================================================================
+# Logs
+# =============================================================================
+
+
+@app.get("/logs")
+async def get_logs(
+    lines: int = Query(default=100, ge=1, le=1000, description="Number of log lines to return"),
+    level: str = Query(default="all", description="Filter by level: all, error, warning, info"),
+):
+    """
+    Get recent log entries.
+
+    Reads from the log file and returns recent entries.
+    """
+    if not _config:
+        return {"status": "error", "message": "Config not initialized"}
+
+    from pathlib import Path
+    import json
+
+    log_file = Path(_config.logging.file)
+    if not log_file.exists():
+        return {"status": "ok", "logs": [], "message": "No log file yet"}
+
+    try:
+        # Read last N lines efficiently
+        with open(log_file, 'rb') as f:
+            # Seek to end and work backwards
+            f.seek(0, 2)  # End of file
+            file_size = f.tell()
+
+            # Read chunks from end until we have enough lines
+            chunk_size = 8192
+            lines_found = []
+            position = file_size
+
+            while position > 0 and len(lines_found) < lines + 1:
+                read_size = min(chunk_size, position)
+                position -= read_size
+                f.seek(position)
+                chunk = f.read(read_size).decode('utf-8', errors='replace')
+                lines_found = chunk.split('\n') + lines_found
+
+            # Take last N lines
+            recent_lines = [l for l in lines_found if l.strip()][-lines:]
+
+        # Parse and filter logs
+        parsed_logs = []
+        for line in recent_lines:
+            try:
+                entry = json.loads(line)
+                log_level = entry.get("level", "info").lower()
+
+                # Filter by level
+                if level != "all":
+                    if level == "error" and log_level not in ["error", "critical"]:
+                        continue
+                    elif level == "warning" and log_level not in ["error", "critical", "warning"]:
+                        continue
+
+                parsed_logs.append({
+                    "timestamp": entry.get("timestamp", ""),
+                    "level": log_level,
+                    "event": entry.get("event", ""),
+                    "component": entry.get("component", ""),
+                    "details": {k: v for k, v in entry.items()
+                               if k not in ["timestamp", "level", "event", "component", "logger"]},
+                })
+            except json.JSONDecodeError:
+                # Not JSON, include raw line
+                parsed_logs.append({
+                    "timestamp": "",
+                    "level": "info",
+                    "event": line,
+                    "component": "",
+                    "details": {},
+                })
+
+        return {
+            "status": "ok",
+            "count": len(parsed_logs),
+            "logs": parsed_logs,
+        }
+
+    except Exception as e:
+        logger.error("Failed to read logs", error=str(e))
+        return {"status": "error", "message": str(e)}
+
+
+@app.get("/logs/errors")
+async def get_errors(lines: int = Query(default=50, ge=1, le=500)):
+    """Get recent errors only."""
+    return await get_logs(lines=lines, level="error")
