@@ -56,24 +56,31 @@ class Scanner:
             initial_scan_done=stats["initial_scan_done"],
         )
 
-    async def refresh_library(self) -> int:
-        """Refresh the list of media to scan."""
-        self.log.info("Refreshing library list")
+    async def refresh_library(self, source: str = "all") -> int:
+        """
+        Refresh the list of media to scan.
+
+        Args:
+            source: "all", "movies" (Radarr only), or "tv" (Sonarr only)
+        """
+        self.log.info("Refreshing library list", source=source)
         all_media: list[MediaItem] = []
 
-        for client in self._radarr_clients:
-            try:
-                media = await client.get_all_media()
-                all_media.extend(media)
-            except Exception as e:
-                self.log.error("Failed to fetch from Radarr", instance=client.instance.name, error=str(e))
+        if source in ("all", "movies"):
+            for client in self._radarr_clients:
+                try:
+                    media = await client.get_all_media()
+                    all_media.extend(media)
+                except Exception as e:
+                    self.log.error("Failed to fetch from Radarr", instance=client.instance.name, error=str(e))
 
-        for client in self._sonarr_clients:
-            try:
-                media = await client.get_all_media()
-                all_media.extend(media)
-            except Exception as e:
-                self.log.error("Failed to fetch from Sonarr", instance=client.instance.name, error=str(e))
+        if source in ("all", "tv"):
+            for client in self._sonarr_clients:
+                try:
+                    media = await client.get_all_media()
+                    all_media.extend(media)
+                except Exception as e:
+                    self.log.error("Failed to fetch from Sonarr", instance=client.instance.name, error=str(e))
 
         # Get already scanned paths from persistent state
         scanned_paths = self.state.get_scanned_paths()

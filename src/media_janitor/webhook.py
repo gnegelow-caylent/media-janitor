@@ -279,13 +279,20 @@ async def trigger_scan(background_tasks: BackgroundTasks):
 
 
 @app.post("/scan/refresh")
-async def refresh_library():
-    """Refresh the library list from Radarr/Sonarr."""
+async def refresh_library(
+    source: str = Query(default="movies", description="Source: movies (fast), tv (slow), or all"),
+):
+    """
+    Refresh the library list from Radarr/Sonarr.
+
+    Use source=movies for fast refresh (Radarr only).
+    Use source=tv for TV shows (Sonarr - very slow on large libraries).
+    """
     if not _janitor:
         return {"status": "error", "message": "Janitor not initialized"}
 
-    count = await _janitor.scanner.refresh_library()
-    return {"status": "ok", "files_to_scan": count}
+    count = await _janitor.scanner.refresh_library(source)
+    return {"status": "ok", "files_to_scan": count, "source": source}
 
 
 @app.post("/state/clear")
