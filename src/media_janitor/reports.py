@@ -50,18 +50,27 @@ def bytes_to_human(size_bytes: int) -> str:
 async def generate_library_report(
     scanner: Scanner,
     top_n: int = 50,
+    source: str = "all",  # "all", "movies", "tv"
 ) -> LibraryReport:
     """Generate a report of library statistics."""
     log = logger.bind(component="reports")
-    log.info("Generating library report")
+    log.info("Generating library report", source=source)
 
     all_media: list[MediaItem] = []
 
-    # Fetch from all clients
+    # Fetch from selected clients
     for client in scanner.get_all_clients():
+        # Filter by source type
+        if source == "movies" and client.arr_type != ArrType.RADARR:
+            continue
+        if source == "tv" and client.arr_type != ArrType.SONARR:
+            continue
+
         try:
+            log.info(f"Fetching from {client.instance.name}...")
             media = await client.get_all_media()
             all_media.extend(media)
+            log.info(f"Fetched {len(media)} items from {client.instance.name}")
         except Exception as e:
             log.error("Failed to fetch media", client=client.instance.name, error=str(e))
 

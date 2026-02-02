@@ -142,16 +142,19 @@ async def test_webhook(request: Request):
 async def get_library_report(
     top_n: int = Query(default=50, ge=1, le=500, description="Number of largest/smallest files to include"),
     format: str = Query(default="json", description="Output format: json, html, or text"),
+    source: str = Query(default="all", description="Source: all, movies (fast), or tv (slow)"),
 ):
     """
     Generate a library report showing largest files, quality breakdown, etc.
 
-    This is fast - it just queries Radarr/Sonarr APIs, no file scanning.
+    Use source=movies for fast results (Radarr only).
+    Use source=tv for TV shows (Sonarr - slow on large libraries).
+    Use source=all for everything (slowest).
     """
     if not _janitor:
         return {"status": "error", "message": "Janitor not initialized"}
 
-    report = await _janitor.generate_library_report(top_n)
+    report = await _janitor.generate_library_report(top_n, source)
 
     if format == "html":
         html = format_report_email(report)

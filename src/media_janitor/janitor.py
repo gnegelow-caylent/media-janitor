@@ -214,9 +214,9 @@ class Janitor:
             # Small delay between files
             await asyncio.sleep(1)
 
-    async def generate_library_report(self, top_n: int = 50) -> LibraryReport:
+    async def generate_library_report(self, top_n: int = 50, source: str = "all") -> LibraryReport:
         """Generate a library report with largest files."""
-        return await generate_library_report(self.scanner, top_n)
+        return await generate_library_report(self.scanner, top_n, source)
 
     async def send_library_report(self, top_n: int = 50) -> bool:
         """Generate and send a library report via email."""
