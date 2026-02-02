@@ -1,20 +1,37 @@
 # Media Janitor Configuration
 # Copy this to config.yaml and fill in your values
 
-# Radarr instances (you can have multiple)
+# Radarr instances
 radarr:
   - name: "radarr"
-    url: "http://localhost:7878"
+    url: "http://radarr:7878"  # Or IP like http://192.168.1.x:7878
     api_key: "your-radarr-api-key"
+    # Path mappings: translate paths FROM Radarr's view TO actual filesystem
+    path_mappings:
+      - from_path: "/movies"
+        to_path: "/mnt/remotes/192.168.1.5_video/Movies"
+      - from_path: "/kids"
+        to_path: "/mnt/remotes/192.168.1.5_video/Kids Stuff/Movies"
+      - from_path: "/google"
+        to_path: "/mnt/remotes/192.168.1.5_video"
 
-# Sonarr instances (you can have multiple)
+# Sonarr instances (you have 2)
 sonarr:
   - name: "sonarr-main"
-    url: "http://localhost:8989"
+    url: "http://sonarr:8989"
     api_key: "your-sonarr-api-key"
-  - name: "sonarr-4k"
-    url: "http://localhost:8990"
-    api_key: "your-sonarr-4k-api-key"
+    path_mappings:
+      - from_path: "/tv"
+        to_path: "/mnt/remotes/192.168.1.2_video/TV"
+      - from_path: "/kids"
+        to_path: "/mnt/remotes/192.168.1.2_video/Kids Stuff/TV"
+      - from_path: "/google"
+        to_path: "/mnt/remotes/192.168.1.2_video"
+
+  - name: "sonarr-2"
+    url: "http://sonarr-2:8990"
+    api_key: "your-sonarr-2-api-key"
+    path_mappings: []  # Add mappings if different from sonarr-main
 
 # Validation settings
 validation:

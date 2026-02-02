@@ -7,7 +7,7 @@ from typing import Any
 import httpx
 import structlog
 
-from .config import ArrInstance
+from .config import ArrInstance, PathMapping
 
 logger = structlog.get_logger()
 
@@ -55,10 +55,25 @@ class ArrClient:
         self.arr_type = arr_type
         self.base_url = instance.url.rstrip("/")
         self.api_key = instance.api_key
+        self.path_mappings = instance.path_mappings
         self.log = logger.bind(arr=instance.name, type=arr_type.value)
 
     def _headers(self) -> dict[str, str]:
         return {"X-Api-Key": self.api_key}
+
+    def translate_path(self, path: str | None) -> str | None:
+        """Translate a path from Radarr/Sonarr to the actual file system path."""
+        if not path:
+            return None
+
+        for mapping in self.path_mappings:
+            if path.startswith(mapping.from_path):
+                translated = path.replace(mapping.from_path, mapping.to_path, 1)
+                self.log.debug("Path translated", original=path, translated=translated)
+                return translated
+
+        # No mapping found, return as-is
+        return path
 
     async def _get(self, endpoint: str, params: dict | None = None) -> Any:
         """Make a GET request to the API."""
@@ -115,7 +130,7 @@ class ArrClient:
                 MediaItem(
                     id=movie["id"],
                     title=movie["title"],
-                    file_path=movie_file.get("path"),
+                    file_path=self.translate_path(movie_file.get("path")),
                     file_id=movie_file.get("id"),
                     quality=movie_file.get("quality", {}).get("quality", {}).get("name"),
                     size_bytes=movie_file.get("size"),
@@ -156,7 +171,7 @@ class ArrClient:
                     MediaItem(
                         id=episode["id"],
                         title=f"{series['title']} - S{episode.get('seasonNumber', 0):02d}E{episode.get('episodeNumber', 0):02d}",
-                        file_path=episode_file.get("path"),
+                        file_path=self.translate_path(episode_file.get("path")),
                         file_id=episode_file.get("id"),
                         quality=episode_file.get("quality", {}).get("quality", {}).get("name"),
                         size_bytes=episode_file.get("size"),

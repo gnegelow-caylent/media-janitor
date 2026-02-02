@@ -16,19 +16,13 @@ services:
       - ./state:/data/state
 
       # ============================================================
-      # IMPORTANT: Map paths EXACTLY as Radarr/Sonarr see them
+      # Mount NAS paths - these are the ACTUAL filesystem paths
+      # Path mappings in config.yaml translate Radarr/Sonarr paths
       # ============================================================
-      # Example for Unraid with your NFS mounts:
-      # NAS 1 (192.168.1.2)
-      - /mnt/user/192.168.1.2_video:/mnt/user/192.168.1.2_video:ro
-      - /mnt/user/192.168.1.2_Torrent:/mnt/user/192.168.1.2_Torrent:ro
-      # NAS 2 (192.168.1.5)
-      - /mnt/user/192.168.1.5_video:/mnt/user/192.168.1.5_video:ro
-      - /mnt/user/192.168.1.5_Torrent:/mnt/user/192.168.1.5_Torrent:ro
-
-      # Adjust paths above to match how your Radarr/Sonarr containers
-      # see the files. Check a movie/show in Radarr/Sonarr to see the
-      # exact path format they use.
+      # NAS 1 (192.168.1.2) - TV/Sonarr
+      - /mnt/remotes/192.168.1.2_video:/mnt/remotes/192.168.1.2_video:ro
+      # NAS 2 (192.168.1.5) - Movies/Radarr
+      - /mnt/remotes/192.168.1.5_video:/mnt/remotes/192.168.1.5_video:ro
 
     environment:
       - TZ=America/New_York  # Adjust to your timezone
