@@ -34,6 +34,9 @@ class MediaItem:
     # Source info
     arr_type: ArrType | None = None
     arr_instance: str | None = None
+    # For mismatch detection
+    year: int | None = None
+    folder_path: str | None = None
 
 
 @dataclass
@@ -136,6 +139,8 @@ class ArrClient:
                     size_bytes=movie_file.get("size"),
                     arr_type=ArrType.RADARR,
                     arr_instance=self.instance.name,
+                    year=movie.get("year"),
+                    folder_path=self.translate_path(movie.get("path")),
                 )
             )
 

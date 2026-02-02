@@ -1,7 +1,9 @@
 """Library reports and statistics."""
 
+import re
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
 
 import structlog
 
@@ -25,6 +27,20 @@ class FileStats:
 
 
 @dataclass
+class PathMismatch:
+    """A file whose path doesn't match its expected title."""
+
+    title: str
+    year: int | None
+    expected_folder: str  # What the folder should contain
+    actual_filename: str  # What the file is actually named
+    file_path: str
+    folder_path: str
+    arr_instance: str
+    mismatch_type: str  # "wrong_movie", "wrong_folder", "naming_issue"
+
+
+@dataclass
 class LibraryReport:
     """Library statistics report."""
 
@@ -45,6 +61,86 @@ def bytes_to_human(size_bytes: int) -> str:
             return f"{size_bytes:.2f} {unit}"
         size_bytes /= 1024.0
     return f"{size_bytes:.2f} PB"
+
+
+def normalize_title(title: str) -> str:
+    """Normalize a title for comparison (lowercase, remove punctuation)."""
+    # Remove common punctuation and normalize
+    normalized = title.lower()
+    normalized = re.sub(r"[':.,!?&\-\(\)]", "", normalized)
+    normalized = re.sub(r"\s+", " ", normalized).strip()
+    return normalized
+
+
+def extract_title_from_filename(filename: str) -> str:
+    """Extract the movie/show title from a filename."""
+    # Remove extension
+    name = Path(filename).stem
+
+    # Remove common patterns: year, quality, release group, etc.
+    # Pattern: "Movie Name (2020)" or "Movie.Name.2020.1080p..."
+    patterns = [
+        r"\(\d{4}\).*$",  # (2020) and everything after
+        r"\.\d{4}\.",  # .2020. (dot-separated year)
+        r"\s\d{4}\s",  # space-separated year
+        r"\.1080p\..*$",
+        r"\.2160p\..*$",
+        r"\.720p\..*$",
+        r"\.480p\..*$",
+        r"\.BluRay\..*$",
+        r"\.WEBRip\..*$",
+        r"\.WEBDL\..*$",
+        r"\.Remux\..*$",
+        r"\.BR-DISK.*$",
+        r"-[A-Za-z0-9]+$",  # Release group at end
+    ]
+
+    for pattern in patterns:
+        name = re.sub(pattern, "", name, flags=re.IGNORECASE)
+
+    # Replace dots and underscores with spaces
+    name = name.replace(".", " ").replace("_", " ")
+    name = re.sub(r"\s+", " ", name).strip()
+
+    return name
+
+
+def detect_path_mismatch(item: MediaItem) -> PathMismatch | None:
+    """Check if a file's path matches its expected title."""
+    if not item.file_path or not item.folder_path:
+        return None
+
+    filename = Path(item.file_path).name
+    folder_name = Path(item.folder_path).name
+
+    # Extract title from filename
+    filename_title = extract_title_from_filename(filename)
+    normalized_filename = normalize_title(filename_title)
+    normalized_expected = normalize_title(item.title)
+
+    # Check if the filename contains the expected movie title
+    # Allow for some flexibility (title should be in filename)
+    if normalized_expected in normalized_filename:
+        return None
+
+    # Check if at least 60% of the expected title words are in the filename
+    expected_words = set(normalized_expected.split())
+    filename_words = set(normalized_filename.split())
+
+    if expected_words and len(expected_words.intersection(filename_words)) / len(expected_words) >= 0.6:
+        return None
+
+    # This is a mismatch
+    return PathMismatch(
+        title=item.title,
+        year=item.year,
+        expected_folder=f"{item.title} ({item.year})" if item.year else item.title,
+        actual_filename=filename,
+        file_path=item.file_path,
+        folder_path=item.folder_path,
+        arr_instance=item.arr_instance or "unknown",
+        mismatch_type="wrong_movie",
+    )
 
 
 async def generate_library_report(
@@ -253,6 +349,41 @@ def format_report_email(report: LibraryReport) -> str:
     """
 
     return html
+
+
+async def generate_mismatch_report(
+    scanner: Scanner,
+    source: str = "movies",
+) -> list[PathMismatch]:
+    """Generate a report of files with mismatched paths."""
+    log = logger.bind(component="reports")
+    log.info("Generating mismatch report", source=source)
+
+    all_media: list[MediaItem] = []
+
+    for client in scanner.get_all_clients():
+        if source == "movies" and client.arr_type != ArrType.RADARR:
+            continue
+        if source == "tv" and client.arr_type != ArrType.SONARR:
+            continue
+
+        try:
+            log.info(f"Checking {client.instance.name} for mismatches...")
+            media = await client.get_all_media()
+            all_media.extend(media)
+        except Exception as e:
+            log.error("Failed to fetch media", client=client.instance.name, error=str(e))
+
+    mismatches = []
+    for item in all_media:
+        if not item.file_path:
+            continue
+        mismatch = detect_path_mismatch(item)
+        if mismatch:
+            mismatches.append(mismatch)
+
+    log.info("Mismatch report generated", total_checked=len(all_media), mismatches_found=len(mismatches))
+    return mismatches
 
 
 def format_report_text(report: LibraryReport) -> str:

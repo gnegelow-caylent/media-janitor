@@ -11,7 +11,7 @@ from fastapi.responses import HTMLResponse, PlainTextResponse
 from .arr_client import ArrClient, ArrType
 from .config import Config
 from .janitor import Janitor
-from .reports import format_report_email, format_report_text
+from .reports import format_report_email, format_report_text, generate_mismatch_report
 
 logger = structlog.get_logger()
 
@@ -209,6 +209,58 @@ async def email_library_report(
         return {"status": "ok", "message": "Report sent"}
     else:
         return {"status": "error", "message": "Failed to send email"}
+
+
+@app.get("/report/mismatches")
+async def get_mismatch_report(
+    source: str = Query(default="movies", description="Source: movies (fast) or tv (slow)"),
+    format: str = Query(default="json", description="Output format: json, text"),
+):
+    """
+    Find files where the filename doesn't match the expected movie/show title.
+
+    This detects cases like:
+    - F.R.E.D.I. folder containing "Mission Impossible - Fallout.mkv"
+    - Wrong movie in wrong folder
+    """
+    if not _janitor:
+        return {"status": "error", "message": "Janitor not initialized"}
+
+    mismatches = await generate_mismatch_report(_janitor.scanner, source)
+
+    if format == "text":
+        lines = [
+            "=" * 70,
+            "PATH MISMATCH REPORT",
+            f"Found {len(mismatches)} mismatches",
+            "=" * 70,
+            "",
+        ]
+        for m in mismatches:
+            lines.append(f"Expected: {m.expected_folder}")
+            lines.append(f"  Actual: {m.actual_filename}")
+            lines.append(f"    Path: {m.file_path}")
+            lines.append(f"Instance: {m.arr_instance}")
+            lines.append("")
+
+        return PlainTextResponse(content="\n".join(lines))
+    else:
+        return {
+            "count": len(mismatches),
+            "mismatches": [
+                {
+                    "title": m.title,
+                    "year": m.year,
+                    "expected_folder": m.expected_folder,
+                    "actual_filename": m.actual_filename,
+                    "file_path": m.file_path,
+                    "folder_path": m.folder_path,
+                    "arr_instance": m.arr_instance,
+                    "mismatch_type": m.mismatch_type,
+                }
+                for m in mismatches
+            ],
+        }
 
 
 # =============================================================================
