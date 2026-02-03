@@ -530,7 +530,7 @@
 
     async function updateCharts() {
         try {
-            const response = await fetch('/report/library?source=movies');
+            const response = await fetch('/report/library?source=all');
             const data = await response.json();
 
             // Update library size
