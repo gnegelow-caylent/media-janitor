@@ -293,3 +293,37 @@ class ArrClient:
         except Exception as e:
             self.log.error("Failed to get queue", error=str(e))
             return []
+
+    async def rename_files(self, item: MediaItem) -> bool:
+        """Trigger a rename of files for a movie/series to match naming convention.
+
+        This uses Radarr/Sonarr's built-in rename command which fixes paths
+        according to the configured naming scheme.
+        """
+        try:
+            if self.arr_type == ArrType.RADARR:
+                # For Radarr, we need the movie file IDs
+                if not item.file_id:
+                    self.log.warning("No file_id for rename", title=item.title)
+                    return False
+                await self._post(
+                    "command",
+                    {"name": "RenameFiles", "movieId": item.id, "files": [item.file_id]},
+                )
+            else:
+                # For Sonarr, rename the series files
+                if not item.series_id:
+                    self.log.warning("No series_id for rename", title=item.title)
+                    return False
+                if not item.file_id:
+                    self.log.warning("No file_id for rename", title=item.title)
+                    return False
+                await self._post(
+                    "command",
+                    {"name": "RenameFiles", "seriesId": item.series_id, "files": [item.file_id]},
+                )
+            self.log.info("Triggered rename", title=item.title)
+            return True
+        except Exception as e:
+            self.log.error("Failed to trigger rename", title=item.title, error=str(e))
+            return False

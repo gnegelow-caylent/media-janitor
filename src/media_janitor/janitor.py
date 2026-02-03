@@ -9,7 +9,14 @@ import structlog
 from .arr_client import ArrClient, ArrType, MediaItem
 from .config import Config
 from .notifications import NotificationManager, ScanResult
-from .reports import LibraryReport, generate_library_report, format_report_email
+from .reports import (
+    LibraryReport,
+    generate_library_report,
+    format_report_email,
+    find_duplicates,
+    generate_mismatch_report,
+    detect_path_mismatch,
+)
 from .scanner import Scanner
 from .state import StateManager
 from .validation import ValidationResult, validate_file
@@ -33,6 +40,10 @@ class Janitor:
         # Rate limiting
         self._replacements_today = 0
         self._replacement_reset_date = datetime.now().date()
+
+        # Path fix tracking
+        self._paths_fixed_today = 0
+        self._path_fix_failures: list[str] = []
 
     async def initialize(self):
         """Initialize the janitor and all components."""
@@ -99,6 +110,18 @@ class Janitor:
         scan_result.media_type = media_type
 
         if validation_result.valid:
+            # Check for path mismatch and auto-fix if needed
+            mismatch = detect_path_mismatch(item)
+            if mismatch:
+                log.info("Path mismatch detected, attempting rename", title=title)
+                renamed = await client.rename_files(item)
+                if renamed:
+                    self._paths_fixed_today += 1
+                    log.info("Path fixed successfully", title=title)
+                else:
+                    self._path_fix_failures.append(f"{title}: rename failed")
+                    log.warning("Path fix failed", title=title)
+
             # Mark valid files as scanned
             self.scanner.mark_scanned(file_path, True, media_type)
             log.info("File validated successfully", title=title)
@@ -246,8 +269,31 @@ class Janitor:
         )
 
     async def send_daily_summary(self):
-        """Send the daily summary email."""
-        await self.notifications.send_daily_summary()
+        """Send the daily summary email with duplicates and path mismatches."""
+        # Fetch duplicates and path mismatches to include in email
+        try:
+            duplicates = await find_duplicates(self.scanner, source="movies")
+            mismatches = await generate_mismatch_report(self.scanner, source="movies")
+
+            # Get the summary before clearing, add extras, then send
+            summary = self.notifications.get_summary(clear=True)
+            summary.duplicates = duplicates
+            summary.path_mismatches = mismatches
+
+            # Add path fix stats
+            summary.paths_fixed = self._paths_fixed_today
+            summary.path_fix_failures = self._path_fix_failures.copy()
+
+            # Reset path fix tracking
+            self._paths_fixed_today = 0
+            self._path_fix_failures = []
+
+            # Send the enhanced summary
+            await self.notifications.send_summary_with_extras(summary)
+        except Exception as e:
+            self.log.error("Failed to generate full daily summary", error=str(e))
+            # Fallback to basic summary
+            await self.notifications.send_daily_summary()
 
     def get_status(self) -> dict:
         """Get current janitor status."""

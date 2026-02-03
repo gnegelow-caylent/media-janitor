@@ -5,11 +5,15 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from typing import TYPE_CHECKING
 
 import aiosmtplib
 import structlog
 
 from .config import EmailConfig
+
+if TYPE_CHECKING:
+    from .reports import DuplicateGroup, PathMismatch
 
 logger = structlog.get_logger()
 
@@ -48,6 +52,12 @@ class DailySummary:
     tv_queued: int = 0
     errors: list[str] = field(default_factory=list)
     invalid_files: list[ScanResult] = field(default_factory=list)
+    # Path issues that were auto-fixed
+    paths_fixed: int = 0
+    path_fix_failures: list[str] = field(default_factory=list)
+    # Duplicates and mismatches for reporting
+    duplicates: list["DuplicateGroup"] = field(default_factory=list)
+    path_mismatches: list["PathMismatch"] = field(default_factory=list)
 
 
 class NotificationManager:
@@ -115,6 +125,21 @@ class NotificationManager:
         summary = self.get_summary(clear=True)
 
         if summary.files_scanned == 0:
+            self.log.info("No activity to report")
+            return True
+
+        subject = f"Media Janitor Daily Report - {summary.date.strftime('%Y-%m-%d')}"
+        body = self._format_summary_email(summary)
+
+        return await self._send_email(subject, body)
+
+    async def send_summary_with_extras(self, summary: DailySummary) -> bool:
+        """Send a daily summary with pre-populated duplicates and mismatches."""
+        if not self.config.enabled:
+            self.log.debug("Email notifications disabled")
+            return False
+
+        if summary.files_scanned == 0 and not summary.duplicates and not summary.path_mismatches:
             self.log.info("No activity to report")
             return True
 
@@ -276,6 +301,90 @@ class NotificationManager:
             html += "</table>"
             if len(invalid_tv) > 25:
                 html += f"<p style='color: #9ca3af;'>...and {len(invalid_tv) - 25} more TV episodes</p>"
+            html += "</div>"
+
+        # Path fixes section
+        if summary.paths_fixed > 0 or summary.path_fix_failures:
+            html += f"""
+            <div class="section">
+                <div class="section-title">
+                    <span style="font-size: 20px;">🔧</span>
+                    <h3 style="margin: 0;">Path Fixes</h3>
+                </div>
+                <p style="color: #9ca3af;">
+                    <span class="good">{summary.paths_fixed}</span> files renamed successfully
+                </p>
+            """
+            if summary.path_fix_failures:
+                html += "<p style='color: #f87171;'>Failed to fix:</p><ul>"
+                for fail in summary.path_fix_failures[:10]:
+                    html += f"<li style='color: #9ca3af; font-size: 12px;'>{fail}</li>"
+                if len(summary.path_fix_failures) > 10:
+                    html += f"<li style='color: #9ca3af;'>...and {len(summary.path_fix_failures) - 10} more</li>"
+                html += "</ul>"
+            html += "</div>"
+
+        # Duplicates section
+        if summary.duplicates:
+            from .reports import bytes_to_human
+            total_savings = sum(d.potential_savings_bytes for d in summary.duplicates)
+            html += f"""
+            <div class="section">
+                <div class="section-title">
+                    <span style="font-size: 20px;">📦</span>
+                    <h3 style="margin: 0;">Duplicates Found</h3>
+                </div>
+                <p style="color: #9ca3af;">
+                    Found <span class="warning">{len(summary.duplicates)}</span> items with multiple copies.
+                    Potential savings: <span class="warning">{bytes_to_human(total_savings)}</span>
+                </p>
+                <table>
+                    <tr>
+                        <th>Title</th>
+                        <th>Copies</th>
+                        <th>Potential Savings</th>
+                    </tr>
+            """
+            for dup in summary.duplicates[:15]:
+                html += f"""
+                <tr>
+                    <td>{dup.title} ({dup.year or 'N/A'})</td>
+                    <td>{len(dup.files)}</td>
+                    <td class="warning">{bytes_to_human(dup.potential_savings_bytes)}</td>
+                </tr>
+                """
+            html += "</table>"
+            if len(summary.duplicates) > 15:
+                html += f"<p style='color: #9ca3af;'>...and {len(summary.duplicates) - 15} more duplicates</p>"
+            html += "</div>"
+
+        # Path mismatches section
+        if summary.path_mismatches:
+            html += f"""
+            <div class="section">
+                <div class="section-title">
+                    <span style="font-size: 20px;">⚠️</span>
+                    <h3 style="margin: 0;">Path Mismatches</h3>
+                </div>
+                <p style="color: #9ca3af;">
+                    Found <span class="warning">{len(summary.path_mismatches)}</span> files with path naming issues.
+                </p>
+                <table>
+                    <tr>
+                        <th>Expected</th>
+                        <th>Actual Filename</th>
+                    </tr>
+            """
+            for mm in summary.path_mismatches[:15]:
+                html += f"""
+                <tr>
+                    <td>{mm.expected_folder}</td>
+                    <td style="color: #f87171; font-size: 11px;">{mm.actual_filename[:60]}{'...' if len(mm.actual_filename) > 60 else ''}</td>
+                </tr>
+                """
+            html += "</table>"
+            if len(summary.path_mismatches) > 15:
+                html += f"<p style='color: #9ca3af;'>...and {len(summary.path_mismatches) - 15} more mismatches</p>"
             html += "</div>"
 
         html += """
