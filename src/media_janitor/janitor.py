@@ -96,11 +96,11 @@ class Janitor:
 
         # Determine media type from arr_type
         media_type = "movie" if item.arr_type == ArrType.RADARR else "tv"
-
-        # Mark as scanned (with valid/invalid status and media type)
-        self.scanner.mark_scanned(file_path, validation_result.valid, media_type)
+        scan_result.media_type = media_type
 
         if validation_result.valid:
+            # Mark valid files as scanned
+            self.scanner.mark_scanned(file_path, True, media_type)
             log.info("File validated successfully", title=title)
             self.notifications.record_result(scan_result)
             return scan_result
@@ -110,14 +110,16 @@ class Janitor:
 
         # Check if auto-replace is enabled
         if not self.config.actions.auto_replace:
+            # Mark as scanned since user doesn't want auto-replace
+            self.scanner.mark_scanned(file_path, False, media_type)
             scan_result.action_taken = "flagged"
             self.notifications.record_result(scan_result)
             return scan_result
 
-        # Check rate limit
+        # Check rate limit - DON'T mark as scanned so it retries next day
         if not self._check_rate_limit():
-            log.warning("Rate limit reached, flagging instead of replacing")
-            scan_result.action_taken = "flagged"
+            log.warning("Rate limit reached, queuing for next day", title=title)
+            scan_result.action_taken = "queued"
             self.notifications.record_result(scan_result)
             return scan_result
 
@@ -129,6 +131,8 @@ class Janitor:
             # Remove from scanned list so new file will be scanned
             self.scanner.mark_replaced(file_path)
         else:
+            # Mark as scanned if replacement failed (don't keep retrying)
+            self.scanner.mark_scanned(file_path, False, media_type)
             scan_result.action_taken = "flagged"
 
         self.notifications.record_result(scan_result)
