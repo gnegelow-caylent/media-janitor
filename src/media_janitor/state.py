@@ -93,6 +93,8 @@ class StateManager:
         if file_path in self._state.get("scanned_files", {}):
             del self._state["scanned_files"][file_path]
         self._state["total_replaced"] = self._state.get("total_replaced", 0) + 1
+        # Replaced files are invalid files, so count them as issues
+        self._state["total_invalid"] = self._state.get("total_invalid", 0) + 1
         self._save()
 
     def mark_scan_started(self):
