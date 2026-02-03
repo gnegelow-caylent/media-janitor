@@ -17,12 +17,17 @@ class StateManager:
         self.state_file = Path(state_file)
         self.log = logger.bind(component="state")
         self._state: dict[str, Any] = {
-            "scanned_files": {},  # path -> timestamp of last scan
+            "scanned_files": {},  # path -> {timestamp, valid, media_type}
             "scan_started": None,
             "scan_completed": None,
             "total_scanned": 0,
             "total_invalid": 0,
             "total_replaced": 0,
+            # Separate counters for movies and TV
+            "movies_scanned": 0,
+            "movies_total": 0,
+            "tv_scanned": 0,
+            "tv_total": 0,
         }
         self._load()
 
@@ -52,19 +57,32 @@ class StateManager:
         """Check if a file has been scanned."""
         return file_path in self._state.get("scanned_files", {})
 
-    def mark_scanned(self, file_path: str, valid: bool = True):
-        """Mark a file as scanned."""
+    def mark_scanned(self, file_path: str, valid: bool = True, media_type: str = "unknown"):
+        """Mark a file as scanned.
+
+        Args:
+            file_path: Path to the file
+            valid: Whether the file passed validation
+            media_type: "movie", "tv", or "unknown"
+        """
         if "scanned_files" not in self._state:
             self._state["scanned_files"] = {}
 
         self._state["scanned_files"][file_path] = {
             "timestamp": datetime.now().isoformat(),
             "valid": valid,
+            "media_type": media_type,
         }
         self._state["total_scanned"] = self._state.get("total_scanned", 0) + 1
 
         if not valid:
             self._state["total_invalid"] = self._state.get("total_invalid", 0) + 1
+
+        # Track separate counts for movies and TV
+        if media_type == "movie":
+            self._state["movies_scanned"] = self._state.get("movies_scanned", 0) + 1
+        elif media_type == "tv":
+            self._state["tv_scanned"] = self._state.get("tv_scanned", 0) + 1
 
         # Save periodically (every 10 scans)
         if self._state["total_scanned"] % 10 == 0:
@@ -97,6 +115,10 @@ class StateManager:
         valid_count = sum(1 for f in scanned_files.values() if f.get("valid", True))
         invalid_count = len(scanned_files) - valid_count
 
+        # Count movies and TV from scanned files (for accuracy even with old state)
+        movies_scanned = sum(1 for f in scanned_files.values() if f.get("media_type") == "movie")
+        tv_scanned = sum(1 for f in scanned_files.values() if f.get("media_type") == "tv")
+
         return {
             "total_scanned": len(scanned_files),
             "valid_files": valid_count,
@@ -105,7 +127,18 @@ class StateManager:
             "scan_started": self._state.get("scan_started"),
             "scan_completed": self._state.get("scan_completed"),
             "initial_scan_done": self._state.get("scan_completed") is not None,
+            # Separate movie/TV counts
+            "movies_scanned": movies_scanned,
+            "movies_total": self._state.get("movies_total", 0),
+            "tv_scanned": tv_scanned,
+            "tv_total": self._state.get("tv_total", 0),
         }
+
+    def set_library_totals(self, movies_total: int, tv_total: int):
+        """Set the total counts for movies and TV in the library."""
+        self._state["movies_total"] = movies_total
+        self._state["tv_total"] = tv_total
+        self._save()
 
     def clear(self):
         """Clear all state (for fresh start)."""
@@ -116,6 +149,10 @@ class StateManager:
             "total_scanned": 0,
             "total_invalid": 0,
             "total_replaced": 0,
+            "movies_scanned": 0,
+            "movies_total": 0,
+            "tv_scanned": 0,
+            "tv_total": 0,
         }
         self._save()
         self.log.info("State cleared")

@@ -94,8 +94,11 @@ class Janitor:
             warnings=validation_result.warnings,
         )
 
-        # Mark as scanned (with valid/invalid status)
-        self.scanner.mark_scanned(file_path, validation_result.valid)
+        # Determine media type from arr_type
+        media_type = "movie" if item.arr_type == ArrType.RADARR else "tv"
+
+        # Mark as scanned (with valid/invalid status and media type)
+        self.scanner.mark_scanned(file_path, validation_result.valid, media_type)
 
         if validation_result.valid:
             log.info("File validated successfully", title=title)

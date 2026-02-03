@@ -138,7 +138,7 @@
         </div>
 
         <!-- Stats row -->
-        <div class="grid grid-cols-4 gap-4">
+        <div class="grid grid-cols-4 gap-4 mb-6">
             <div class="text-center">
                 <p class="text-2xl font-bold text-white" id="progress-scanned">0</p>
                 <p class="text-xs text-gray-500 uppercase">Scanned</p>
@@ -154,6 +154,45 @@
             <div class="text-center">
                 <p class="text-2xl font-bold text-gray-400" id="progress-remaining">0</p>
                 <p class="text-xs text-gray-500 uppercase">Remaining</p>
+            </div>
+        </div>
+
+        <!-- Movies vs TV breakdown -->
+        <div class="grid grid-cols-2 gap-4 pt-4 border-t border-gray-700">
+            <!-- Movies -->
+            <div class="flex items-center gap-4 p-3 bg-gray-700/30 rounded-lg">
+                <div class="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"/>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-sm font-medium text-white">Movies</span>
+                        <span class="text-sm text-gray-400"><span id="movies-scanned">0</span> / <span id="movies-total">0</span></span>
+                    </div>
+                    <div class="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                        <div id="movies-progress" class="h-full bg-orange-400 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TV Shows -->
+            <div class="flex items-center gap-4 p-3 bg-gray-700/30 rounded-lg">
+                <div class="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-sm font-medium text-white">TV Episodes</span>
+                        <span class="text-sm text-gray-400"><span id="tv-scanned">0</span> / <span id="tv-total">0</span></span>
+                    </div>
+                    <div class="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                        <div id="tv-progress" class="h-full bg-blue-400 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -399,6 +438,25 @@
 
             document.getElementById('radarr-status').className = data.scanner.radarr_instances > 0 ? 'status-dot online' : 'status-dot offline';
             document.getElementById('sonarr-status').className = data.scanner.sonarr_instances > 0 ? 'status-dot online' : 'status-dot offline';
+
+            // Update movies/TV breakdown
+            const moviesScanned = data.scanner.movies_scanned || 0;
+            const moviesTotal = data.scanner.movies_total || 0;
+            const moviesInQueue = data.scanner.movies_in_queue || 0;
+            const tvScanned = data.scanner.tv_scanned || 0;
+            const tvTotal = data.scanner.tv_total || 0;
+            const tvInQueue = data.scanner.tv_in_queue || 0;
+
+            document.getElementById('movies-scanned').textContent = moviesScanned.toLocaleString();
+            document.getElementById('movies-total').textContent = (moviesTotal || (moviesScanned + moviesInQueue)).toLocaleString();
+            document.getElementById('tv-scanned').textContent = tvScanned.toLocaleString();
+            document.getElementById('tv-total').textContent = (tvTotal || (tvScanned + tvInQueue)).toLocaleString();
+
+            // Update progress bars
+            const moviesPct = moviesTotal > 0 ? (moviesScanned / moviesTotal) * 100 : 0;
+            const tvPct = tvTotal > 0 ? (tvScanned / tvTotal) * 100 : 0;
+            document.getElementById('movies-progress').style.width = `${Math.min(moviesPct, 100)}%`;
+            document.getElementById('tv-progress').style.width = `${Math.min(tvPct, 100)}%`;
 
         } catch (e) {
             console.error('Failed to fetch status:', e);

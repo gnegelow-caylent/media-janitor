@@ -65,11 +65,14 @@ class Scanner:
         """
         self.log.info("Refreshing library list", source=source)
         all_media: list[MediaItem] = []
+        movies_total = 0
+        tv_total = 0
 
         if source in ("all", "movies"):
             for client in self._radarr_clients:
                 try:
                     media = await client.get_all_media()
+                    movies_total += len(media)
                     all_media.extend(media)
                 except Exception as e:
                     self.log.error("Failed to fetch from Radarr", instance=client.instance.name, error=str(e))
@@ -78,9 +81,20 @@ class Scanner:
             for client in self._sonarr_clients:
                 try:
                     media = await client.get_all_media()
+                    tv_total += len(media)
                     all_media.extend(media)
                 except Exception as e:
                     self.log.error("Failed to fetch from Sonarr", instance=client.instance.name, error=str(e))
+
+        # Update library totals in state
+        if source == "all":
+            self.state.set_library_totals(movies_total, tv_total)
+        elif source == "movies":
+            current_stats = self.state.get_stats()
+            self.state.set_library_totals(movies_total, current_stats.get("tv_total", 0))
+        elif source == "tv":
+            current_stats = self.state.get_stats()
+            self.state.set_library_totals(current_stats.get("movies_total", 0), tv_total)
 
         # Get already scanned paths from persistent state
         scanned_paths = self.state.get_scanned_paths()
@@ -104,6 +118,8 @@ class Scanner:
         self.log.info(
             "Library refreshed",
             total_files=len(all_media),
+            movies=movies_total,
+            tv_episodes=tv_total,
             new_to_scan=len(new_items),
             already_scanned=len(scanned_paths),
         )
@@ -116,9 +132,9 @@ class Scanner:
         self._scan_queue = self._scan_queue[count:]
         return batch
 
-    def mark_scanned(self, file_path: str, valid: bool = True):
+    def mark_scanned(self, file_path: str, valid: bool = True, media_type: str = "unknown"):
         """Mark a file as scanned (persisted to disk)."""
-        self.state.mark_scanned(file_path, valid)
+        self.state.mark_scanned(file_path, valid, media_type)
 
     def mark_replaced(self, file_path: str):
         """Mark a file as replaced (removes from scanned list)."""
@@ -140,6 +156,11 @@ class Scanner:
     def get_status(self) -> dict:
         """Get scanner status."""
         stats = self.state.get_stats()
+
+        # Count movies/TV in queue
+        movies_in_queue = sum(1 for item in self._scan_queue if item.arr_type == ArrType.RADARR)
+        tv_in_queue = sum(1 for item in self._scan_queue if item.arr_type == ArrType.SONARR)
+
         return {
             "queue_size": len(self._scan_queue),
             "scanned_count": stats["total_scanned"],
@@ -152,6 +173,13 @@ class Scanner:
             "scan_completed": stats["scan_completed"],
             "radarr_instances": len(self._radarr_clients),
             "sonarr_instances": len(self._sonarr_clients),
+            # Separate movie/TV stats
+            "movies_scanned": stats["movies_scanned"],
+            "movies_total": stats["movies_total"],
+            "movies_in_queue": movies_in_queue,
+            "tv_scanned": stats["tv_scanned"],
+            "tv_total": stats["tv_total"],
+            "tv_in_queue": tv_in_queue,
         }
 
     def get_client_for_item(self, item: MediaItem) -> ArrClient | None:
