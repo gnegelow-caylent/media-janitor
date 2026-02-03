@@ -38,8 +38,8 @@ class Janitor:
         """Initialize the janitor and all components."""
         self.log.info("Initializing janitor")
         await self.scanner.initialize()
-        # Only refresh movies on init (fast), TV can be added manually
-        await self.scanner.refresh_library("movies")
+        # Refresh both movies and TV at startup
+        await self.scanner.refresh_library("all")
         self.log.info("Janitor initialized")
 
     def _check_rate_limit(self) -> bool:
@@ -194,8 +194,8 @@ class Janitor:
         status = self.scanner.get_status()
         if status["queue_size"] == 0:
             self.log.info("Scan queue empty, refreshing library")
-            # Only refresh movies (fast), TV is too slow for background refresh
-            count = await self.scanner.refresh_library("movies")
+            # Refresh both movies and TV
+            count = await self.scanner.refresh_library("all")
             if count == 0:
                 self.log.info("All files have been scanned")
                 return
