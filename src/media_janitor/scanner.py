@@ -105,10 +105,28 @@ class Scanner:
             if item.file_path and item.file_path not in scanned_paths
         ]
 
-        # Shuffle to avoid always scanning in the same order
-        random.shuffle(new_items)
+        # Separate movies and TV, then interleave for balanced scanning
+        movies = [item for item in new_items if item.arr_type == ArrType.RADARR]
+        tv = [item for item in new_items if item.arr_type == ArrType.SONARR]
+        random.shuffle(movies)
+        random.shuffle(tv)
 
-        self._scan_queue = new_items
+        # Interleave: for every 1 movie, scan ~10 TV (proportional to library size)
+        # This ensures both get scanned even with large TV libraries
+        interleaved = []
+        mi, ti = 0, 0
+        while mi < len(movies) or ti < len(tv):
+            # Add a movie
+            if mi < len(movies):
+                interleaved.append(movies[mi])
+                mi += 1
+            # Add up to 10 TV episodes
+            for _ in range(10):
+                if ti < len(tv):
+                    interleaved.append(tv[ti])
+                    ti += 1
+
+        self._scan_queue = interleaved
         self._last_full_refresh = datetime.now()
 
         # Mark scan started if this is the first run

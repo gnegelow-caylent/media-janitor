@@ -343,6 +343,15 @@
         return Math.round((valid / total) * 100);
     }
 
+    // Format bytes to human readable
+    function formatBytes(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
     function updateHealthDisplay(score) {
         const ring = document.getElementById('health-ring');
         const scoreEl = document.getElementById('health-score');
@@ -530,15 +539,43 @@
 
     async function updateCharts() {
         try {
-            const response = await fetch('/report/library?source=all');
-            const data = await response.json();
+            // Fetch movies and TV in parallel for speed
+            const [moviesRes, tvRes] = await Promise.all([
+                fetch('/report/library?source=movies'),
+                fetch('/report/library?source=tv')
+            ]);
+            const moviesData = await moviesRes.json();
+            const tvData = await tvRes.json();
+
+            // Combine the data
+            const totalFiles = (moviesData.total_files || 0) + (tvData.total_files || 0);
+            const totalSize = (moviesData.total_size_bytes || 0) + (tvData.total_size_bytes || 0);
+            const totalSizeHuman = formatBytes(totalSize);
+
+            // Merge quality counts
+            const qualityMap = {};
+            for (const [k, v] of Object.entries(moviesData.files_by_quality || {})) {
+                qualityMap[k] = (qualityMap[k] || 0) + v;
+            }
+            for (const [k, v] of Object.entries(tvData.files_by_quality || {})) {
+                qualityMap[k] = (qualityMap[k] || 0) + v;
+            }
+
+            // Merge instance counts
+            const instanceMap = {};
+            for (const [k, v] of Object.entries(moviesData.files_by_instance || {})) {
+                instanceMap[k] = (instanceMap[k] || 0) + v;
+            }
+            for (const [k, v] of Object.entries(tvData.files_by_instance || {})) {
+                instanceMap[k] = (instanceMap[k] || 0) + v;
+            }
 
             // Update library size
-            document.getElementById('library-size').textContent = data.total_size_human || '--';
-            document.getElementById('files-scanned').textContent = (data.total_files || 0).toLocaleString();
+            document.getElementById('library-size').textContent = totalSizeHuman || '--';
+            document.getElementById('files-scanned').textContent = totalFiles.toLocaleString();
 
             // Quality chart
-            const qualityData = Object.entries(data.files_by_quality || {}).sort((a, b) => b[1] - a[1]).slice(0, 8);
+            const qualityData = Object.entries(qualityMap).sort((a, b) => b[1] - a[1]).slice(0, 8);
             const qualityCtx = document.getElementById('quality-chart').getContext('2d');
 
             if (qualityChart) qualityChart.destroy();
@@ -566,7 +603,7 @@
             });
 
             // Instance chart
-            const instanceData = Object.entries(data.files_by_instance || {});
+            const instanceData = Object.entries(instanceMap);
             const instanceCtx = document.getElementById('instance-chart').getContext('2d');
 
             if (instanceChart) instanceChart.destroy();
