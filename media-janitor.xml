@@ -14,7 +14,7 @@
   <Overview>Proactive media library quality monitor with Web UI - detects and replaces bad copies automatically via Radarr/Sonarr. Features include duplicate detection, codec analysis, HDR reports, and multi-platform notifications.</Overview>
   <Category>MediaServer:Video Tools:</Category>
   <WebUI>http://[IP]:[PORT:9000]/</WebUI>
-  <Icon>https://raw.githubusercontent.com/gnegelow-caylent/media-janitor/main/logo.svg</Icon>
+  <Icon>https://cdn-icons-png.flaticon.com/512/3163/3163478.png</Icon>
   <ExtraParams>--restart unless-stopped</ExtraParams>
   <DateInstalled></DateInstalled>
   <Description>Media Janitor monitors your Plex library for corrupt, incomplete, or low-quality files and automatically triggers replacements via Radarr and Sonarr. Includes a full Web UI for monitoring, reports, and configuration.</Description>
