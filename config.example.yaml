@@ -1,87 +1,123 @@
 # Media Janitor Configuration
 # Copy this to config.yaml and fill in your values
 
+# =============================================================================
+# Radarr Instances (Movies)
+# =============================================================================
 radarr:
   - name: "radarr"
-    url: "http://192.168.1.X:7878"
-    api_key: "RADARR_API_KEY"
+    url: "http://192.168.1.3:7878"
+    api_key: "YOUR_RADARR_API_KEY"
+    # Path mappings translate Radarr's container paths to actual filesystem paths
+    # Find your root folders in Radarr -> Settings -> Media Management
     path_mappings:
       - from_path: "/movies"
         to_path: "/mnt/remotes/192.168.1.5_video/Movies"
       - from_path: "/kids"
         to_path: "/mnt/remotes/192.168.1.5_video/Kids Stuff/Movies"
-      - from_path: "/google"
-        to_path: "/mnt/remotes/192.168.1.5_video"
 
+# =============================================================================
+# Sonarr Instances (TV Shows)
+# =============================================================================
 sonarr:
   - name: "sonarr-main"
-    url: "http://192.168.1.X:8989"
-    api_key: "SONARR1_API_KEY"
+    url: "http://192.168.1.3:8989"
+    api_key: "YOUR_SONARR_API_KEY"
     path_mappings:
       - from_path: "/tv"
         to_path: "/mnt/remotes/192.168.1.2_video/TV"
       - from_path: "/kids"
         to_path: "/mnt/remotes/192.168.1.2_video/Kids Stuff/TV"
-      - from_path: "/google"
-        to_path: "/mnt/remotes/192.168.1.2_video"
 
   - name: "sonarr-2"
-    url: "http://192.168.1.X:8990"
-    api_key: "SONARR2_API_KEY"
+    url: "http://192.168.1.3:8992"
+    api_key: "YOUR_SONARR2_API_KEY"
     path_mappings:
       - from_path: "/tv"
         to_path: "/mnt/remotes/192.168.1.2_video/TV"
-      - from_path: "/kids"
-        to_path: "/mnt/remotes/192.168.1.2_video/Kids Stuff/TV"
-      - from_path: "/google"
-        to_path: "/mnt/remotes/192.168.1.2_video"
 
-# Validation settings
+# =============================================================================
+# Validation Settings
+# =============================================================================
 validation:
+  # Duration sanity check - flag files with unrealistic durations
   check_duration_sanity: true
   max_duration_hours: 12
 
+  # Bitrate checks - flag suspiciously low bitrates
   check_bitrate: true
   min_bitrate_720p: 1500   # kbps
   min_bitrate_1080p: 3000  # kbps
   min_bitrate_4k: 8000     # kbps
 
-  # Decode test - checks start/middle/end of file for corruption
+  # Deep scan - decode samples from start/middle/end of file
   deep_scan_enabled: true
   sample_duration_seconds: 30
 
-  # Full decode - very slow, only enable if you have CPU to spare
+  # Full decode - decode entire file (VERY slow, use sparingly)
   full_decode_enabled: false
 
-# Background scanner
+# =============================================================================
+# Background Scanner
+# =============================================================================
 scanner:
   enabled: true
-  files_per_hour: 100
-  # "watch_only" = scan once, then only validate new imports
-  # "continuous" = keep re-scanning forever
-  mode: "watch_only"
-  # When to refresh TV library (cron format, slow operation)
-  # Default: 3am daily. Movies load on startup, TV loads on this schedule.
-  tv_refresh_schedule: "0 3 * * *"
 
-# Actions
+  # How many files to scan per hour (controls bandwidth/CPU usage)
+  # 100 = ~2400/day, takes ~2-3 days for 5000 movies
+  # 50 = ~1200/day, takes ~4-5 days for 5000 movies
+  files_per_hour: 100
+
+  # Scan mode:
+  # "watch_only" = scan library once, then only validate new imports via webhooks
+  # "continuous" = keep re-scanning library forever
+  mode: "watch_only"
+
+  # When to refresh TV library (cron format)
+  # TV is slow to fetch (each episode is a separate API call)
+  # Movies load on startup, TV loads on this schedule
+  # Set to null to disable automatic TV refresh
+  tv_refresh_schedule: "0 3 * * *"  # 3am daily
+
+# =============================================================================
+# Auto-Replace Actions
+# =============================================================================
 actions:
+  # Automatically delete bad files and trigger re-download
   auto_replace: true
+
+  # Add bad releases to blocklist so they won't be re-downloaded
   blocklist_bad_releases: true
+
+  # Maximum replacements per day (prevents hammering indexers)
   max_replacements_per_day: 10
 
-# Email - daily summary at 8 AM
+# =============================================================================
+# Email Notifications
+# =============================================================================
 email:
   enabled: true
   smtp_host: "smtp.gmail.com"
   smtp_port: 587
   smtp_user: "you@gmail.com"
-  smtp_password: "YOUR_GMAIL_APP_PASSWORD"
+  smtp_password: "xxxx xxxx xxxx xxxx"  # Gmail App Password (not regular password)
   from_address: "you@gmail.com"
   to_address: "you@gmail.com"
+
+  # When to send daily summary (24h format)
   daily_summary_time: "08:00"
 
+# =============================================================================
+# Webhook Server
+# =============================================================================
+webhook:
+  enabled: true
+  host: "0.0.0.0"
+  port: 9000
+
+# =============================================================================
 # Logging
+# =============================================================================
 logging:
-  level: "INFO"
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
   file: "/data/logs/media-janitor.log"
