@@ -52,9 +52,6 @@ class DailySummary:
     tv_queued: int = 0
     errors: list[str] = field(default_factory=list)
     invalid_files: list[ScanResult] = field(default_factory=list)
-    # Path issues that were auto-fixed
-    paths_fixed: int = 0
-    path_fix_failures: list[str] = field(default_factory=list)
     # Duplicates and mismatches for reporting
     duplicates: list["DuplicateGroup"] = field(default_factory=list)
     path_mismatches: list["PathMismatch"] = field(default_factory=list)
@@ -301,27 +298,6 @@ class NotificationManager:
             html += "</table>"
             if len(invalid_tv) > 25:
                 html += f"<p style='color: #9ca3af;'>...and {len(invalid_tv) - 25} more TV episodes</p>"
-            html += "</div>"
-
-        # Path fixes section
-        if summary.paths_fixed > 0 or summary.path_fix_failures:
-            html += f"""
-            <div class="section">
-                <div class="section-title">
-                    <span style="font-size: 20px;">🔧</span>
-                    <h3 style="margin: 0;">Path Fixes</h3>
-                </div>
-                <p style="color: #9ca3af;">
-                    <span class="good">{summary.paths_fixed}</span> files renamed successfully
-                </p>
-            """
-            if summary.path_fix_failures:
-                html += "<p style='color: #f87171;'>Failed to fix:</p><ul>"
-                for fail in summary.path_fix_failures[:10]:
-                    html += f"<li style='color: #9ca3af; font-size: 12px;'>{fail}</li>"
-                if len(summary.path_fix_failures) > 10:
-                    html += f"<li style='color: #9ca3af;'>...and {len(summary.path_fix_failures) - 10} more</li>"
-                html += "</ul>"
             html += "</div>"
 
         # Duplicates section

@@ -41,10 +41,6 @@ class Janitor:
         self._replacements_today = 0
         self._replacement_reset_date = datetime.now().date()
 
-        # Path fix tracking
-        self._paths_fixed_today = 0
-        self._path_fix_failures: list[str] = []
-
     async def initialize(self):
         """Initialize the janitor and all components."""
         self.log.info("Initializing janitor")
@@ -110,25 +106,31 @@ class Janitor:
         scan_result.media_type = media_type
 
         if validation_result.valid:
-            # Check for path mismatch and auto-fix if needed
+            # Check for path mismatch - if filename doesn't match expected title,
+            # it's likely the wrong file entirely (not just a naming issue)
             mismatch = detect_path_mismatch(item)
             if mismatch:
-                log.info("Path mismatch detected, attempting rename", title=title)
-                renamed = await client.rename_files(item)
-                if renamed:
-                    self._paths_fixed_today += 1
-                    log.info("Path fixed successfully", title=title)
-                else:
-                    self._path_fix_failures.append(f"{title}: rename failed")
-                    log.warning("Path fix failed", title=title)
+                log.warning(
+                    "Path mismatch detected - wrong file in folder, needs replacement",
+                    title=title,
+                    expected=mismatch.expected_folder,
+                    actual=mismatch.actual_filename,
+                )
+                # Treat as invalid - this file needs to be replaced, not renamed
+                validation_result.valid = False
+                validation_result.errors.append(
+                    f"Wrong file: expected '{mismatch.expected_folder}' but found '{mismatch.actual_filename}'"
+                )
+                scan_result.valid = False
+                scan_result.errors = validation_result.errors
+            else:
+                # File is valid and in correct location
+                self.scanner.mark_scanned(file_path, True, media_type)
+                log.info("File validated successfully", title=title)
+                self.notifications.record_result(scan_result)
+                return scan_result
 
-            # Mark valid files as scanned
-            self.scanner.mark_scanned(file_path, True, media_type)
-            log.info("File validated successfully", title=title)
-            self.notifications.record_result(scan_result)
-            return scan_result
-
-        # File is invalid
+        # File is invalid (either failed validation or path mismatch)
         log.warning("File validation failed", title=title, errors=validation_result.errors)
 
         # Check if auto-replace is enabled
@@ -279,14 +281,6 @@ class Janitor:
             summary = self.notifications.get_summary(clear=True)
             summary.duplicates = duplicates
             summary.path_mismatches = mismatches
-
-            # Add path fix stats
-            summary.paths_fixed = self._paths_fixed_today
-            summary.path_fix_failures = self._path_fix_failures.copy()
-
-            # Reset path fix tracking
-            self._paths_fixed_today = 0
-            self._path_fix_failures = []
 
             # Send the enhanced summary
             await self.notifications.send_summary_with_extras(summary)
