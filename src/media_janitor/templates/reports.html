@@ -43,7 +43,7 @@
             </div>
             <p class="mt-2 text-sm text-gray-400">Same content in multiple qualities</p>
             <div class="mt-4">
-                <span class="text-gray-500 text-sm">Coming soon</span>
+                <span class="text-primary text-sm">Click to run report →</span>
             </div>
         </div>
 
@@ -67,7 +67,7 @@
             </div>
             <p class="mt-2 text-sm text-gray-400">H.264, HEVC, AV1 distribution</p>
             <div class="mt-4">
-                <span class="text-gray-500 text-sm">Coming soon</span>
+                <span class="text-primary text-sm">Click to run report →</span>
             </div>
         </div>
 
@@ -79,7 +79,7 @@
             </div>
             <p class="mt-2 text-sm text-gray-400">HDR10, Dolby Vision, HDR10+</p>
             <div class="mt-4">
-                <span class="text-gray-500 text-sm">Coming soon</span>
+                <span class="text-primary text-sm">Click to run report →</span>
             </div>
         </div>
 
@@ -147,16 +147,16 @@
                     await loadSmallFilesReport();
                     break;
                 case 'duplicates':
-                    showModal('Duplicates', '<p class="text-gray-400">Coming soon - will detect same movie in multiple qualities.</p>');
+                    await loadDuplicatesReport();
                     break;
                 case 'upgrades':
                     showModal('Upgrade Opportunities', '<p class="text-gray-400">Coming soon - will find 720p files that could be upgraded to 1080p/4K.</p>');
                     break;
                 case 'codecs':
-                    showModal('Codec Breakdown', '<p class="text-gray-400">Coming soon - will show H.264 vs HEVC vs AV1 distribution.</p>');
+                    await loadCodecsReport();
                     break;
                 case 'hdr':
-                    showModal('HDR Content', '<p class="text-gray-400">Coming soon - will identify HDR10, Dolby Vision, and HDR10+ content.</p>');
+                    await loadHdrReport();
                     break;
             }
         } catch (e) {
@@ -243,6 +243,158 @@
         }
 
         showModal('Suspiciously Small Files', content);
+    }
+
+    async function loadDuplicatesReport() {
+        const response = await fetch('/report/duplicates?source=movies');
+        const data = await response.json();
+
+        let content = '';
+
+        if (data.count === 0) {
+            content = '<p class="text-green-400">No duplicate content found!</p>';
+        } else {
+            content = `
+                <div class="mb-4">
+                    <p class="text-yellow-400">Found ${data.count} items with multiple copies</p>
+                    <p class="text-gray-400 text-sm">Potential space savings: <span class="text-green-400 font-bold">${data.total_potential_savings_human}</span></p>
+                </div>
+                <div class="space-y-4">
+            `;
+
+            data.duplicates.slice(0, 20).forEach(d => {
+                content += `
+                    <div class="bg-gray-700 rounded-lg p-4">
+                        <div class="flex justify-between items-start mb-2">
+                            <p class="text-white font-medium">${d.title} (${d.year || 'Unknown year'})</p>
+                            <span class="text-xs bg-green-600 text-white px-2 py-1 rounded">Save ${d.potential_savings_human}</span>
+                        </div>
+                        <p class="text-sm text-gray-400 mb-2">${d.copies} copies, total ${d.total_size_human}</p>
+                        <div class="space-y-1">
+                `;
+
+                d.files.forEach((f, i) => {
+                    const bgClass = i === 0 ? 'bg-gray-600' : 'bg-gray-800';
+                    const label = i === 0 ? '<span class="text-xs text-green-400 ml-2">(keep)</span>' : '<span class="text-xs text-red-400 ml-2">(remove)</span>';
+                    content += `
+                        <div class="${bgClass} rounded p-2 text-sm">
+                            <span class="text-gray-300">${f.quality || 'Unknown'}</span>
+                            <span class="text-gray-500 ml-2">${f.size_human}</span>
+                            ${label}
+                        </div>
+                    `;
+                });
+
+                content += `
+                        </div>
+                    </div>
+                `;
+            });
+
+            if (data.count > 20) {
+                content += `<p class="text-gray-400 text-sm mt-4">Showing top 20 of ${data.count} duplicates</p>`;
+            }
+
+            content += '</div>';
+        }
+
+        showModal('Duplicate Content', content);
+    }
+
+    async function loadCodecsReport() {
+        const response = await fetch('/report/codecs?source=movies');
+        const data = await response.json();
+
+        let content = `
+            <p class="text-gray-400 mb-4">Total files analyzed: ${data.total_files}</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        `;
+
+        // Video codecs
+        content += `
+            <div>
+                <h4 class="text-white font-medium mb-3">Video Codecs</h4>
+                <div class="space-y-2">
+        `;
+        const sortedCodecs = Object.entries(data.video_codecs || {}).sort((a, b) => b[1] - a[1]);
+        sortedCodecs.forEach(([codec, count]) => {
+            const pct = ((count / data.total_files) * 100).toFixed(1);
+            const colorClass = codec.includes('HEVC') ? 'bg-green-600' : codec.includes('AV1') ? 'bg-blue-600' : 'bg-gray-600';
+            content += `
+                <div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-gray-300">${codec}</span>
+                        <span class="text-gray-400">${count} (${pct}%)</span>
+                    </div>
+                    <div class="w-full bg-gray-700 rounded-full h-2">
+                        <div class="${colorClass} h-2 rounded-full" style="width: ${pct}%"></div>
+                    </div>
+                </div>
+            `;
+        });
+        content += '</div></div>';
+
+        // Containers
+        content += `
+            <div>
+                <h4 class="text-white font-medium mb-3">Containers</h4>
+                <div class="space-y-2">
+        `;
+        const sortedContainers = Object.entries(data.containers || {}).sort((a, b) => b[1] - a[1]);
+        sortedContainers.forEach(([container, count]) => {
+            const pct = ((count / data.total_files) * 100).toFixed(1);
+            content += `
+                <div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-gray-300">.${container}</span>
+                        <span class="text-gray-400">${count} (${pct}%)</span>
+                    </div>
+                    <div class="w-full bg-gray-700 rounded-full h-2">
+                        <div class="bg-purple-600 h-2 rounded-full" style="width: ${pct}%"></div>
+                    </div>
+                </div>
+            `;
+        });
+        content += '</div></div>';
+
+        content += '</div>';
+        showModal('Codec Breakdown', content);
+    }
+
+    async function loadHdrReport() {
+        const response = await fetch('/report/codecs?source=movies');
+        const data = await response.json();
+
+        let content = `
+            <p class="text-gray-400 mb-4">Total files analyzed: ${data.total_files}</p>
+            <div class="space-y-4">
+                <h4 class="text-white font-medium">HDR Types</h4>
+        `;
+
+        const sortedHdr = Object.entries(data.hdr_types || {}).sort((a, b) => b[1] - a[1]);
+        sortedHdr.forEach(([hdr, count]) => {
+            const pct = ((count / data.total_files) * 100).toFixed(1);
+            let colorClass = 'bg-gray-600';
+            if (hdr === 'Dolby Vision') colorClass = 'bg-purple-600';
+            else if (hdr === 'HDR10+') colorClass = 'bg-blue-600';
+            else if (hdr === 'HDR10') colorClass = 'bg-green-600';
+            else if (hdr === 'SDR') colorClass = 'bg-gray-500';
+
+            content += `
+                <div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-gray-300">${hdr}</span>
+                        <span class="text-gray-400">${count} (${pct}%)</span>
+                    </div>
+                    <div class="w-full bg-gray-700 rounded-full h-3">
+                        <div class="${colorClass} h-3 rounded-full" style="width: ${pct}%"></div>
+                    </div>
+                </div>
+            `;
+        });
+
+        content += '</div>';
+        showModal('HDR Content', content);
     }
 
     // Close modal on escape key

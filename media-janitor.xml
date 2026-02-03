@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>media-janitor</Name>
+  <Repository>media-janitor:latest</Repository>
+  <Registry>local</Registry>
+  <Branch>
+    <Tag>latest</Tag>
+    <TagDescription>Latest stable release</TagDescription>
+  </Branch>
+  <Network>bridge</Network>
+  <Privileged>false</Privileged>
+  <Support/>
+  <Project>https://github.com/yourusername/media-janitor</Project>
+  <Overview>Proactive media library quality monitor - detects and replaces bad copies automatically via Radarr/Sonarr.</Overview>
+  <Category>MediaServer:Video Tools:</Category>
+  <WebUI>http://[IP]:[PORT:9000]/</WebUI>
+  <Icon>https://raw.githubusercontent.com/linuxserver/docker-templates/master/linuxserver.io/img/radarr-logo.png</Icon>
+  <ExtraParams/>
+  <DateInstalled></DateInstalled>
+  <Description>Media Janitor monitors your Plex library for corrupt, incomplete, or low-quality files and automatically triggers replacements via Radarr and Sonarr.</Description>
+  <Config Name="Web UI Port" Target="9000" Default="9000" Mode="tcp" Description="Web interface port" Type="Port" Display="always" Required="true" Mask="false">9000</Config>
+  <Config Name="Config File" Target="/data/config.yaml" Default="/mnt/user/appdata/media-janitor/config.yaml" Mode="rw" Description="Configuration file path" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/media-janitor/config.yaml</Config>
+  <Config Name="Logs Directory" Target="/data/logs" Default="/mnt/user/appdata/media-janitor/logs" Mode="rw" Description="Log files directory" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/media-janitor/logs</Config>
+  <Config Name="State Directory" Target="/data/state" Default="/mnt/user/appdata/media-janitor/state" Mode="rw" Description="Persistent state directory" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/media-janitor/state</Config>
+  <Config Name="Media Path 1" Target="/mnt/remotes/192.168.1.2_video" Default="" Mode="ro" Description="First NAS media path (adjust to match your path mappings)" Type="Path" Display="always" Required="false" Mask="false"></Config>
+  <Config Name="Media Path 2" Target="/mnt/remotes/192.168.1.5_video" Default="" Mode="ro" Description="Second NAS media path (adjust to match your path mappings)" Type="Path" Display="always" Required="false" Mask="false"></Config>
+  <Config Name="Timezone" Target="TZ" Default="America/New_York" Mode="" Description="Timezone for logs and scheduling" Type="Variable" Display="always" Required="false" Mask="false">America/New_York</Config>
+</Container>

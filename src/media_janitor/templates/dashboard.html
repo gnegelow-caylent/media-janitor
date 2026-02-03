@@ -4,85 +4,277 @@
 
 {% block content %}
 <div class="space-y-6">
-    <!-- Page header -->
-    <div class="md:flex md:items-center md:justify-between">
-        <div class="min-w-0 flex-1">
-            <h2 class="text-2xl font-bold leading-7 text-white sm:truncate sm:text-3xl sm:tracking-tight">
-                Dashboard
-            </h2>
+    <!-- Welcome Header with Health Score -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Health Score Card -->
+        <div class="lg:col-span-1">
+            <div class="stat-card h-full flex flex-col items-center justify-center py-8 card-hover">
+                <div class="relative w-32 h-32 mb-4">
+                    <!-- Background circle -->
+                    <svg class="w-32 h-32 transform -rotate-90">
+                        <circle cx="64" cy="64" r="56" stroke="#374151" stroke-width="8" fill="none"/>
+                        <circle id="health-ring" cx="64" cy="64" r="56" stroke="#22c55e" stroke-width="8" fill="none"
+                                stroke-linecap="round" stroke-dasharray="351.86" stroke-dashoffset="351.86"
+                                class="transition-all duration-1000 ease-out"/>
+                    </svg>
+                    <!-- Score in center -->
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <span id="health-score" class="text-4xl font-bold text-white">--</span>
+                        <span class="text-xs text-gray-400 uppercase tracking-wider">Health</span>
+                    </div>
+                </div>
+                <h3 id="health-label" class="text-lg font-medium text-gray-300">Calculating...</h3>
+                <p id="health-detail" class="text-sm text-gray-500 mt-1">Analyzing library</p>
+            </div>
         </div>
-        <div class="mt-4 flex md:ml-4 md:mt-0">
-            <button onclick="refreshData()" class="ml-3 inline-flex items-center rounded-md bg-primary px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-yellow-500">
-                Refresh
-            </button>
+
+        <!-- Quick Stats Grid -->
+        <div class="lg:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div class="stat-card card-hover animate-slide-up stagger-1">
+                <div class="flex items-center justify-between">
+                    <div class="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                        </svg>
+                    </div>
+                </div>
+                <p class="mt-4 text-2xl font-bold text-white" id="stat-total">--</p>
+                <p class="text-sm text-gray-400">Total Files</p>
+            </div>
+
+            <div class="stat-card card-hover animate-slide-up stagger-2">
+                <div class="flex items-center justify-between">
+                    <div class="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                </div>
+                <p class="mt-4 text-2xl font-bold text-green-400" id="stat-valid">--</p>
+                <p class="text-sm text-gray-400">Valid</p>
+            </div>
+
+            <div class="stat-card card-hover animate-slide-up stagger-3">
+                <div class="flex items-center justify-between">
+                    <div class="w-10 h-10 rounded-lg bg-red-500/20 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                </div>
+                <p class="mt-4 text-2xl font-bold text-red-400" id="stat-invalid">--</p>
+                <p class="text-sm text-gray-400">Issues Found</p>
+            </div>
+
+            <div class="stat-card card-hover animate-slide-up stagger-4">
+                <div class="flex items-center justify-between">
+                    <div class="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                    </div>
+                </div>
+                <p class="mt-4 text-2xl font-bold text-primary" id="stat-replaced">--</p>
+                <p class="text-sm text-gray-400">Replaced Today</p>
+            </div>
         </div>
     </div>
 
-    <!-- Stats cards -->
-    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        <div class="stat-card">
-            <dt class="text-sm font-medium text-gray-400">Queue Size</dt>
-            <dd class="mt-1 text-3xl font-semibold text-white" id="stat-queue">-</dd>
-        </div>
-        <div class="stat-card">
-            <dt class="text-sm font-medium text-gray-400">Scanned</dt>
-            <dd class="mt-1 text-3xl font-semibold text-green-400" id="stat-scanned">-</dd>
-        </div>
-        <div class="stat-card">
-            <dt class="text-sm font-medium text-gray-400">Invalid</dt>
-            <dd class="mt-1 text-3xl font-semibold text-red-400" id="stat-invalid">-</dd>
-        </div>
-        <div class="stat-card">
-            <dt class="text-sm font-medium text-gray-400">Replaced Today</dt>
-            <dd class="mt-1 text-3xl font-semibold text-primary" id="stat-replaced">-</dd>
-        </div>
-    </div>
-
-    <!-- Scan Progress -->
+    <!-- Quick Actions -->
     <div class="stat-card">
-        <h3 class="text-lg font-medium text-white mb-4">Scan Progress</h3>
-        <div class="relative pt-1">
-            <div class="flex mb-2 items-center justify-between">
-                <div>
-                    <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-primary bg-gray-700" id="progress-label">
-                        Starting...
-                    </span>
-                </div>
-                <div class="text-right">
-                    <span class="text-xs font-semibold inline-block text-primary" id="progress-percent">0%</span>
-                </div>
+        <div class="flex flex-wrap items-center gap-3">
+            <span class="text-sm font-medium text-gray-400 mr-2">Quick Actions:</span>
+            <button onclick="triggerScan()" class="inline-flex items-center px-4 py-2 rounded-lg bg-primary/20 text-primary hover:bg-primary/30 text-sm font-medium transition-all hover:scale-105">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                Scan Now
+            </button>
+            <button onclick="refreshLibrary()" class="inline-flex items-center px-4 py-2 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 text-sm font-medium transition-all hover:scale-105">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                Refresh Library
+            </button>
+            <button onclick="sendReport()" class="inline-flex items-center px-4 py-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 text-sm font-medium transition-all hover:scale-105">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+                Email Report
+            </button>
+            <a href="/ui/reports" class="inline-flex items-center px-4 py-2 rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600 text-sm font-medium transition-all hover:scale-105">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                View Reports
+            </a>
+        </div>
+    </div>
+
+    <!-- Live Scan Progress -->
+    <div class="stat-card" id="scan-progress-card">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center">
+                <div id="scan-indicator" class="w-3 h-3 rounded-full bg-primary mr-3 animate-pulse"></div>
+                <h3 class="text-lg font-medium text-white">Scan Progress</h3>
             </div>
-            <div class="overflow-hidden h-2 text-xs flex rounded bg-gray-700">
-                <div id="progress-bar" style="width:0%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-primary transition-all duration-500"></div>
+            <span id="scan-status-text" class="text-sm text-gray-400">Initializing...</span>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="relative h-3 bg-gray-700 rounded-full overflow-hidden mb-4">
+            <div id="progress-bar" class="h-full progress-bar-animated rounded-full" style="width: 0%"></div>
+        </div>
+
+        <!-- Currently scanning -->
+        <div id="current-file-container" class="bg-gray-700/30 rounded-lg p-3 mb-4">
+            <div class="flex items-center">
+                <svg class="w-4 h-4 text-gray-500 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                <span class="text-sm text-gray-400">Currently scanning:</span>
+                <span id="current-file" class="text-sm text-white ml-2 truncate">Waiting...</span>
             </div>
         </div>
-        <div class="mt-4 grid grid-cols-3 gap-4 text-center text-sm">
-            <div>
-                <span class="text-gray-400">Valid</span>
-                <p class="text-green-400 font-semibold" id="progress-valid">-</p>
+
+        <!-- Stats row -->
+        <div class="grid grid-cols-4 gap-4">
+            <div class="text-center">
+                <p class="text-2xl font-bold text-white" id="progress-scanned">0</p>
+                <p class="text-xs text-gray-500 uppercase">Scanned</p>
             </div>
-            <div>
-                <span class="text-gray-400">Invalid</span>
-                <p class="text-red-400 font-semibold" id="progress-invalid">-</p>
+            <div class="text-center">
+                <p class="text-2xl font-bold text-green-400" id="progress-valid">0</p>
+                <p class="text-xs text-gray-500 uppercase">Valid</p>
             </div>
-            <div>
-                <span class="text-gray-400">Remaining</span>
-                <p class="text-gray-300 font-semibold" id="progress-remaining">-</p>
+            <div class="text-center">
+                <p class="text-2xl font-bold text-red-400" id="progress-invalid">0</p>
+                <p class="text-xs text-gray-500 uppercase">Issues</p>
+            </div>
+            <div class="text-center">
+                <p class="text-2xl font-bold text-gray-400" id="progress-remaining">0</p>
+                <p class="text-xs text-gray-500 uppercase">Remaining</p>
             </div>
         </div>
     </div>
 
-    <!-- Charts row -->
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <!-- Quality breakdown -->
+    <!-- Two column layout: Activity + Connections -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Recent Activity -->
+        <div class="lg:col-span-2 stat-card">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-white">Recent Activity</h3>
+                <a href="/ui/logs" class="text-sm text-primary hover:text-yellow-400 transition-colors">View all</a>
+            </div>
+            <div id="activity-container">
+                <!-- Loading skeleton -->
+                <div id="activity-skeleton" class="space-y-3">
+                    <div class="flex items-center space-x-3">
+                        <div class="skeleton-circle w-8 h-8"></div>
+                        <div class="flex-1 space-y-2">
+                            <div class="skeleton-text w-3/4"></div>
+                            <div class="skeleton-text w-1/2"></div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <div class="skeleton-circle w-8 h-8"></div>
+                        <div class="flex-1 space-y-2">
+                            <div class="skeleton-text w-2/3"></div>
+                            <div class="skeleton-text w-1/3"></div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <div class="skeleton-circle w-8 h-8"></div>
+                        <div class="flex-1 space-y-2">
+                            <div class="skeleton-text w-4/5"></div>
+                            <div class="skeleton-text w-2/5"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Activity list -->
+                <div id="activity-list" class="hidden space-y-3">
+                    <!-- Populated by JS -->
+                </div>
+                <!-- Empty state -->
+                <div id="activity-empty" class="hidden empty-state">
+                    <svg class="empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <p class="text-gray-400">No recent activity</p>
+                    <p class="text-sm text-gray-500 mt-1">Activity will appear here as files are scanned</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Connections -->
         <div class="stat-card">
-            <h3 class="text-lg font-medium text-white mb-4">Quality Breakdown</h3>
+            <h3 class="text-lg font-medium text-white mb-4">Connections</h3>
+            <div class="space-y-4">
+                <!-- Radarr -->
+                <div class="flex items-center p-3 bg-gray-700/30 rounded-lg">
+                    <div class="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center mr-3">
+                        <svg class="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4"/>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-white">Radarr</p>
+                        <p class="text-xs text-gray-400" id="radarr-info">Loading...</p>
+                    </div>
+                    <span id="radarr-status" class="status-dot online"></span>
+                </div>
+
+                <!-- Sonarr -->
+                <div class="flex items-center p-3 bg-gray-700/30 rounded-lg">
+                    <div class="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center mr-3">
+                        <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-white">Sonarr</p>
+                        <p class="text-xs text-gray-400" id="sonarr-info">Loading...</p>
+                    </div>
+                    <span id="sonarr-status" class="status-dot online"></span>
+                </div>
+
+                <!-- Email -->
+                <div class="flex items-center p-3 bg-gray-700/30 rounded-lg">
+                    <div class="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center mr-3">
+                        <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-white">Email</p>
+                        <p class="text-xs text-gray-400" id="email-info">Loading...</p>
+                    </div>
+                    <span id="email-status" class="status-dot"></span>
+                </div>
+            </div>
+
+            <!-- Storage info -->
+            <div class="mt-6 pt-4 border-t border-gray-700">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm text-gray-400">Library Size</span>
+                    <span id="library-size" class="text-sm font-medium text-white">--</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-400">Files Scanned</span>
+                    <span id="files-scanned" class="text-sm font-medium text-white">--</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="stat-card">
+            <h3 class="text-lg font-medium text-white mb-4">Quality Distribution</h3>
             <div class="h-64">
                 <canvas id="quality-chart"></canvas>
             </div>
         </div>
-
-        <!-- Instance breakdown -->
         <div class="stat-card">
             <h3 class="text-lg font-medium text-white mb-4">Files by Instance</h3>
             <div class="h-64">
@@ -90,59 +282,13 @@
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Recent Activity -->
-    <div class="stat-card">
-        <h3 class="text-lg font-medium text-white mb-4">Recent Activity</h3>
-        <div class="overflow-hidden">
-            <table class="min-w-full divide-y divide-gray-700">
-                <thead>
-                    <tr>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Time</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Event</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">File</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Status</th>
-                    </tr>
-                </thead>
-                <tbody id="activity-table" class="divide-y divide-gray-700">
-                    <!-- Populated by JS -->
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Connection Status -->
-    <div class="stat-card">
-        <h3 class="text-lg font-medium text-white mb-4">Connections</h3>
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div class="flex items-center space-x-3">
-                <div class="flex-shrink-0">
-                    <span class="h-3 w-3 rounded-full bg-green-400 inline-block" id="radarr-status"></span>
-                </div>
-                <div>
-                    <p class="text-sm font-medium text-white">Radarr</p>
-                    <p class="text-xs text-gray-400" id="radarr-count">- instances</p>
-                </div>
-            </div>
-            <div class="flex items-center space-x-3">
-                <div class="flex-shrink-0">
-                    <span class="h-3 w-3 rounded-full bg-green-400 inline-block" id="sonarr-status"></span>
-                </div>
-                <div>
-                    <p class="text-sm font-medium text-white">Sonarr</p>
-                    <p class="text-xs text-gray-400" id="sonarr-count">- instances</p>
-                </div>
-            </div>
-            <div class="flex items-center space-x-3">
-                <div class="flex-shrink-0">
-                    <span class="h-3 w-3 rounded-full inline-block" id="email-status"></span>
-                </div>
-                <div>
-                    <p class="text-sm font-medium text-white">Email</p>
-                    <p class="text-xs text-gray-400" id="email-info">-</p>
-                </div>
-            </div>
-        </div>
+<!-- Toast for actions -->
+<div id="action-toast" class="fixed bottom-4 right-4 hidden z-50">
+    <div class="flex items-center bg-gray-800 border border-gray-700 text-white px-4 py-3 rounded-lg shadow-lg">
+        <span id="action-toast-icon" class="mr-3"></span>
+        <span id="action-toast-message"></span>
     </div>
 </div>
 {% endblock %}
@@ -152,12 +298,54 @@
     let qualityChart = null;
     let instanceChart = null;
 
-    async function refreshData() {
-        await Promise.all([
-            updateStatus(),
-            updateCharts(),
-            updateActivity()
-        ]);
+    // Health score calculation
+    function calculateHealthScore(valid, invalid, total) {
+        if (total === 0) return 100;
+        return Math.round((valid / total) * 100);
+    }
+
+    function updateHealthDisplay(score) {
+        const ring = document.getElementById('health-ring');
+        const scoreEl = document.getElementById('health-score');
+        const labelEl = document.getElementById('health-label');
+        const detailEl = document.getElementById('health-detail');
+
+        // Update score text
+        scoreEl.textContent = score;
+
+        // Update ring (circumference = 2 * PI * 56 = 351.86)
+        const circumference = 351.86;
+        const offset = circumference - (score / 100) * circumference;
+        ring.style.strokeDashoffset = offset;
+
+        // Update color based on score
+        let color, label, detail;
+        if (score >= 95) {
+            color = '#22c55e'; // green
+            label = 'Excellent';
+            detail = 'Your library is in great shape!';
+        } else if (score >= 80) {
+            color = '#84cc16'; // lime
+            label = 'Good';
+            detail = 'Minor issues detected';
+        } else if (score >= 60) {
+            color = '#f5a623'; // primary/orange
+            label = 'Fair';
+            detail = 'Some files need attention';
+        } else if (score >= 40) {
+            color = '#f97316'; // orange
+            label = 'Poor';
+            detail = 'Multiple issues found';
+        } else {
+            color = '#ef4444'; // red
+            label = 'Critical';
+            detail = 'Immediate attention needed';
+        }
+
+        ring.style.stroke = color;
+        labelEl.textContent = label;
+        labelEl.style.color = color;
+        detailEl.textContent = detail;
     }
 
     async function updateStatus() {
@@ -165,35 +353,120 @@
             const response = await fetch('/status');
             const data = await response.json();
 
-            // Update stats
-            document.getElementById('stat-queue').textContent = data.scanner.queue_size.toLocaleString();
-            document.getElementById('stat-scanned').textContent = data.scanner.scanned_count.toLocaleString();
-            document.getElementById('stat-invalid').textContent = data.scanner.invalid_count.toLocaleString();
-            document.getElementById('stat-replaced').textContent = `${data.replacements_today} / ${data.max_replacements_per_day}`;
+            const scanned = data.scanner.scanned_count;
+            const valid = data.scanner.valid_count;
+            const invalid = data.scanner.invalid_count;
+            const queue = data.scanner.queue_size;
+            const total = scanned + queue;
+
+            // Update health score
+            const healthScore = calculateHealthScore(valid, invalid, scanned);
+            updateHealthDisplay(healthScore);
+
+            // Update stat cards
+            document.getElementById('stat-total').textContent = total.toLocaleString();
+            document.getElementById('stat-valid').textContent = valid.toLocaleString();
+            document.getElementById('stat-invalid').textContent = invalid.toLocaleString();
+            document.getElementById('stat-replaced').textContent = `${data.replacements_today}/${data.max_replacements_per_day}`;
 
             // Update progress
-            const total = data.scanner.scanned_count + data.scanner.queue_size;
-            const percent = total > 0 ? ((data.scanner.scanned_count / total) * 100).toFixed(1) : 0;
-
+            const percent = total > 0 ? ((scanned / total) * 100).toFixed(1) : 0;
             document.getElementById('progress-bar').style.width = `${percent}%`;
-            document.getElementById('progress-percent').textContent = `${percent}%`;
-            document.getElementById('progress-valid').textContent = data.scanner.valid_count.toLocaleString();
-            document.getElementById('progress-invalid').textContent = data.scanner.invalid_count.toLocaleString();
-            document.getElementById('progress-remaining').textContent = data.scanner.queue_size.toLocaleString();
+            document.getElementById('progress-scanned').textContent = scanned.toLocaleString();
+            document.getElementById('progress-valid').textContent = valid.toLocaleString();
+            document.getElementById('progress-invalid').textContent = invalid.toLocaleString();
+            document.getElementById('progress-remaining').textContent = queue.toLocaleString();
+
+            // Update scan status
+            const indicator = document.getElementById('scan-indicator');
+            const statusText = document.getElementById('scan-status-text');
+            const fileContainer = document.getElementById('current-file-container');
 
             if (data.scanner.initial_scan_done) {
-                document.getElementById('progress-label').textContent = 'Complete';
-                document.getElementById('progress-label').classList.add('bg-green-700');
+                indicator.className = 'w-3 h-3 rounded-full bg-green-400 mr-3';
+                statusText.textContent = 'Complete - Watching for new imports';
+                fileContainer.classList.add('hidden');
             } else {
-                document.getElementById('progress-label').textContent = 'Scanning';
+                indicator.className = 'w-3 h-3 rounded-full bg-primary mr-3 animate-pulse';
+                statusText.textContent = `${percent}% complete`;
+                fileContainer.classList.remove('hidden');
+                document.getElementById('current-file').textContent = data.scanner.current_file || 'Processing...';
             }
 
             // Update connections
-            document.getElementById('radarr-count').textContent = `${data.scanner.radarr_instances} instance(s)`;
-            document.getElementById('sonarr-count').textContent = `${data.scanner.sonarr_instances} instance(s)`;
+            document.getElementById('radarr-info').textContent = `${data.scanner.radarr_instances} instance(s) connected`;
+            document.getElementById('sonarr-info').textContent = `${data.scanner.sonarr_instances} instance(s) connected`;
+
+            document.getElementById('radarr-status').className = data.scanner.radarr_instances > 0 ? 'status-dot online' : 'status-dot offline';
+            document.getElementById('sonarr-status').className = data.scanner.sonarr_instances > 0 ? 'status-dot online' : 'status-dot offline';
 
         } catch (e) {
             console.error('Failed to fetch status:', e);
+        }
+    }
+
+    async function updateActivity() {
+        try {
+            const response = await fetch('/logs?lines=8');
+            const data = await response.json();
+
+            const skeleton = document.getElementById('activity-skeleton');
+            const list = document.getElementById('activity-list');
+            const empty = document.getElementById('activity-empty');
+
+            skeleton.classList.add('hidden');
+
+            const logs = (data.logs || []).reverse();
+
+            if (logs.length === 0) {
+                list.classList.add('hidden');
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            empty.classList.add('hidden');
+            list.classList.remove('hidden');
+            list.innerHTML = '';
+
+            logs.forEach(log => {
+                let iconBg, iconColor, icon;
+                if (log.level === 'error') {
+                    iconBg = 'bg-red-500/20';
+                    iconColor = 'text-red-400';
+                    icon = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>';
+                } else if (log.level === 'warning') {
+                    iconBg = 'bg-yellow-500/20';
+                    iconColor = 'text-yellow-400';
+                    icon = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>';
+                } else if (log.event?.toLowerCase().includes('replaced') || log.event?.toLowerCase().includes('fixed')) {
+                    iconBg = 'bg-primary/20';
+                    iconColor = 'text-primary';
+                    icon = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>';
+                } else {
+                    iconBg = 'bg-green-500/20';
+                    iconColor = 'text-green-400';
+                    icon = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>';
+                }
+
+                const time = log.timestamp ? new Date(log.timestamp).toLocaleTimeString() : '';
+                const title = log.details?.title || log.details?.file || '';
+
+                list.innerHTML += `
+                    <div class="flex items-start space-x-3 p-2 rounded-lg hover:bg-gray-700/30 transition-colors">
+                        <div class="w-8 h-8 rounded-lg ${iconBg} flex items-center justify-center flex-shrink-0">
+                            <svg class="w-4 h-4 ${iconColor}" fill="none" stroke="currentColor" viewBox="0 0 24 24">${icon}</svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm text-white">${log.event || 'Event'}</p>
+                            <p class="text-xs text-gray-500 truncate">${title || 'No details'}</p>
+                        </div>
+                        <span class="text-xs text-gray-500 flex-shrink-0">${time}</span>
+                    </div>
+                `;
+            });
+
+        } catch (e) {
+            console.error('Failed to fetch activity:', e);
         }
     }
 
@@ -202,8 +475,12 @@
             const response = await fetch('/report/library?source=movies');
             const data = await response.json();
 
+            // Update library size
+            document.getElementById('library-size').textContent = data.total_size_human || '--';
+            document.getElementById('files-scanned').textContent = (data.total_files || 0).toLocaleString();
+
             // Quality chart
-            const qualityData = Object.entries(data.files_by_quality || {}).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            const qualityData = Object.entries(data.files_by_quality || {}).sort((a, b) => b[1] - a[1]).slice(0, 8);
             const qualityCtx = document.getElementById('quality-chart').getContext('2d');
 
             if (qualityChart) qualityChart.destroy();
@@ -213,19 +490,18 @@
                     labels: qualityData.map(d => d[0]),
                     datasets: [{
                         data: qualityData.map(d => d[1]),
-                        backgroundColor: [
-                            '#f5a623', '#e94560', '#4ade80', '#60a5fa', '#a78bfa',
-                            '#f472b6', '#fb923c', '#facc15', '#2dd4bf', '#818cf8'
-                        ]
+                        backgroundColor: ['#f5a623', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#14b8a6', '#6b7280'],
+                        borderWidth: 0
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    cutout: '65%',
                     plugins: {
                         legend: {
                             position: 'right',
-                            labels: { color: '#9ca3af' }
+                            labels: { color: '#9ca3af', padding: 12, usePointStyle: true }
                         }
                     }
                 }
@@ -243,64 +519,110 @@
                     datasets: [{
                         label: 'Files',
                         data: instanceData.map(d => d[1]),
-                        backgroundColor: '#f5a623'
+                        backgroundColor: '#f5a623',
+                        borderRadius: 6
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
+                    plugins: { legend: { display: false } },
                     scales: {
-                        y: {
-                            ticks: { color: '#9ca3af' },
-                            grid: { color: '#374151' }
-                        },
-                        x: {
-                            ticks: { color: '#9ca3af' },
-                            grid: { display: false }
-                        }
+                        y: { ticks: { color: '#9ca3af' }, grid: { color: '#374151' } },
+                        x: { ticks: { color: '#9ca3af' }, grid: { display: false } }
                     }
                 }
             });
 
         } catch (e) {
-            console.error('Failed to fetch library data:', e);
+            console.error('Failed to fetch charts:', e);
         }
     }
 
-    async function updateActivity() {
+    async function updateConfig() {
         try {
-            const response = await fetch('/logs?lines=10');
+            const response = await fetch('/api/config');
             const data = await response.json();
 
-            const tbody = document.getElementById('activity-table');
-            tbody.innerHTML = '';
-
-            (data.logs || []).reverse().forEach(log => {
-                const row = document.createElement('tr');
-                const statusClass = log.level === 'error' ? 'text-red-400' :
-                                   log.level === 'warning' ? 'text-yellow-400' : 'text-green-400';
-
-                row.innerHTML = `
-                    <td class="px-4 py-3 text-sm text-gray-400">${log.timestamp ? new Date(log.timestamp).toLocaleTimeString() : '-'}</td>
-                    <td class="px-4 py-3 text-sm text-white">${log.event || '-'}</td>
-                    <td class="px-4 py-3 text-sm text-gray-400 truncate max-w-xs">${log.details?.file || log.details?.title || '-'}</td>
-                    <td class="px-4 py-3 text-sm ${statusClass}">${log.level || '-'}</td>
-                `;
-                tbody.appendChild(row);
-            });
+            const emailEnabled = data.email?.enabled;
+            document.getElementById('email-info').textContent = emailEnabled ? 'Notifications enabled' : 'Disabled';
+            document.getElementById('email-status').className = emailEnabled ? 'status-dot online' : 'status-dot offline';
 
         } catch (e) {
-            console.error('Failed to fetch logs:', e);
+            console.error('Failed to fetch config:', e);
         }
+    }
+
+    function showToast(message, isError = false) {
+        const toast = document.getElementById('action-toast');
+        const icon = document.getElementById('action-toast-icon');
+        const msg = document.getElementById('action-toast-message');
+
+        msg.textContent = message;
+        icon.innerHTML = isError
+            ? '<svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>'
+            : '<svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
+
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), 3000);
+    }
+
+    async function triggerScan() {
+        try {
+            const response = await fetch('/scan/trigger', { method: 'POST' });
+            const data = await response.json();
+            showToast(data.message || 'Scan triggered!');
+        } catch (e) {
+            showToast('Failed to trigger scan', true);
+        }
+    }
+
+    async function refreshLibrary() {
+        try {
+            showToast('Refreshing library...');
+            const response = await fetch('/scan/refresh?source=movies', { method: 'POST' });
+            const data = await response.json();
+            showToast(`Refreshed! ${data.files_to_scan} files to scan`);
+        } catch (e) {
+            showToast('Failed to refresh library', true);
+        }
+    }
+
+    async function sendReport() {
+        try {
+            showToast('Sending report...');
+            const response = await fetch('/report/library/email', { method: 'POST' });
+            const data = await response.json();
+            if (data.status === 'ok') {
+                showToast('Report sent!');
+            } else {
+                showToast(data.message || 'Failed to send report', true);
+            }
+        } catch (e) {
+            showToast('Failed to send report', true);
+        }
+    }
+
+    async function refreshAll() {
+        await Promise.all([
+            updateStatus(),
+            updateActivity(),
+            updateCharts(),
+            updateConfig()
+        ]);
     }
 
     // Initial load
-    refreshData();
+    refreshAll();
 
-    // Refresh every 30 seconds
-    setInterval(refreshData, 30000);
+    // Listen for status updates from base template
+    window.addEventListener('statusUpdate', (e) => {
+        // Already handled by base template, but could use for additional updates
+    });
+
+    // Refresh periodically
+    setInterval(updateStatus, 5000);
+    setInterval(updateActivity, 15000);
+    setInterval(updateCharts, 60000);
 </script>
 {% endblock %}

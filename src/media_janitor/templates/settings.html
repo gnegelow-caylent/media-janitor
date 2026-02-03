@@ -4,44 +4,114 @@
 
 {% block content %}
 <div class="space-y-6">
+    <!-- Header -->
     <div class="md:flex md:items-center md:justify-between">
-        <h2 class="text-2xl font-bold text-white">Settings</h2>
-        <button onclick="saveAllSettings()" class="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-yellow-500">
-            Save All Changes
-        </button>
+        <div>
+            <h2 class="text-2xl font-bold text-white">Settings</h2>
+            <p class="mt-1 text-sm text-gray-400">Configure Media Janitor to work with your media setup</p>
+        </div>
+        <div class="mt-4 md:mt-0 flex space-x-3">
+            <button onclick="loadConfig()" class="inline-flex items-center rounded-lg bg-gray-700 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-gray-600 transition-colors">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                Reload
+            </button>
+            <button onclick="saveAllSettings()" class="inline-flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-yellow-500 transition-colors">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                Save All Changes
+            </button>
+        </div>
     </div>
 
     <!-- Tabs -->
     <div class="border-b border-gray-700">
-        <nav class="flex space-x-8">
-            <button onclick="showTab('connections')" class="tab-btn active" data-tab="connections">Connections</button>
-            <button onclick="showTab('scanner')" class="tab-btn" data-tab="scanner">Scanner</button>
-            <button onclick="showTab('validation')" class="tab-btn" data-tab="validation">Validation</button>
-            <button onclick="showTab('actions')" class="tab-btn" data-tab="actions">Actions</button>
-            <button onclick="showTab('email')" class="tab-btn" data-tab="email">Email</button>
+        <nav class="flex space-x-1">
+            <button onclick="showTab('connections')" class="tab-btn active" data-tab="connections">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
+                </svg>
+                Connections
+            </button>
+            <button onclick="showTab('scanner')" class="tab-btn" data-tab="scanner">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                Scanner
+            </button>
+            <button onclick="showTab('validation')" class="tab-btn" data-tab="validation">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Validation
+            </button>
+            <button onclick="showTab('actions')" class="tab-btn" data-tab="actions">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                Actions
+            </button>
+            <button onclick="showTab('email')" class="tab-btn" data-tab="email">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+                Email
+            </button>
         </nav>
     </div>
 
     <!-- Connections Tab -->
-    <div id="tab-connections" class="tab-content">
-        <!-- Radarr Instances -->
-        <div class="stat-card mb-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-medium text-white">Radarr Instances</h3>
-                <button onclick="addInstance('radarr')" class="text-sm text-primary hover:text-yellow-400">+ Add Instance</button>
+    <div id="tab-connections" class="tab-content space-y-6">
+        <!-- Radarr Section -->
+        <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
+            <div class="px-6 py-4 bg-gray-800/50 border-b border-gray-700 flex justify-between items-center">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center mr-4">
+                        <svg class="w-6 h-6 text-orange-400" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-white">Radarr Instances</h3>
+                        <p class="text-sm text-gray-400">Connect to your Radarr servers for movie management</p>
+                    </div>
+                </div>
+                <button onclick="addInstance('radarr')" class="inline-flex items-center px-3 py-1.5 rounded-lg bg-orange-500/20 text-orange-400 hover:bg-orange-500/30 text-sm font-medium transition-colors">
+                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Add Instance
+                </button>
             </div>
-            <div id="radarr-instances" class="space-y-4">
+            <div id="radarr-instances" class="p-6 space-y-4">
                 <!-- Populated by JS -->
             </div>
         </div>
 
-        <!-- Sonarr Instances -->
-        <div class="stat-card">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-medium text-white">Sonarr Instances</h3>
-                <button onclick="addInstance('sonarr')" class="text-sm text-primary hover:text-yellow-400">+ Add Instance</button>
+        <!-- Sonarr Section -->
+        <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
+            <div class="px-6 py-4 bg-gray-800/50 border-b border-gray-700 flex justify-between items-center">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center mr-4">
+                        <svg class="w-6 h-6 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14zM9 8h2v8H9zm4 0h2v8h-2z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-white">Sonarr Instances</h3>
+                        <p class="text-sm text-gray-400">Connect to your Sonarr servers for TV show management</p>
+                    </div>
+                </div>
+                <button onclick="addInstance('sonarr')" class="inline-flex items-center px-3 py-1.5 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 text-sm font-medium transition-colors">
+                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Add Instance
+                </button>
             </div>
-            <div id="sonarr-instances" class="space-y-4">
+            <div id="sonarr-instances" class="p-6 space-y-4">
                 <!-- Populated by JS -->
             </div>
         </div>
@@ -49,89 +119,158 @@
 
     <!-- Scanner Tab -->
     <div id="tab-scanner" class="tab-content hidden">
-        <div class="stat-card">
-            <h3 class="text-lg font-medium text-white mb-4">Scanner Settings</h3>
-            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <div>
-                    <label class="block text-sm font-medium text-gray-300">Scanner Enabled</label>
-                    <select id="scanner-enabled" class="input-field mt-1">
-                        <option value="true">Enabled</option>
-                        <option value="false">Disabled</option>
-                    </select>
+        <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
+            <div class="px-6 py-4 bg-gray-800/50 border-b border-gray-700">
+                <h3 class="text-lg font-semibold text-white">Scanner Configuration</h3>
+                <p class="text-sm text-gray-400 mt-1">Control how Media Janitor scans your library</p>
+            </div>
+            <div class="p-6 space-y-6">
+                <!-- Toggle Row -->
+                <div class="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg">
+                    <div>
+                        <h4 class="text-sm font-medium text-white">Enable Scanner</h4>
+                        <p class="text-sm text-gray-400 mt-0.5">Automatically scan your library for issues</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="scanner-enabled">
+                        <span class="toggle-slider"></span>
+                    </label>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-300">Files Per Hour</label>
-                    <input type="number" id="scanner-files-per-hour" class="input-field mt-1" min="1" max="1000">
-                    <p class="mt-1 text-xs text-gray-500">Lower = less bandwidth usage</p>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-300">Scan Mode</label>
-                    <select id="scanner-mode" class="input-field mt-1">
-                        <option value="watch_only">Watch Only (scan once, then webhooks)</option>
-                        <option value="continuous">Continuous (keep re-scanning)</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-300">TV Refresh Schedule</label>
-                    <input type="text" id="scanner-tv-schedule" class="input-field mt-1" placeholder="0 3 * * *">
-                    <p class="mt-1 text-xs text-gray-500">Cron format (default: 3am daily)</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="form-group">
+                        <label class="form-label">Scan Mode</label>
+                        <select id="scanner-mode" class="form-select">
+                            <option value="watch_only">Watch Only</option>
+                            <option value="continuous">Continuous</option>
+                        </select>
+                        <p class="form-hint">Watch Only: Scan once, then monitor webhooks. Continuous: Keep re-scanning library.</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Files Per Hour</label>
+                        <input type="number" id="scanner-files-per-hour" class="form-input" min="1" max="1000">
+                        <p class="form-hint">Lower values reduce network and disk usage</p>
+                    </div>
+
+                    <div class="form-group md:col-span-2">
+                        <label class="form-label">TV Library Refresh Schedule</label>
+                        <input type="text" id="scanner-tv-schedule" class="form-input" placeholder="0 3 * * *">
+                        <p class="form-hint">Cron expression for when to refresh TV library (e.g., "0 3 * * *" = 3:00 AM daily)</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Validation Tab -->
-    <div id="tab-validation" class="tab-content hidden">
-        <div class="stat-card">
-            <h3 class="text-lg font-medium text-white mb-4">Validation Settings</h3>
-            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <div>
-                    <label class="block text-sm font-medium text-gray-300">Check Duration</label>
-                    <select id="validation-duration" class="input-field mt-1">
-                        <option value="true">Enabled</option>
-                        <option value="false">Disabled</option>
-                    </select>
+    <div id="tab-validation" class="tab-content hidden space-y-6">
+        <!-- Duration Checks -->
+        <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
+            <div class="px-6 py-4 bg-gray-800/50 border-b border-gray-700">
+                <h3 class="text-lg font-semibold text-white">Duration Validation</h3>
+                <p class="text-sm text-gray-400 mt-1">Detect files with suspicious durations</p>
+            </div>
+            <div class="p-6 space-y-6">
+                <div class="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg">
+                    <div>
+                        <h4 class="text-sm font-medium text-white">Check Duration Sanity</h4>
+                        <p class="text-sm text-gray-400 mt-0.5">Flag files with unrealistic durations</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="validation-duration">
+                        <span class="toggle-slider"></span>
+                    </label>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-300">Max Duration (hours)</label>
-                    <input type="number" id="validation-max-duration" class="input-field mt-1" min="1" max="48">
+
+                <div class="form-group">
+                    <label class="form-label">Maximum Duration (hours)</label>
+                    <input type="number" id="validation-max-duration" class="form-input w-32" min="1" max="48">
+                    <p class="form-hint">Files longer than this will be flagged as suspicious</p>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-300">Check Bitrate</label>
-                    <select id="validation-bitrate" class="input-field mt-1">
-                        <option value="true">Enabled</option>
-                        <option value="false">Disabled</option>
-                    </select>
+            </div>
+        </div>
+
+        <!-- Bitrate Checks -->
+        <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
+            <div class="px-6 py-4 bg-gray-800/50 border-b border-gray-700">
+                <h3 class="text-lg font-semibold text-white">Bitrate Validation</h3>
+                <p class="text-sm text-gray-400 mt-1">Ensure files meet minimum quality standards</p>
+            </div>
+            <div class="p-6 space-y-6">
+                <div class="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg">
+                    <div>
+                        <h4 class="text-sm font-medium text-white">Check Bitrate</h4>
+                        <p class="text-sm text-gray-400 mt-0.5">Validate minimum bitrate requirements</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="validation-bitrate">
+                        <span class="toggle-slider"></span>
+                    </label>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-300">Min Bitrate 720p (kbps)</label>
-                    <input type="number" id="validation-bitrate-720" class="input-field mt-1" min="500" max="10000">
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="form-group">
+                        <label class="form-label">Min Bitrate 720p</label>
+                        <div class="input-with-suffix">
+                            <input type="number" id="validation-bitrate-720" class="form-input" min="500" max="10000">
+                            <span class="input-suffix">kbps</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Min Bitrate 1080p</label>
+                        <div class="input-with-suffix">
+                            <input type="number" id="validation-bitrate-1080" class="form-input" min="1000" max="20000">
+                            <span class="input-suffix">kbps</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Min Bitrate 4K</label>
+                        <div class="input-with-suffix">
+                            <input type="number" id="validation-bitrate-4k" class="form-input" min="2000" max="50000">
+                            <span class="input-suffix">kbps</span>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-300">Min Bitrate 1080p (kbps)</label>
-                    <input type="number" id="validation-bitrate-1080" class="input-field mt-1" min="1000" max="20000">
+            </div>
+        </div>
+
+        <!-- Deep Scan -->
+        <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
+            <div class="px-6 py-4 bg-gray-800/50 border-b border-gray-700">
+                <h3 class="text-lg font-semibold text-white">Deep Scan Options</h3>
+                <p class="text-sm text-gray-400 mt-1">Advanced file integrity checks</p>
+            </div>
+            <div class="p-6 space-y-6">
+                <div class="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg">
+                    <div>
+                        <h4 class="text-sm font-medium text-white">Deep Scan</h4>
+                        <p class="text-sm text-gray-400 mt-0.5">Sample decode to detect corruption (recommended)</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="validation-deep-scan">
+                        <span class="toggle-slider"></span>
+                    </label>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-300">Min Bitrate 4K (kbps)</label>
-                    <input type="number" id="validation-bitrate-4k" class="input-field mt-1" min="2000" max="50000">
+
+                <div class="form-group">
+                    <label class="form-label">Sample Duration</label>
+                    <div class="input-with-suffix w-48">
+                        <input type="number" id="validation-sample-duration" class="form-input" min="5" max="120">
+                        <span class="input-suffix">seconds</span>
+                    </div>
+                    <p class="form-hint">Duration of video to sample for corruption detection</p>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-300">Deep Scan</label>
-                    <select id="validation-deep-scan" class="input-field mt-1">
-                        <option value="true">Enabled (recommended)</option>
-                        <option value="false">Disabled</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-300">Sample Duration (seconds)</label>
-                    <input type="number" id="validation-sample-duration" class="input-field mt-1" min="5" max="120">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-300">Full Decode Test</label>
-                    <select id="validation-full-decode" class="input-field mt-1">
-                        <option value="false">Disabled (recommended)</option>
-                        <option value="true">Enabled (very slow)</option>
-                    </select>
+
+                <div class="flex items-center justify-between p-4 bg-red-900/20 border border-red-800/30 rounded-lg">
+                    <div>
+                        <h4 class="text-sm font-medium text-red-400">Full Decode Test</h4>
+                        <p class="text-sm text-gray-400 mt-0.5">Decode entire file to find all errors (very slow)</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="validation-full-decode">
+                        <span class="toggle-slider"></span>
+                    </label>
                 </div>
             </div>
         </div>
@@ -139,104 +278,137 @@
 
     <!-- Actions Tab -->
     <div id="tab-actions" class="tab-content hidden">
-        <div class="stat-card">
-            <h3 class="text-lg font-medium text-white mb-4">Action Settings</h3>
-            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <div>
-                    <label class="block text-sm font-medium text-gray-300">Auto Replace</label>
-                    <select id="actions-auto-replace" class="input-field mt-1">
-                        <option value="true">Enabled - auto delete & re-download bad files</option>
-                        <option value="false">Disabled - report only</option>
-                    </select>
+        <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
+            <div class="px-6 py-4 bg-gray-800/50 border-b border-gray-700">
+                <h3 class="text-lg font-semibold text-white">Automatic Actions</h3>
+                <p class="text-sm text-gray-400 mt-1">Configure what happens when bad files are detected</p>
+            </div>
+            <div class="p-6 space-y-6">
+                <div class="flex items-center justify-between p-4 bg-yellow-900/20 border border-yellow-800/30 rounded-lg">
+                    <div>
+                        <h4 class="text-sm font-medium text-yellow-400">Auto Replace Bad Files</h4>
+                        <p class="text-sm text-gray-400 mt-0.5">Automatically delete and re-download files that fail validation</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="actions-auto-replace">
+                        <span class="toggle-slider"></span>
+                    </label>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-300">Blocklist Bad Releases</label>
-                    <select id="actions-blocklist" class="input-field mt-1">
-                        <option value="true">Enabled</option>
-                        <option value="false">Disabled</option>
-                    </select>
+
+                <div class="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg">
+                    <div>
+                        <h4 class="text-sm font-medium text-white">Blocklist Bad Releases</h4>
+                        <p class="text-sm text-gray-400 mt-0.5">Add failed releases to Radarr/Sonarr blocklist to prevent re-download</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="actions-blocklist">
+                        <span class="toggle-slider"></span>
+                    </label>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-300">Max Replacements Per Day</label>
-                    <input type="number" id="actions-max-replacements" class="input-field mt-1" min="1" max="100">
-                    <p class="mt-1 text-xs text-gray-500">Limits bandwidth usage</p>
+
+                <div class="form-group">
+                    <label class="form-label">Max Replacements Per Day</label>
+                    <input type="number" id="actions-max-replacements" class="form-input w-32" min="1" max="100">
+                    <p class="form-hint">Limits bandwidth usage by capping daily automatic replacements</p>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Email Tab -->
-    <div id="tab-email" class="tab-content hidden">
-        <div class="stat-card">
-            <h3 class="text-lg font-medium text-white mb-4">Email Settings</h3>
-
-            <!-- Quick setup buttons -->
-            <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-300 mb-2">Quick Setup</label>
-                <div class="flex space-x-3">
-                    <button onclick="setupGmail()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">
-                        Gmail
-                    </button>
-                    <button onclick="setupOutlook()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">
-                        Outlook
-                    </button>
-                    <button onclick="setupCustom()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm">
-                        Custom SMTP
-                    </button>
-                </div>
+    <div id="tab-email" class="tab-content hidden space-y-6">
+        <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
+            <div class="px-6 py-4 bg-gray-800/50 border-b border-gray-700">
+                <h3 class="text-lg font-semibold text-white">Email Notifications</h3>
+                <p class="text-sm text-gray-400 mt-1">Receive email reports about your library health</p>
             </div>
+            <div class="p-6 space-y-6">
+                <div class="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg">
+                    <div>
+                        <h4 class="text-sm font-medium text-white">Enable Email Notifications</h4>
+                        <p class="text-sm text-gray-400 mt-0.5">Receive daily summaries and alerts via email</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="email-enabled">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
 
-            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <!-- Quick Setup -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-300">Email Enabled</label>
-                    <select id="email-enabled" class="input-field mt-1">
-                        <option value="true">Enabled</option>
-                        <option value="false">Disabled</option>
-                    </select>
+                    <label class="form-label mb-3">Quick Setup</label>
+                    <div class="flex flex-wrap gap-3">
+                        <button onclick="setupGmail()" class="inline-flex items-center px-4 py-2 rounded-lg bg-red-600/20 text-red-400 hover:bg-red-600/30 text-sm font-medium transition-colors border border-red-600/30">
+                            <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/>
+                            </svg>
+                            Gmail
+                        </button>
+                        <button onclick="setupOutlook()" class="inline-flex items-center px-4 py-2 rounded-lg bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 text-sm font-medium transition-colors border border-blue-600/30">
+                            <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M24 7.387v10.478c0 .23-.08.424-.238.576-.158.154-.352.232-.58.232h-8.547v-6.959l1.6 1.229c.101.072.222.109.361.109.139 0 .26-.037.361-.109l6.324-4.865c.101-.072.151-.172.151-.298 0-.139-.055-.25-.166-.333-.111-.083-.233-.125-.366-.125h-.609l-7.656 5.879-7.656-5.879h-.609c-.133 0-.255.042-.366.125-.111.083-.166.194-.166.333 0 .126.05.226.151.298l6.324 4.865c.101.072.222.109.361.109.139 0 .26-.037.361-.109l1.6-1.229v6.959H.819c-.228 0-.422-.078-.58-.232C.08 18.289 0 18.095 0 17.865V7.387l.008-.072.006-.037L8.182 0h7.636l8.168 7.278.006.037.008.072z"/>
+                            </svg>
+                            Outlook
+                        </button>
+                        <button onclick="setupCustom()" class="inline-flex items-center px-4 py-2 rounded-lg bg-gray-600/20 text-gray-400 hover:bg-gray-600/30 text-sm font-medium transition-colors border border-gray-600/30">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            Custom SMTP
+                        </button>
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-300">SMTP Server</label>
-                    <input type="text" id="email-smtp-host" class="input-field mt-1" placeholder="smtp.gmail.com">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-300">SMTP Port</label>
-                    <input type="number" id="email-smtp-port" class="input-field mt-1" placeholder="587">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-300">Username</label>
-                    <input type="text" id="email-smtp-user" class="input-field mt-1" placeholder="you@gmail.com">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-300">Password / App Password</label>
-                    <input type="password" id="email-smtp-password" class="input-field mt-1" placeholder="xxxx xxxx xxxx xxxx">
-                    <p class="mt-1 text-xs text-gray-500">For Gmail, use an App Password</p>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-300">From Address</label>
-                    <input type="email" id="email-from" class="input-field mt-1" placeholder="you@gmail.com">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-300">To Address</label>
-                    <input type="email" id="email-to" class="input-field mt-1" placeholder="you@gmail.com">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-300">Daily Summary Time</label>
-                    <input type="time" id="email-summary-time" class="input-field mt-1" value="08:00">
-                </div>
-            </div>
 
-            <div class="mt-6">
-                <button onclick="testEmail()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-                    Send Test Email
-                </button>
-                <span id="email-test-result" class="ml-3 text-sm"></span>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="form-group">
+                        <label class="form-label">SMTP Server</label>
+                        <input type="text" id="email-smtp-host" class="form-input" placeholder="smtp.gmail.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">SMTP Port</label>
+                        <input type="number" id="email-smtp-port" class="form-input" placeholder="587">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Username</label>
+                        <input type="text" id="email-smtp-user" class="form-input" placeholder="you@gmail.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password / App Password</label>
+                        <input type="password" id="email-smtp-password" class="form-input" placeholder="xxxx xxxx xxxx xxxx">
+                        <p class="form-hint">For Gmail, generate an App Password in your Google Account settings</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">From Address</label>
+                        <input type="email" id="email-from" class="form-input" placeholder="you@gmail.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">To Address</label>
+                        <input type="email" id="email-to" class="form-input" placeholder="you@gmail.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Daily Summary Time</label>
+                        <input type="time" id="email-summary-time" class="form-input w-32" value="08:00">
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-gray-700">
+                    <button onclick="testEmail()" class="inline-flex items-center px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 text-sm font-medium transition-colors">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        Send Test Email
+                    </button>
+                    <span id="email-test-result" class="ml-3 text-sm"></span>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Toast notification -->
-    <div id="toast" class="fixed bottom-4 right-4 hidden">
-        <div class="bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg">
+    <div id="toast" class="fixed bottom-4 right-4 hidden z-50">
+        <div class="flex items-center px-6 py-3 rounded-lg shadow-lg">
+            <span id="toast-icon" class="mr-3"></span>
             <span id="toast-message">Saved successfully!</span>
         </div>
     </div>
@@ -244,13 +416,62 @@
 
 <style>
     .tab-btn {
-        @apply pb-4 text-sm font-medium text-gray-400 border-b-2 border-transparent hover:text-white hover:border-gray-500;
+        @apply flex items-center px-4 py-3 text-sm font-medium text-gray-400 border-b-2 border-transparent hover:text-white hover:border-gray-500 transition-colors;
     }
     .tab-btn.active {
         @apply text-primary border-primary;
     }
-    .input-field {
-        @apply block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm px-3 py-2;
+
+    .form-group {
+        @apply space-y-1.5;
+    }
+    .form-label {
+        @apply block text-sm font-medium text-gray-300;
+    }
+    .form-input {
+        @apply block w-full rounded-lg bg-gray-700/50 border border-gray-600 text-white shadow-sm focus:border-primary focus:ring-1 focus:ring-primary px-4 py-2.5 text-sm transition-colors;
+    }
+    .form-select {
+        @apply block w-full rounded-lg bg-gray-700/50 border border-gray-600 text-white shadow-sm focus:border-primary focus:ring-1 focus:ring-primary px-4 py-2.5 text-sm transition-colors;
+    }
+    .form-hint {
+        @apply text-xs text-gray-500 mt-1;
+    }
+
+    .input-with-suffix {
+        @apply relative;
+    }
+    .input-with-suffix .form-input {
+        @apply pr-16;
+    }
+    .input-suffix {
+        @apply absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500;
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+        @apply relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer;
+    }
+    .toggle-switch input {
+        @apply sr-only;
+    }
+    .toggle-slider {
+        @apply pointer-events-none inline-block h-6 w-11 rounded-full bg-gray-600 transition-colors duration-200 ease-in-out;
+    }
+    .toggle-slider::before {
+        content: '';
+        @apply absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 ease-in-out;
+    }
+    .toggle-switch input:checked + .toggle-slider {
+        @apply bg-primary;
+    }
+    .toggle-switch input:checked + .toggle-slider::before {
+        @apply translate-x-5;
+    }
+
+    /* Instance Card */
+    .instance-card {
+        @apply bg-gray-700/30 rounded-lg border border-gray-600 p-5 transition-all hover:border-gray-500;
     }
 </style>
 {% endblock %}
@@ -270,10 +491,18 @@
     function showToast(message, isError = false) {
         const toast = document.getElementById('toast');
         const toastMsg = document.getElementById('toast-message');
+        const toastIcon = document.getElementById('toast-icon');
+
         toastMsg.textContent = message;
-        toast.firstElementChild.className = isError
-            ? 'bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg'
-            : 'bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg';
+
+        if (isError) {
+            toast.firstElementChild.className = 'flex items-center bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg';
+            toastIcon.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>';
+        } else {
+            toast.firstElementChild.className = 'flex items-center bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg';
+            toastIcon.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
+        }
+
         toast.classList.remove('hidden');
         setTimeout(() => toast.classList.add('hidden'), 3000);
     }
@@ -291,29 +520,29 @@
 
     function populateForm() {
         // Scanner
-        document.getElementById('scanner-enabled').value = String(currentConfig.scanner?.enabled ?? true);
+        document.getElementById('scanner-enabled').checked = currentConfig.scanner?.enabled ?? true;
         document.getElementById('scanner-files-per-hour').value = currentConfig.scanner?.files_per_hour ?? 100;
         document.getElementById('scanner-mode').value = currentConfig.scanner?.mode ?? 'watch_only';
         document.getElementById('scanner-tv-schedule').value = currentConfig.scanner?.tv_refresh_schedule ?? '0 3 * * *';
 
         // Validation
-        document.getElementById('validation-duration').value = String(currentConfig.validation?.check_duration_sanity ?? true);
+        document.getElementById('validation-duration').checked = currentConfig.validation?.check_duration_sanity ?? true;
         document.getElementById('validation-max-duration').value = currentConfig.validation?.max_duration_hours ?? 12;
-        document.getElementById('validation-bitrate').value = String(currentConfig.validation?.check_bitrate ?? true);
+        document.getElementById('validation-bitrate').checked = currentConfig.validation?.check_bitrate ?? true;
         document.getElementById('validation-bitrate-720').value = currentConfig.validation?.min_bitrate_720p ?? 1500;
         document.getElementById('validation-bitrate-1080').value = currentConfig.validation?.min_bitrate_1080p ?? 3000;
         document.getElementById('validation-bitrate-4k').value = currentConfig.validation?.min_bitrate_4k ?? 8000;
-        document.getElementById('validation-deep-scan').value = String(currentConfig.validation?.deep_scan_enabled ?? true);
+        document.getElementById('validation-deep-scan').checked = currentConfig.validation?.deep_scan_enabled ?? true;
         document.getElementById('validation-sample-duration').value = currentConfig.validation?.sample_duration_seconds ?? 30;
-        document.getElementById('validation-full-decode').value = String(currentConfig.validation?.full_decode_enabled ?? false);
+        document.getElementById('validation-full-decode').checked = currentConfig.validation?.full_decode_enabled ?? false;
 
         // Actions
-        document.getElementById('actions-auto-replace').value = String(currentConfig.actions?.auto_replace ?? true);
-        document.getElementById('actions-blocklist').value = String(currentConfig.actions?.blocklist_bad_releases ?? true);
+        document.getElementById('actions-auto-replace').checked = currentConfig.actions?.auto_replace ?? true;
+        document.getElementById('actions-blocklist').checked = currentConfig.actions?.blocklist_bad_releases ?? true;
         document.getElementById('actions-max-replacements').value = currentConfig.actions?.max_replacements_per_day ?? 10;
 
         // Email
-        document.getElementById('email-enabled').value = String(currentConfig.email?.enabled ?? false);
+        document.getElementById('email-enabled').checked = currentConfig.email?.enabled ?? false;
         document.getElementById('email-smtp-host').value = currentConfig.email?.smtp_host ?? '';
         document.getElementById('email-smtp-port').value = currentConfig.email?.smtp_port ?? 587;
         document.getElementById('email-smtp-user').value = currentConfig.email?.smtp_user ?? '';
@@ -328,38 +557,81 @@
 
     function renderInstances(type, instances) {
         const container = document.getElementById(`${type}-instances`);
+        const colorClass = type === 'radarr' ? 'orange' : 'blue';
+
+        if (instances.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-8 text-gray-500">
+                    <svg class="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"/>
+                    </svg>
+                    <p>No ${type} instances configured</p>
+                    <p class="text-sm mt-1">Click "Add Instance" to connect to your ${type} server</p>
+                </div>
+            `;
+            return;
+        }
+
         container.innerHTML = '';
 
         instances.forEach((inst, idx) => {
             container.innerHTML += `
-                <div class="bg-gray-700 rounded-lg p-4" data-instance="${type}-${idx}">
-                    <div class="flex justify-between items-start mb-3">
-                        <input type="text" value="${inst.name}" class="input-field w-48" placeholder="Instance name" data-field="name">
-                        <button onclick="removeInstance('${type}', ${idx})" class="text-red-400 hover:text-red-300 text-sm">Remove</button>
+                <div class="instance-card" data-instance="${type}-${idx}">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 rounded-lg bg-${colorClass}-500/20 flex items-center justify-center mr-3">
+                                <span class="text-${colorClass}-400 font-bold text-sm">${idx + 1}</span>
+                            </div>
+                            <input type="text" value="${inst.name}" class="form-input w-48 font-medium" placeholder="Instance name" data-field="name">
+                        </div>
+                        <button onclick="removeInstance('${type}', ${idx})" class="text-red-400 hover:text-red-300 text-sm hover:bg-red-400/10 px-2 py-1 rounded transition-colors">
+                            Remove
+                        </button>
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <input type="text" value="${inst.url}" class="input-field" placeholder="http://192.168.1.3:7878" data-field="url">
-                        <input type="password" value="${inst.api_key}" class="input-field" placeholder="API Key" data-field="api_key">
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="form-group">
+                            <label class="form-label text-xs text-gray-400">URL</label>
+                            <input type="text" value="${inst.url}" class="form-input" placeholder="http://192.168.1.3:7878" data-field="url">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label text-xs text-gray-400">API Key</label>
+                            <input type="password" value="${inst.api_key}" class="form-input" placeholder="API Key" data-field="api_key">
+                        </div>
                     </div>
-                    <div class="mt-3">
-                        <label class="text-xs text-gray-400">Path Mappings</label>
-                        <div class="path-mappings space-y-2 mt-1">
+
+                    <div class="mb-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="form-label text-xs text-gray-400">Path Mappings</label>
+                            <button onclick="addPathMapping('${type}', ${idx})" class="text-xs text-${colorClass}-400 hover:text-${colorClass}-300 transition-colors">+ Add Mapping</button>
+                        </div>
+                        <div class="path-mappings space-y-2">
                             ${(inst.path_mappings || []).map((pm, pmIdx) => `
-                                <div class="flex space-x-2">
-                                    <input type="text" value="${pm.from_path}" class="input-field flex-1" placeholder="/movies" data-field="from_path" data-pm-idx="${pmIdx}">
-                                    <span class="text-gray-500 py-2">→</span>
-                                    <input type="text" value="${pm.to_path}" class="input-field flex-1" placeholder="/mnt/remotes/..." data-field="to_path" data-pm-idx="${pmIdx}">
-                                    <button onclick="removePathMapping('${type}', ${idx}, ${pmIdx})" class="text-red-400 hover:text-red-300 text-xs">×</button>
+                                <div class="flex items-center space-x-2 bg-gray-800/50 rounded-lg p-2">
+                                    <input type="text" value="${pm.from_path}" class="form-input flex-1 text-sm py-1.5" placeholder="Container path (e.g., /movies)" data-field="from_path" data-pm-idx="${pmIdx}">
+                                    <svg class="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                                    </svg>
+                                    <input type="text" value="${pm.to_path}" class="form-input flex-1 text-sm py-1.5" placeholder="Host path (e.g., /mnt/media/movies)" data-field="to_path" data-pm-idx="${pmIdx}">
+                                    <button onclick="removePathMapping('${type}', ${idx}, ${pmIdx})" class="text-red-400 hover:text-red-300 p-1 hover:bg-red-400/10 rounded transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                        </svg>
+                                    </button>
                                 </div>
                             `).join('')}
+                            ${(inst.path_mappings || []).length === 0 ? '<p class="text-xs text-gray-500 italic">No path mappings configured</p>' : ''}
                         </div>
-                        <button onclick="addPathMapping('${type}', ${idx})" class="text-xs text-primary hover:text-yellow-400 mt-2">+ Add Path Mapping</button>
                     </div>
-                    <div class="mt-3">
-                        <button onclick="testConnection('${type}', ${idx})" class="text-xs bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-500">
+
+                    <div class="flex items-center pt-3 border-t border-gray-600">
+                        <button onclick="testConnection('${type}', ${idx})" class="inline-flex items-center text-sm bg-gray-600 text-white px-3 py-1.5 rounded-lg hover:bg-gray-500 transition-colors">
+                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
                             Test Connection
                         </button>
-                        <span class="connection-status text-xs ml-2"></span>
+                        <span class="connection-status text-sm ml-3"></span>
                     </div>
                 </div>
             `;
@@ -437,10 +709,8 @@
     async function testConnection(type, idx) {
         const container = document.querySelector(`[data-instance="${type}-${idx}"]`);
         const status = container.querySelector('.connection-status');
-        status.textContent = 'Testing...';
-        status.className = 'connection-status text-xs ml-2 text-gray-400';
+        status.innerHTML = '<span class="text-gray-400">Testing...</span>';
 
-        // Get current values from form
         const url = container.querySelector('[data-field="url"]').value;
         const api_key = container.querySelector('[data-field="api_key"]').value;
 
@@ -453,15 +723,12 @@
             const data = await response.json();
 
             if (data.success) {
-                status.textContent = 'Connected!';
-                status.className = 'connection-status text-xs ml-2 text-green-400';
+                status.innerHTML = '<span class="text-green-400 flex items-center"><svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Connected</span>';
             } else {
-                status.textContent = `Failed: ${data.error}`;
-                status.className = 'connection-status text-xs ml-2 text-red-400';
+                status.innerHTML = `<span class="text-red-400">Failed: ${data.error}</span>`;
             }
         } catch (e) {
-            status.textContent = 'Connection failed';
-            status.className = 'connection-status text-xs ml-2 text-red-400';
+            status.innerHTML = '<span class="text-red-400">Connection failed</span>';
         }
     }
 
@@ -480,10 +747,14 @@
                 };
 
                 container.querySelectorAll('.path-mappings > div').forEach(pmDiv => {
-                    inst.path_mappings.push({
-                        from_path: pmDiv.querySelector('[data-field="from_path"]').value,
-                        to_path: pmDiv.querySelector('[data-field="to_path"]').value
-                    });
+                    const fromPath = pmDiv.querySelector('[data-field="from_path"]');
+                    const toPath = pmDiv.querySelector('[data-field="to_path"]');
+                    if (fromPath && toPath) {
+                        inst.path_mappings.push({
+                            from_path: fromPath.value,
+                            to_path: toPath.value
+                        });
+                    }
                 });
 
                 currentConfig[type].push(inst);
@@ -492,32 +763,32 @@
 
         // Collect other settings
         currentConfig.scanner = {
-            enabled: document.getElementById('scanner-enabled').value === 'true',
+            enabled: document.getElementById('scanner-enabled').checked,
             files_per_hour: parseInt(document.getElementById('scanner-files-per-hour').value),
             mode: document.getElementById('scanner-mode').value,
             tv_refresh_schedule: document.getElementById('scanner-tv-schedule').value || null
         };
 
         currentConfig.validation = {
-            check_duration_sanity: document.getElementById('validation-duration').value === 'true',
+            check_duration_sanity: document.getElementById('validation-duration').checked,
             max_duration_hours: parseInt(document.getElementById('validation-max-duration').value),
-            check_bitrate: document.getElementById('validation-bitrate').value === 'true',
+            check_bitrate: document.getElementById('validation-bitrate').checked,
             min_bitrate_720p: parseInt(document.getElementById('validation-bitrate-720').value),
             min_bitrate_1080p: parseInt(document.getElementById('validation-bitrate-1080').value),
             min_bitrate_4k: parseInt(document.getElementById('validation-bitrate-4k').value),
-            deep_scan_enabled: document.getElementById('validation-deep-scan').value === 'true',
+            deep_scan_enabled: document.getElementById('validation-deep-scan').checked,
             sample_duration_seconds: parseInt(document.getElementById('validation-sample-duration').value),
-            full_decode_enabled: document.getElementById('validation-full-decode').value === 'true'
+            full_decode_enabled: document.getElementById('validation-full-decode').checked
         };
 
         currentConfig.actions = {
-            auto_replace: document.getElementById('actions-auto-replace').value === 'true',
-            blocklist_bad_releases: document.getElementById('actions-blocklist').value === 'true',
+            auto_replace: document.getElementById('actions-auto-replace').checked,
+            blocklist_bad_releases: document.getElementById('actions-blocklist').checked,
             max_replacements_per_day: parseInt(document.getElementById('actions-max-replacements').value)
         };
 
         currentConfig.email = {
-            enabled: document.getElementById('email-enabled').value === 'true',
+            enabled: document.getElementById('email-enabled').checked,
             smtp_host: document.getElementById('email-smtp-host').value,
             smtp_port: parseInt(document.getElementById('email-smtp-port').value),
             smtp_user: document.getElementById('email-smtp-user').value,

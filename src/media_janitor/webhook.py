@@ -13,7 +13,14 @@ from fastapi.staticfiles import StaticFiles
 from .arr_client import ArrClient, ArrType
 from .config import Config
 from .janitor import Janitor
-from .reports import format_report_email, format_report_text, generate_mismatch_report
+from .reports import (
+    format_report_email,
+    format_report_text,
+    generate_mismatch_report,
+    find_duplicates,
+    get_codec_breakdown,
+    bytes_to_human,
+)
 
 logger = structlog.get_logger()
 
@@ -272,6 +279,121 @@ async def get_mismatch_report(
                 }
                 for m in mismatches
             ],
+        }
+
+
+@app.get("/report/duplicates")
+async def get_duplicates_report(
+    source: str = Query(default="movies", description="Source: movies (fast) or tv (slow)"),
+    format: str = Query(default="json", description="Output format: json, text"),
+):
+    """
+    Find duplicate content (same movie/show in multiple qualities).
+
+    This helps identify wasted space from having the same content multiple times.
+    """
+    if not _janitor:
+        return {"status": "error", "message": "Janitor not initialized"}
+
+    duplicates = await find_duplicates(_janitor.scanner, source)
+
+    if format == "text":
+        lines = [
+            "=" * 70,
+            "DUPLICATE CONTENT REPORT",
+            f"Found {len(duplicates)} items with multiple copies",
+            "=" * 70,
+            "",
+        ]
+        for d in duplicates:
+            lines.append(f"{d.title} ({d.year or 'Unknown year'})")
+            lines.append(f"  Total size: {bytes_to_human(d.total_size_bytes)}")
+            lines.append(f"  Potential savings: {bytes_to_human(d.potential_savings_bytes)}")
+            lines.append(f"  Copies: {len(d.files)}")
+            for f in d.files:
+                lines.append(f"    - [{f.size_human}] {f.quality or 'Unknown quality'}")
+            lines.append("")
+
+        return PlainTextResponse(content="\n".join(lines))
+    else:
+        total_savings = sum(d.potential_savings_bytes for d in duplicates)
+        return {
+            "count": len(duplicates),
+            "total_potential_savings_bytes": total_savings,
+            "total_potential_savings_human": bytes_to_human(total_savings),
+            "duplicates": [
+                {
+                    "title": d.title,
+                    "year": d.year,
+                    "total_size_bytes": d.total_size_bytes,
+                    "total_size_human": bytes_to_human(d.total_size_bytes),
+                    "potential_savings_bytes": d.potential_savings_bytes,
+                    "potential_savings_human": bytes_to_human(d.potential_savings_bytes),
+                    "copies": len(d.files),
+                    "files": [
+                        {
+                            "file_path": f.file_path,
+                            "size_bytes": f.size_bytes,
+                            "size_human": f.size_human,
+                            "quality": f.quality,
+                            "arr_instance": f.arr_instance,
+                        }
+                        for f in d.files
+                    ],
+                }
+                for d in duplicates
+            ],
+        }
+
+
+@app.get("/report/codecs")
+async def get_codecs_report(
+    source: str = Query(default="movies", description="Source: movies (fast) or tv (slow)"),
+    format: str = Query(default="json", description="Output format: json, text"),
+):
+    """
+    Get codec/HDR breakdown of the library.
+
+    Shows distribution of video codecs (H.264, HEVC, AV1) and HDR types.
+    """
+    if not _janitor:
+        return {"status": "error", "message": "Janitor not initialized"}
+
+    stats = await get_codec_breakdown(_janitor.scanner, source)
+
+    if format == "text":
+        lines = [
+            "=" * 70,
+            "CODEC BREAKDOWN REPORT",
+            f"Total files: {stats.total_files}",
+            "=" * 70,
+            "",
+            "VIDEO CODECS:",
+        ]
+        for codec, count in sorted(stats.video_codecs.items(), key=lambda x: -x[1]):
+            pct = (count / stats.total_files * 100) if stats.total_files else 0
+            lines.append(f"  {codec}: {count} ({pct:.1f}%)")
+
+        lines.append("")
+        lines.append("CONTAINERS:")
+        for container, count in sorted(stats.containers.items(), key=lambda x: -x[1]):
+            pct = (count / stats.total_files * 100) if stats.total_files else 0
+            lines.append(f"  .{container}: {count} ({pct:.1f}%)")
+
+        lines.append("")
+        lines.append("HDR TYPES:")
+        for hdr, count in sorted(stats.hdr_types.items(), key=lambda x: -x[1]):
+            pct = (count / stats.total_files * 100) if stats.total_files else 0
+            lines.append(f"  {hdr}: {count} ({pct:.1f}%)")
+
+        return PlainTextResponse(content="\n".join(lines))
+    else:
+        return {
+            "total_files": stats.total_files,
+            "video_codecs": stats.video_codecs,
+            "audio_codecs": stats.audio_codecs,
+            "containers": stats.containers,
+            "hdr_types": stats.hdr_types,
         }
 
 

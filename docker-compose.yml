@@ -8,6 +8,10 @@ services:
     restart: unless-stopped
     ports:
       - "9000:9000"
+    labels:
+      # Unraid WebUI button
+      net.unraid.docker.webui: "http://[IP]:[PORT:9000]/"
+      net.unraid.docker.icon: "https://raw.githubusercontent.com/linuxserver/docker-templates/master/linuxserver.io/img/radarr-logo.png"
     volumes:
       # Configuration file
       - ./config.yaml:/data/config.yaml:ro

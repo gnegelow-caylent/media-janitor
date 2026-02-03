@@ -1,15 +1,20 @@
 """Web UI routes and API endpoints."""
 
+import secrets
 import httpx
 import yaml
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
+import structlog
+from fastapi import APIRouter, Request, Response
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from .config import Config
+from . import plex_auth
+
+logger = structlog.get_logger()
 
 router = APIRouter()
 
@@ -19,6 +24,14 @@ templates = Jinja2Templates(directory=str(templates_dir))
 
 # Config file path
 CONFIG_PATH = Path("/data/config.yaml")
+
+# Session storage (maps session_token -> plex_auth_token)
+# In production, consider using Redis or encrypted cookies
+_sessions: dict[str, str] = {}
+
+# Cookie settings
+SESSION_COOKIE_NAME = "mj_session"
+AUTH_PENDING_COOKIE = "mj_auth_pending"
 
 
 def get_config_dict() -> dict:
@@ -86,6 +99,134 @@ async def settings_page(request: Request):
         "settings.html",
         {"request": request, "active_page": "settings"}
     )
+
+
+# =============================================================================
+# Authentication (Plex OAuth)
+# =============================================================================
+
+
+async def get_current_user(request: Request) -> plex_auth.PlexUser | None:
+    """Get current authenticated user from session cookie."""
+    session_token = request.cookies.get(SESSION_COOKIE_NAME)
+    if not session_token:
+        return None
+
+    plex_token = _sessions.get(session_token)
+    if not plex_token:
+        return None
+
+    # Validate the token is still valid
+    try:
+        return await plex_auth.get_user_info(plex_token)
+    except Exception:
+        # Token invalid, remove session
+        del _sessions[session_token]
+        return None
+
+
+@router.get("/auth/plex/start")
+async def plex_login_start(response: Response):
+    """
+    Start Plex OAuth flow.
+    Returns the auth URL and stores the session ID in a cookie.
+    """
+    try:
+        session_id, pin = await plex_auth.create_pin()
+
+        # Store session ID in cookie for callback
+        response.set_cookie(
+            AUTH_PENDING_COOKIE,
+            session_id,
+            max_age=900,  # 15 min
+            httponly=True,
+            samesite="lax",
+        )
+
+        return {
+            "success": True,
+            "auth_url": pin.auth_url,
+            "expires_in": 900,
+        }
+
+    except Exception as e:
+        logger.error("Failed to start Plex auth", error=str(e))
+        return {"success": False, "error": str(e)}
+
+
+@router.get("/auth/plex/check")
+async def plex_login_check(request: Request, response: Response):
+    """
+    Check if Plex auth has completed.
+    Poll this endpoint after redirecting user to auth_url.
+    """
+    session_id = request.cookies.get(AUTH_PENDING_COOKIE)
+    if not session_id:
+        return {"success": False, "error": "No pending auth", "done": True}
+
+    try:
+        user = await plex_auth.check_pin(session_id)
+
+        if user is None:
+            # Still waiting for user to authorize
+            return {"success": True, "done": False}
+
+        # User authorized! Create session
+        session_token = secrets.token_urlsafe(32)
+        _sessions[session_token] = user.auth_token
+
+        # Set session cookie
+        response.set_cookie(
+            SESSION_COOKIE_NAME,
+            session_token,
+            max_age=30 * 24 * 60 * 60,  # 30 days
+            httponly=True,
+            samesite="lax",
+        )
+
+        # Clear pending auth cookie
+        response.delete_cookie(AUTH_PENDING_COOKIE)
+
+        return {
+            "success": True,
+            "done": True,
+            "user": {
+                "username": user.username,
+                "email": user.email,
+                "thumb": user.thumb,
+            },
+        }
+
+    except Exception as e:
+        logger.error("Failed to check Plex auth", error=str(e))
+        return {"success": False, "error": str(e), "done": True}
+
+
+@router.post("/auth/logout")
+async def logout(response: Response, request: Request):
+    """Log out the current user."""
+    session_token = request.cookies.get(SESSION_COOKIE_NAME)
+    if session_token and session_token in _sessions:
+        del _sessions[session_token]
+
+    response.delete_cookie(SESSION_COOKIE_NAME)
+    return {"success": True}
+
+
+@router.get("/auth/user")
+async def get_user(request: Request):
+    """Get the currently logged-in user."""
+    user = await get_current_user(request)
+    if user:
+        return {
+            "logged_in": True,
+            "user": {
+                "username": user.username,
+                "email": user.email,
+                "thumb": user.thumb,
+            },
+        }
+    return {"logged_in": False}
 
 
 # =============================================================================

@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Media Janitor{% endblock %}</title>
+
+    <!-- Favicon - Film reel with sparkle -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23f5a623'/%3E%3Cstop offset='100%25' stop-color='%23e88d0c'/%3E%3C/linearGradient%3E%3ClinearGradient id='shine' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23fff' stop-opacity='0.9'/%3E%3Cstop offset='100%25' stop-color='%23fbbf24'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='20' fill='%231f2937'/%3E%3Ccircle cx='50' cy='50' r='32' fill='url(%23g)'/%3E%3Ccircle cx='50' cy='50' r='10' fill='%231f2937'/%3E%3Ccircle cx='50' cy='25' r='5' fill='%231f2937'/%3E%3Ccircle cx='50' cy='75' r='5' fill='%231f2937'/%3E%3Ccircle cx='25' cy='50' r='5' fill='%231f2937'/%3E%3Ccircle cx='75' cy='50' r='5' fill='%231f2937'/%3E%3Ccircle cx='32' cy='32' r='4' fill='%231f2937'/%3E%3Ccircle cx='68' cy='68' r='4' fill='%231f2937'/%3E%3Ccircle cx='32' cy='68' r='4' fill='%231f2937'/%3E%3Ccircle cx='68' cy='32' r='4' fill='%231f2937'/%3E%3Cpath d='M78 18l4 4M80 16v8M76 20h8' stroke='url(%23shine)' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='M88 28l2 2M89 26v4M87 28h4' stroke='%23fbbf24' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
@@ -15,64 +19,295 @@
                         primary: '#f5a623',
                         secondary: '#1a1a2e',
                         accent: '#e94560',
-                    }
+                    },
+                    animation: {
+                        'shimmer': 'shimmer 2s infinite',
+                        'fade-in': 'fadeIn 0.3s ease-out',
+                        'slide-up': 'slideUp 0.3s ease-out',
+                        'pulse-slow': 'pulse 3s infinite',
+                    },
+                    keyframes: {
+                        shimmer: {
+                            '0%': { backgroundPosition: '-200% 0' },
+                            '100%': { backgroundPosition: '200% 0' },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                    },
                 }
             }
         }
     </script>
     <style>
+        /* Base components */
         .stat-card {
-            @apply bg-gray-800 rounded-lg p-6 border border-gray-700;
+            @apply bg-gray-800 rounded-xl p-6 border border-gray-700 transition-all duration-200 hover:border-gray-600;
         }
         .nav-link {
-            @apply px-4 py-2 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors;
+            @apply px-4 py-2 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-200;
         }
         .nav-link.active {
-            @apply bg-primary text-gray-900 font-semibold;
+            @apply bg-primary text-gray-900 font-semibold shadow-lg shadow-primary/20;
+        }
+
+        /* Loading skeleton */
+        .skeleton {
+            @apply bg-gradient-to-r from-gray-700 via-gray-600 to-gray-700 bg-[length:200%_100%] animate-shimmer rounded;
+        }
+        .skeleton-text {
+            @apply h-4 skeleton;
+        }
+        .skeleton-title {
+            @apply h-6 skeleton;
+        }
+        .skeleton-card {
+            @apply h-32 skeleton rounded-xl;
+        }
+        .skeleton-circle {
+            @apply rounded-full skeleton;
+        }
+
+        /* Content transitions */
+        .page-content {
+            @apply animate-fade-in;
+        }
+        .stagger-1 { animation-delay: 0.05s; }
+        .stagger-2 { animation-delay: 0.1s; }
+        .stagger-3 { animation-delay: 0.15s; }
+        .stagger-4 { animation-delay: 0.2s; }
+
+        /* Progress bar animation */
+        .progress-bar {
+            @apply transition-all duration-500 ease-out;
+        }
+        .progress-bar-animated {
+            background: linear-gradient(90deg, #f5a623 0%, #fbbf24 50%, #f5a623 100%);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+
+        /* Card hover effects */
+        .card-hover {
+            @apply transition-all duration-200 hover:scale-[1.02] hover:shadow-lg hover:shadow-black/20;
+        }
+
+        /* Status indicators */
+        .status-dot {
+            @apply w-2 h-2 rounded-full;
+        }
+        .status-dot.online {
+            @apply bg-green-400 shadow-lg shadow-green-400/50;
+            animation: pulse 2s infinite;
+        }
+        .status-dot.scanning {
+            @apply bg-primary shadow-lg shadow-primary/50;
+            animation: pulse 1s infinite;
+        }
+        .status-dot.offline {
+            @apply bg-red-400;
+        }
+
+        /* Empty state */
+        .empty-state {
+            @apply text-center py-12 px-4;
+        }
+        .empty-state-icon {
+            @apply w-16 h-16 mx-auto mb-4 text-gray-600;
+        }
+
+        /* Smooth scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            @apply bg-gray-800;
+        }
+        ::-webkit-scrollbar-thumb {
+            @apply bg-gray-600 rounded-full hover:bg-gray-500;
+        }
+
+        /* Logo sparkle animation */
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.9; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.85); }
+        }
+        @keyframes twinkle-alt {
+            0%, 100% { opacity: 0.8; transform: scale(0.9); }
+            50% { opacity: 1; transform: scale(1.1); }
+        }
+        .sparkle {
+            animation: twinkle 2s ease-in-out infinite;
+            transform-origin: center;
+        }
+        .sparkle-sm {
+            animation: twinkle-alt 2.5s ease-in-out infinite;
+            animation-delay: 0.5s;
+            transform-origin: center;
+        }
+        a:hover .sparkle {
+            animation-duration: 0.8s;
+        }
+        a:hover .sparkle-sm {
+            animation-duration: 1s;
         }
     </style>
     {% block head %}{% endblock %}
 </head>
 <body class="h-full">
-    <div class="min-h-full">
+    <div class="min-h-full flex flex-col">
         <!-- Navigation -->
-        <nav class="bg-gray-800 border-b border-gray-700">
+        <nav class="bg-gray-800/95 backdrop-blur-sm border-b border-gray-700 sticky top-0 z-40">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div class="flex h-16 items-center justify-between">
                     <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <span class="text-2xl font-bold text-primary">Media Janitor</span>
-                        </div>
-                        <div class="ml-10 flex items-baseline space-x-4">
-                            <a href="/" class="nav-link {% if active_page == 'dashboard' %}active{% endif %}">Dashboard</a>
-                            <a href="/ui/library" class="nav-link {% if active_page == 'library' %}active{% endif %}">Library</a>
-                            <a href="/ui/reports" class="nav-link {% if active_page == 'reports' %}active{% endif %}">Reports</a>
-                            <a href="/ui/logs" class="nav-link {% if active_page == 'logs' %}active{% endif %}">Logs</a>
-                            <a href="/ui/settings" class="nav-link {% if active_page == 'settings' %}active{% endif %}">Settings</a>
+                        <!-- Logo - Film reel with sparkle -->
+                        <a href="/" class="flex-shrink-0 flex items-center group">
+                            <div class="w-10 h-10 mr-3 relative">
+                                <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-lg group-hover:drop-shadow-[0_0_12px_rgba(245,166,35,0.5)] transition-all duration-300">
+                                    <defs>
+                                        <linearGradient id="nav-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#f5a623"/>
+                                            <stop offset="100%" stop-color="#e88d0c"/>
+                                        </linearGradient>
+                                        <linearGradient id="nav-shine" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#fff" stop-opacity="0.9"/>
+                                            <stop offset="100%" stop-color="#fbbf24"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <!-- Film reel base -->
+                                    <circle cx="50" cy="50" r="38" fill="url(#nav-grad)"/>
+                                    <!-- Center hole -->
+                                    <circle cx="50" cy="50" r="12" fill="#1f2937"/>
+                                    <!-- Sprocket holes around the reel -->
+                                    <circle cx="50" cy="22" r="6" fill="#1f2937"/>
+                                    <circle cx="50" cy="78" r="6" fill="#1f2937"/>
+                                    <circle cx="22" cy="50" r="6" fill="#1f2937"/>
+                                    <circle cx="78" cy="50" r="6" fill="#1f2937"/>
+                                    <circle cx="30" cy="30" r="5" fill="#1f2937"/>
+                                    <circle cx="70" cy="70" r="5" fill="#1f2937"/>
+                                    <circle cx="30" cy="70" r="5" fill="#1f2937"/>
+                                    <circle cx="70" cy="30" r="5" fill="#1f2937"/>
+                                    <!-- Sparkle effects -->
+                                    <g class="sparkle" opacity="0.95">
+                                        <path d="M85 12l5 5M87.5 9v10M83 14.5h10" stroke="url(#nav-shine)" stroke-width="3.5" stroke-linecap="round"/>
+                                    </g>
+                                    <g class="sparkle-sm" opacity="0.8">
+                                        <path d="M92 25l2.5 2.5M93.25 23v5M91 25.5h5" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/>
+                                    </g>
+                                </svg>
+                            </div>
+                            <span class="text-xl font-bold text-white group-hover:text-primary transition-colors">Media Janitor</span>
+                        </a>
+                        <div class="ml-10 flex items-baseline space-x-2">
+                            <a href="/" class="nav-link {% if active_page == 'dashboard' %}active{% endif %}">
+                                <svg class="w-4 h-4 inline mr-1.5 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
+                                </svg>
+                                Dashboard
+                            </a>
+                            <a href="/ui/library" class="nav-link {% if active_page == 'library' %}active{% endif %}">
+                                <svg class="w-4 h-4 inline mr-1.5 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"/>
+                                </svg>
+                                Library
+                            </a>
+                            <a href="/ui/reports" class="nav-link {% if active_page == 'reports' %}active{% endif %}">
+                                <svg class="w-4 h-4 inline mr-1.5 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                Reports
+                            </a>
+                            <a href="/ui/logs" class="nav-link {% if active_page == 'logs' %}active{% endif %}">
+                                <svg class="w-4 h-4 inline mr-1.5 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                                </svg>
+                                Logs
+                            </a>
+                            <a href="/ui/settings" class="nav-link {% if active_page == 'settings' %}active{% endif %}">
+                                <svg class="w-4 h-4 inline mr-1.5 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                                Settings
+                            </a>
                         </div>
                     </div>
-                    <div class="flex items-center">
-                        <span id="scan-status" class="text-sm text-gray-400">
-                            <!-- Populated by JS -->
-                        </span>
+                    <div class="flex items-center space-x-6">
+                        <!-- Live status indicator -->
+                        <div id="scan-status" class="flex items-center text-sm text-gray-400">
+                            <span class="status-dot online mr-2"></span>
+                            <span>Loading...</span>
+                        </div>
+
+                        <!-- User auth section -->
+                        <div id="auth-section" class="flex items-center">
+                            <button id="login-btn" onclick="startPlexLogin()" class="hidden items-center px-3 py-1.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm transition-all duration-200 hover:scale-105">
+                                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+                                </svg>
+                                Login with Plex
+                            </button>
+                            <div id="user-info" class="hidden items-center space-x-3">
+                                <img id="user-avatar" src="" alt="" class="w-8 h-8 rounded-full border-2 border-primary shadow-lg shadow-primary/20">
+                                <span id="user-name" class="text-sm text-gray-300"></span>
+                                <button onclick="logout()" class="text-gray-500 hover:text-gray-300 text-sm transition-colors">Logout</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </nav>
 
+        <!-- Plex Login Modal -->
+        <div id="plex-login-modal" class="fixed inset-0 bg-black/75 backdrop-blur-sm hidden z-50 flex items-center justify-center animate-fade-in">
+            <div class="bg-gray-800 rounded-xl p-8 max-w-md w-full mx-4 text-center shadow-2xl border border-gray-700 animate-slide-up">
+                <h3 class="text-xl font-bold text-white mb-4">Login with Plex</h3>
+                <div id="login-waiting" class="hidden">
+                    <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+                    <p class="text-gray-400 mb-4">Waiting for Plex authorization...</p>
+                    <p class="text-gray-500 text-sm mb-6">A new window should have opened. Please authorize Media Janitor in Plex.</p>
+                    <button onclick="cancelPlexLogin()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-colors">Cancel</button>
+                </div>
+                <div id="login-error" class="hidden">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/20 flex items-center justify-center">
+                        <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </div>
+                    <p class="text-red-400 mb-2 font-medium">Login Failed</p>
+                    <p id="login-error-msg" class="text-gray-400 mb-6 text-sm"></p>
+                    <button onclick="closePlexModal()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-colors">Close</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Main content -->
-        <main>
-            <div class="mx-auto max-w-7xl py-6 px-4 sm:px-6 lg:px-8">
+        <main class="flex-1">
+            <div class="mx-auto max-w-7xl py-6 px-4 sm:px-6 lg:px-8 page-content">
                 {% block content %}{% endblock %}
             </div>
         </main>
 
         <!-- Footer -->
-        <footer class="bg-gray-800 border-t border-gray-700 mt-auto">
+        <footer class="bg-gray-800/50 border-t border-gray-700/50 mt-auto">
             <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-                <p class="text-center text-sm text-gray-500">
-                    Media Janitor - Proactive media library quality monitor
-                </p>
+                <div class="flex items-center justify-between">
+                    <p class="text-sm text-gray-500">
+                        Media Janitor v0.1.0
+                    </p>
+                    <div class="flex items-center space-x-4 text-sm text-gray-500">
+                        <a href="https://github.com" class="hover:text-gray-300 transition-colors">GitHub</a>
+                        <span class="text-gray-700">|</span>
+                        <a href="/ui/logs" class="hover:text-gray-300 transition-colors">View Logs</a>
+                    </div>
+                </div>
             </div>
         </footer>
     </div>
@@ -84,20 +319,139 @@
                 const response = await fetch('/status');
                 const data = await response.json();
                 const statusEl = document.getElementById('scan-status');
+                const dot = statusEl.querySelector('.status-dot');
 
                 if (data.scanner.initial_scan_done) {
-                    statusEl.innerHTML = '<span class="text-green-400">Scan Complete</span> - Watching for new imports';
+                    dot.className = 'status-dot online mr-2';
+                    statusEl.querySelector('span:last-child').innerHTML = 'Watching for imports';
                 } else {
-                    const percent = ((data.scanner.scanned_count / (data.scanner.scanned_count + data.scanner.queue_size)) * 100).toFixed(1);
-                    statusEl.innerHTML = `<span class="text-primary">Scanning...</span> ${data.scanner.scanned_count} / ${data.scanner.scanned_count + data.scanner.queue_size} (${percent}%)`;
+                    const total = data.scanner.scanned_count + data.scanner.queue_size;
+                    const percent = total > 0 ? ((data.scanner.scanned_count / total) * 100).toFixed(0) : 0;
+                    dot.className = 'status-dot scanning mr-2';
+                    statusEl.querySelector('span:last-child').innerHTML = `Scanning... ${percent}%`;
                 }
+
+                // Dispatch event for dashboard to listen to
+                window.dispatchEvent(new CustomEvent('statusUpdate', { detail: data }));
             } catch (e) {
                 console.error('Failed to fetch status:', e);
+                const statusEl = document.getElementById('scan-status');
+                const dot = statusEl.querySelector('.status-dot');
+                dot.className = 'status-dot offline mr-2';
+                statusEl.querySelector('span:last-child').innerHTML = 'Disconnected';
             }
         }
 
         updateStatus();
-        setInterval(updateStatus, 30000);
+        setInterval(updateStatus, 5000);
+
+        // Plex Authentication
+        let plexAuthWindow = null;
+        let plexPollInterval = null;
+
+        async function checkAuthStatus() {
+            try {
+                const response = await fetch('/auth/user');
+                const data = await response.json();
+
+                const loginBtn = document.getElementById('login-btn');
+                const userInfo = document.getElementById('user-info');
+
+                if (data.logged_in) {
+                    loginBtn.classList.add('hidden');
+                    loginBtn.classList.remove('flex');
+                    userInfo.classList.remove('hidden');
+                    userInfo.classList.add('flex');
+                    document.getElementById('user-name').textContent = data.user.username;
+                    document.getElementById('user-avatar').src = data.user.thumb || 'https://plex.tv/assets/images/avatar-default.png';
+                } else {
+                    loginBtn.classList.remove('hidden');
+                    loginBtn.classList.add('flex');
+                    userInfo.classList.add('hidden');
+                    userInfo.classList.remove('flex');
+                }
+            } catch (e) {
+                console.error('Failed to check auth status:', e);
+            }
+        }
+
+        async function startPlexLogin() {
+            try {
+                const response = await fetch('/auth/plex/start');
+                const data = await response.json();
+
+                if (!data.success) {
+                    showLoginError(data.error || 'Failed to start login');
+                    return;
+                }
+
+                plexAuthWindow = window.open(data.auth_url, 'PlexAuth', 'width=800,height=600');
+
+                document.getElementById('plex-login-modal').classList.remove('hidden');
+                document.getElementById('login-waiting').classList.remove('hidden');
+                document.getElementById('login-error').classList.add('hidden');
+
+                plexPollInterval = setInterval(pollPlexAuth, 2000);
+
+            } catch (e) {
+                showLoginError(e.message);
+            }
+        }
+
+        async function pollPlexAuth() {
+            try {
+                const response = await fetch('/auth/plex/check');
+                const data = await response.json();
+
+                if (data.done) {
+                    clearInterval(plexPollInterval);
+                    plexPollInterval = null;
+
+                    if (data.success && data.user) {
+                        closePlexModal();
+                        checkAuthStatus();
+                    } else if (data.error) {
+                        showLoginError(data.error);
+                    }
+                }
+            } catch (e) {
+                clearInterval(plexPollInterval);
+                showLoginError(e.message);
+            }
+        }
+
+        function cancelPlexLogin() {
+            if (plexPollInterval) {
+                clearInterval(plexPollInterval);
+                plexPollInterval = null;
+            }
+            if (plexAuthWindow) {
+                plexAuthWindow.close();
+                plexAuthWindow = null;
+            }
+            closePlexModal();
+        }
+
+        function showLoginError(msg) {
+            document.getElementById('login-waiting').classList.add('hidden');
+            document.getElementById('login-error').classList.remove('hidden');
+            document.getElementById('login-error-msg').textContent = msg;
+        }
+
+        function closePlexModal() {
+            document.getElementById('plex-login-modal').classList.add('hidden');
+        }
+
+        async function logout() {
+            try {
+                await fetch('/auth/logout', { method: 'POST' });
+                checkAuthStatus();
+            } catch (e) {
+                console.error('Logout failed:', e);
+            }
+        }
+
+        checkAuthStatus();
     </script>
     {% block scripts %}{% endblock %}
 </body>
