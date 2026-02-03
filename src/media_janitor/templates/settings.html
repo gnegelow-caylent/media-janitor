@@ -35,16 +35,6 @@
                     <span>Notifications</span>
                 </button>
             </nav>
-
-            <!-- Save Button -->
-            <div class="p-3 border-t border-gray-700/50 bg-gray-900/30">
-                <button onclick="saveAllSettings()" class="w-full flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-gray-900 hover:bg-yellow-500 transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                    </svg>
-                    Save Changes
-                </button>
-            </div>
         </div>
     </aside>
 
@@ -112,6 +102,15 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="mt-6 flex justify-end">
+                    <button onclick="saveAllSettings()" class="save-section-btn">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Save Changes
+                    </button>
+                </div>
             </div>
         </section>
 
@@ -140,6 +139,14 @@
                         <button onclick="addInstance('radarr')" class="text-sm text-primary hover:text-yellow-400 font-medium">+ Add Instance</button>
                     </div>
                     <div id="radarr-instances" class="space-y-3"></div>
+                    <div class="mt-4 pt-4 border-t border-gray-700/50 flex justify-end">
+                        <button onclick="saveAllSettings()" class="save-section-btn">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            Save Radarr
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Sonarr -->
@@ -159,6 +166,14 @@
                         <button onclick="addInstance('sonarr')" class="text-sm text-primary hover:text-yellow-400 font-medium">+ Add Instance</button>
                     </div>
                     <div id="sonarr-instances" class="space-y-3"></div>
+                    <div class="mt-4 pt-4 border-t border-gray-700/50 flex justify-end">
+                        <button onclick="saveAllSettings()" class="save-section-btn">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            Save Sonarr
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Plex -->
@@ -193,6 +208,14 @@
                             <button onclick="testPlex()" class="text-sm text-primary hover:text-yellow-400 font-medium">Test Connection</button>
                             <span id="plex-status" class="text-sm"></span>
                         </div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-gray-700/50 flex justify-end">
+                        <button onclick="saveAllSettings()" class="save-section-btn">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            Save Plex
+                        </button>
                     </div>
                 </div>
             </div>
@@ -278,6 +301,15 @@
                             </label>
                         </div>
                     </div>
+                </div>
+
+                <div class="mt-6 flex justify-end">
+                    <button onclick="saveAllSettings()" class="save-section-btn">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Save Changes
+                    </button>
                 </div>
             </div>
         </section>
@@ -477,6 +509,15 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="mt-6 flex justify-end">
+                    <button onclick="saveAllSettings()" class="save-section-btn">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Save Changes
+                    </button>
+                </div>
             </div>
         </section>
     </main>
@@ -592,6 +633,25 @@
     /* Instance Rows */
     .instance-row {
         @apply p-4 bg-gray-900/30 rounded-xl border border-gray-700/50;
+    }
+
+    /* Save Section Button */
+    .save-section-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        background: #fbbf24;
+        color: #111827;
+        font-size: 0.875rem;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .save-section-btn:hover {
+        background: #f59e0b;
     }
 </style>
 {% endblock %}
