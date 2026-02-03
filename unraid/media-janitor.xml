@@ -11,7 +11,7 @@
   <Project>https://github.com/gnegelow-caylent/media-janitor</Project>
   <Overview>Proactive media library quality monitor for Plex/Radarr/Sonarr. Automatically detects and replaces bad media files. Includes library reports showing largest files.</Overview>
   <Category>MediaServer:Other</Category>
-  <WebUI>http://[IP]:[PORT:9000]/report/library?format=html</WebUI>
+  <WebUI>http://[IP]:[PORT:9000]/</WebUI>
   <TemplateURL>https://raw.githubusercontent.com/gnegelow-caylent/media-janitor/main/unraid/media-janitor.xml</TemplateURL>
   <Icon>https://raw.githubusercontent.com/gnegelow-caylent/media-janitor/main/unraid/icon.png</Icon>
   <ExtraParams>--memory=2G --cpus=2</ExtraParams>
