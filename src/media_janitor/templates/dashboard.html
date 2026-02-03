@@ -607,6 +607,7 @@
             const instanceCtx = document.getElementById('instance-chart').getContext('2d');
 
             if (instanceChart) instanceChart.destroy();
+            const instanceColors = ['#f97316', '#3b82f6', '#22c55e', '#8b5cf6', '#ec4899', '#14b8a6'];
             instanceChart = new Chart(instanceCtx, {
                 type: 'bar',
                 data: {
@@ -614,7 +615,7 @@
                     datasets: [{
                         label: 'Files',
                         data: instanceData.map(d => d[1]),
-                        backgroundColor: '#f5a623',
+                        backgroundColor: instanceData.map((_, i) => instanceColors[i % instanceColors.length]),
                         borderRadius: 6
                     }]
                 },
