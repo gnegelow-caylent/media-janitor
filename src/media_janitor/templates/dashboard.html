@@ -307,13 +307,24 @@
     </div>
 
     <!-- Library Overview -->
-    <div class="stat-card">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-medium text-white">Library Overview</h3>
-            <a href="/ui/library" class="text-sm text-primary hover:text-yellow-400 transition-colors">View details →</a>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Instance Bar Chart -->
+        <div class="stat-card">
+            <h3 class="text-lg font-medium text-white mb-4">Files by Instance</h3>
+            <div class="h-64">
+                <canvas id="instance-chart"></canvas>
+            </div>
         </div>
-        <div class="h-64">
-            <canvas id="instance-chart"></canvas>
+
+        <!-- Quality Charts per Instance -->
+        <div class="lg:col-span-2 stat-card">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-white">Quality by Instance</h3>
+                <a href="/ui/library" class="text-sm text-primary hover:text-yellow-400 transition-colors">View details →</a>
+            </div>
+            <div id="quality-charts-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Dynamically populated -->
+            </div>
         </div>
     </div>
 </div>
@@ -330,6 +341,7 @@
 {% block scripts %}
 <script>
     let instanceChart = null;
+    let qualityCharts = {};
 
     // Health score calculation
     function calculateHealthScore(valid, invalid, total) {
@@ -586,6 +598,90 @@
                     }
                 }
             });
+
+            // Build per-instance quality data
+            const instanceQuality = {};
+
+            // Movies quality - assign to Radarr instances
+            for (const [instance, count] of Object.entries(moviesData.files_by_instance || {})) {
+                instanceQuality[instance] = { ...moviesData.files_by_quality };
+            }
+
+            // TV quality - distribute proportionally to Sonarr instances
+            for (const [instance, count] of Object.entries(tvData.files_by_instance || {})) {
+                if (!instanceQuality[instance]) {
+                    instanceQuality[instance] = {};
+                }
+                for (const [q, c] of Object.entries(tvData.files_by_quality || {})) {
+                    const ratio = count / (tvData.total_files || 1);
+                    instanceQuality[instance][q] = Math.round(c * ratio);
+                }
+            }
+
+            // Create quality charts per instance
+            const container = document.getElementById('quality-charts-container');
+            container.innerHTML = '';
+
+            const chartColors = ['#f5a623', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#14b8a6', '#6b7280'];
+            const instanceColorMap = { 'radarr': '#f97316', 'sonarr-main': '#3b82f6', 'sonarr-2': '#22c55e' };
+
+            // Destroy old charts
+            for (const chart of Object.values(qualityCharts)) {
+                chart.destroy();
+            }
+            qualityCharts = {};
+
+            for (const [instance, qualities] of Object.entries(instanceQuality)) {
+                const qualityData = Object.entries(qualities)
+                    .filter(([_, v]) => v > 0)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 6);
+
+                if (qualityData.length === 0) continue;
+
+                const total = qualityData.reduce((sum, [_, v]) => sum + v, 0);
+                const accentColor = instanceColorMap[instance] || '#f5a623';
+
+                // Create card for this instance
+                const card = document.createElement('div');
+                card.className = 'bg-gray-700/30 rounded-lg p-4';
+                card.innerHTML = `
+                    <div class="flex items-center mb-3">
+                        <div class="w-3 h-3 rounded-full mr-2" style="background: ${accentColor}"></div>
+                        <h4 class="text-sm font-medium text-white">${instance}</h4>
+                        <span class="ml-auto text-xs text-gray-400">${total.toLocaleString()} files</span>
+                    </div>
+                    <div class="h-40">
+                        <canvas id="quality-chart-${instance}"></canvas>
+                    </div>
+                `;
+                container.appendChild(card);
+
+                // Create chart
+                const ctx = document.getElementById(`quality-chart-${instance}`).getContext('2d');
+                qualityCharts[instance] = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: qualityData.map(d => d[0]),
+                        datasets: [{
+                            data: qualityData.map(d => d[1]),
+                            backgroundColor: chartColors.slice(0, qualityData.length),
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '60%',
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: { color: '#9ca3af', padding: 6, usePointStyle: true, font: { size: 9 } }
+                            }
+                        }
+                    }
+                });
+            }
 
         } catch (e) {
             console.error('Failed to fetch charts:', e);
