@@ -52,6 +52,7 @@ class LibraryReport:
     smallest_files: list[FileStats]
     files_by_quality: dict[str, int]
     files_by_instance: dict[str, int]
+    quality_by_instance: dict[str, dict[str, int]]  # instance -> quality -> count
 
 
 def bytes_to_human(size_bytes: int) -> str:
@@ -183,6 +184,7 @@ async def generate_library_report(
             smallest_files=[],
             files_by_quality={},
             files_by_instance={},
+            quality_by_instance={},
         )
 
     # Calculate totals
@@ -231,6 +233,15 @@ async def generate_library_report(
         inst = m.arr_instance or "Unknown"
         instance_counts[inst] = instance_counts.get(inst, 0) + 1
 
+    # Group quality by instance
+    quality_by_instance: dict[str, dict[str, int]] = {}
+    for m in files_with_size:
+        inst = m.arr_instance or "Unknown"
+        q = m.quality or "Unknown"
+        if inst not in quality_by_instance:
+            quality_by_instance[inst] = {}
+        quality_by_instance[inst][q] = quality_by_instance[inst].get(q, 0) + 1
+
     log.info(
         "Report generated",
         total_files=len(files_with_size),
@@ -246,6 +257,7 @@ async def generate_library_report(
         smallest_files=smallest,
         files_by_quality=quality_counts,
         files_by_instance=instance_counts,
+        quality_by_instance=quality_by_instance,
     )
 
 

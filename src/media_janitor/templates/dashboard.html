@@ -599,22 +599,20 @@
                 }
             });
 
-            // Build per-instance quality data
+            // Use actual per-instance quality data from API
             const instanceQuality = {};
 
-            // Movies quality - assign to Radarr instances
-            for (const [instance, count] of Object.entries(moviesData.files_by_instance || {})) {
-                instanceQuality[instance] = { ...moviesData.files_by_quality };
+            // Merge quality_by_instance from both movies and TV
+            for (const [instance, qualities] of Object.entries(moviesData.quality_by_instance || {})) {
+                instanceQuality[instance] = { ...qualities };
             }
-
-            // TV quality - distribute proportionally to Sonarr instances
-            for (const [instance, count] of Object.entries(tvData.files_by_instance || {})) {
+            for (const [instance, qualities] of Object.entries(tvData.quality_by_instance || {})) {
                 if (!instanceQuality[instance]) {
                     instanceQuality[instance] = {};
                 }
-                for (const [q, c] of Object.entries(tvData.files_by_quality || {})) {
-                    const ratio = count / (tvData.total_files || 1);
-                    instanceQuality[instance][q] = Math.round(c * ratio);
+                // Merge qualities (in case same instance has both - unlikely but safe)
+                for (const [q, count] of Object.entries(qualities)) {
+                    instanceQuality[instance][q] = (instanceQuality[instance][q] || 0) + count;
                 }
             }
 

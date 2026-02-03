@@ -203,28 +203,25 @@
             const moviesData = await moviesRes.json();
             const tvData = await tvRes.json();
 
-            // Build data structure: instance -> quality -> count
+            // Use actual quality_by_instance data from API
             const instanceQualityData = {};
 
-            // Movies - all go to their instances with full quality data
-            for (const [instance, count] of Object.entries(moviesData.files_by_instance || {})) {
+            // Movies instances (Radarr)
+            for (const [instance, qualities] of Object.entries(moviesData.quality_by_instance || {})) {
+                const total = Object.values(qualities).reduce((sum, c) => sum + c, 0);
                 instanceQualityData[instance] = {
-                    qualities: { ...moviesData.files_by_quality },
-                    total: count,
+                    qualities: qualities,
+                    total: total,
                     type: 'radarr'
                 };
             }
 
-            // TV - distribute quality proportionally per instance
-            for (const [instance, count] of Object.entries(tvData.files_by_instance || {})) {
-                const ratio = count / (tvData.total_files || 1);
-                const qualities = {};
-                for (const [q, c] of Object.entries(tvData.files_by_quality || {})) {
-                    qualities[q] = Math.round(c * ratio);
-                }
+            // TV instances (Sonarr)
+            for (const [instance, qualities] of Object.entries(tvData.quality_by_instance || {})) {
+                const total = Object.values(qualities).reduce((sum, c) => sum + c, 0);
                 instanceQualityData[instance] = {
                     qualities: qualities,
-                    total: count,
+                    total: total,
                     type: 'sonarr'
                 };
             }

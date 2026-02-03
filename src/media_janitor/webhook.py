@@ -212,6 +212,7 @@ async def get_library_report(
             ],
             "files_by_quality": report.files_by_quality,
             "files_by_instance": report.files_by_instance,
+            "quality_by_instance": report.quality_by_instance,
         }
 
 
