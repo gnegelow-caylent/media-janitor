@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Literal
 
 import yaml
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 
 
 class PathMapping(BaseModel):
@@ -21,6 +21,16 @@ class ArrInstance(BaseModel):
     url: str
     api_key: str
     path_mappings: list[PathMapping] = Field(default_factory=list)
+
+
+class PlexConfig(BaseModel):
+    """Plex server configuration."""
+
+    enabled: bool = False
+    url: str = ""
+    token: str = ""
+    # Trigger library refresh after replacements
+    refresh_on_replace: bool = True
 
 
 class ValidationConfig(BaseModel):
@@ -65,8 +75,10 @@ class ActionsConfig(BaseModel):
     """Action settings."""
 
     auto_replace: bool = True
+    auto_delete_duplicates: bool = False
     blocklist_bad_releases: bool = True
     max_replacements_per_day: int = 10
+    dry_run: bool = False  # Report only, no actual changes
 
 
 class EmailConfig(BaseModel):
@@ -82,6 +94,54 @@ class EmailConfig(BaseModel):
     daily_summary_time: str = "08:00"
 
 
+class DiscordConfig(BaseModel):
+    """Discord notification settings."""
+
+    enabled: bool = False
+    webhook_url: str = ""
+
+
+class SlackConfig(BaseModel):
+    """Slack notification settings."""
+
+    enabled: bool = False
+    webhook_url: str = ""
+
+
+class TelegramConfig(BaseModel):
+    """Telegram notification settings."""
+
+    enabled: bool = False
+    bot_token: str = ""
+    chat_id: str = ""
+
+
+class PushoverConfig(BaseModel):
+    """Pushover notification settings."""
+
+    enabled: bool = False
+    user_key: str = ""
+    api_token: str = ""
+
+
+class GotifyConfig(BaseModel):
+    """Gotify notification settings."""
+
+    enabled: bool = False
+    server_url: str = ""
+    app_token: str = ""
+
+
+class NotificationsConfig(BaseModel):
+    """All notification settings."""
+
+    discord: DiscordConfig = Field(default_factory=DiscordConfig)
+    slack: SlackConfig = Field(default_factory=SlackConfig)
+    telegram: TelegramConfig = Field(default_factory=TelegramConfig)
+    pushover: PushoverConfig = Field(default_factory=PushoverConfig)
+    gotify: GotifyConfig = Field(default_factory=GotifyConfig)
+
+
 class LoggingConfig(BaseModel):
     """Logging settings."""
 
@@ -89,17 +149,27 @@ class LoggingConfig(BaseModel):
     file: str = "/data/logs/media-janitor.log"
 
 
+class UIConfig(BaseModel):
+    """UI settings."""
+
+    theme: Literal["dark", "light"] = "dark"
+    timezone: str = "America/New_York"
+
+
 class Config(BaseModel):
     """Main configuration."""
 
     radarr: list[ArrInstance] = Field(default_factory=list)
     sonarr: list[ArrInstance] = Field(default_factory=list)
+    plex: PlexConfig = Field(default_factory=PlexConfig)
     validation: ValidationConfig = Field(default_factory=ValidationConfig)
     scanner: ScannerConfig = Field(default_factory=ScannerConfig)
     webhook: WebhookConfig = Field(default_factory=WebhookConfig)
     actions: ActionsConfig = Field(default_factory=ActionsConfig)
     email: EmailConfig = Field(default_factory=EmailConfig)
+    notifications: NotificationsConfig = Field(default_factory=NotificationsConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
+    ui: UIConfig = Field(default_factory=UIConfig)
 
 
 def load_config(path: str | Path = "/data/config.yaml") -> Config:

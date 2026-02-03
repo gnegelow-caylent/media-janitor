@@ -234,6 +234,15 @@ async def get_user(request: Request):
 # =============================================================================
 
 
+def mask_secret(value: str, show_chars: int = 8) -> str:
+    """Mask a secret value, showing only first few chars."""
+    if not value:
+        return ""
+    if len(value) <= show_chars:
+        return "***"
+    return value[:show_chars] + "..."
+
+
 @router.get("/api/config")
 async def get_config():
     """Get current configuration."""
@@ -241,17 +250,42 @@ async def get_config():
 
     # Mask sensitive fields
     if config.get("email", {}).get("smtp_password"):
-        config["email"]["smtp_password"] = ""  # Don't send password to frontend
+        config["email"]["smtp_password"] = "***"
 
+    # Mask Plex token
+    if config.get("plex", {}).get("token"):
+        config["plex"]["token"] = mask_secret(config["plex"]["token"])
+
+    # Mask Radarr/Sonarr API keys
     for instance in config.get("radarr", []):
         if instance.get("api_key"):
-            instance["api_key"] = instance["api_key"][:8] + "..." if len(instance["api_key"]) > 8 else "***"
+            instance["api_key"] = mask_secret(instance["api_key"])
 
     for instance in config.get("sonarr", []):
         if instance.get("api_key"):
-            instance["api_key"] = instance["api_key"][:8] + "..." if len(instance["api_key"]) > 8 else "***"
+            instance["api_key"] = mask_secret(instance["api_key"])
+
+    # Mask notification secrets
+    notifications = config.get("notifications", {})
+    if notifications.get("discord", {}).get("webhook_url"):
+        notifications["discord"]["webhook_url"] = mask_secret(notifications["discord"]["webhook_url"], 40)
+    if notifications.get("slack", {}).get("webhook_url"):
+        notifications["slack"]["webhook_url"] = mask_secret(notifications["slack"]["webhook_url"], 40)
+    if notifications.get("telegram", {}).get("bot_token"):
+        notifications["telegram"]["bot_token"] = mask_secret(notifications["telegram"]["bot_token"])
+    if notifications.get("pushover", {}).get("api_token"):
+        notifications["pushover"]["api_token"] = mask_secret(notifications["pushover"]["api_token"])
+    if notifications.get("gotify", {}).get("app_token"):
+        notifications["gotify"]["app_token"] = mask_secret(notifications["gotify"]["app_token"])
 
     return config
+
+
+def is_masked(value: str) -> bool:
+    """Check if a value is masked."""
+    if not value:
+        return False
+    return value == "***" or value.endswith("...")
 
 
 @router.post("/api/config")
@@ -260,24 +294,48 @@ async def save_config(request: Request):
     try:
         new_config = await request.json()
 
-        # Load existing config to preserve passwords if not changed
+        # Load existing config to preserve secrets if not changed
         existing = get_config_dict()
 
-        # Preserve API keys if masked
+        # Preserve Radarr API keys if masked
         for i, inst in enumerate(new_config.get("radarr", [])):
-            if inst.get("api_key", "").endswith("..."):
-                if i < len(existing.get("radarr", [])):
-                    inst["api_key"] = existing["radarr"][i].get("api_key", "")
+            if is_masked(inst.get("api_key", "")):
+                # Try to find existing instance by name or URL
+                for existing_inst in existing.get("radarr", []):
+                    if existing_inst.get("name") == inst.get("name") or existing_inst.get("url") == inst.get("url"):
+                        inst["api_key"] = existing_inst.get("api_key", "")
+                        break
 
+        # Preserve Sonarr API keys if masked
         for i, inst in enumerate(new_config.get("sonarr", [])):
-            if inst.get("api_key", "").endswith("..."):
-                if i < len(existing.get("sonarr", [])):
-                    inst["api_key"] = existing["sonarr"][i].get("api_key", "")
+            if is_masked(inst.get("api_key", "")):
+                for existing_inst in existing.get("sonarr", []):
+                    if existing_inst.get("name") == inst.get("name") or existing_inst.get("url") == inst.get("url"):
+                        inst["api_key"] = existing_inst.get("api_key", "")
+                        break
 
-        # Preserve email password if not changed
-        if not new_config.get("email", {}).get("smtp_password"):
-            if existing.get("email", {}).get("smtp_password"):
-                new_config.setdefault("email", {})["smtp_password"] = existing["email"]["smtp_password"]
+        # Preserve Plex token if masked
+        if is_masked(new_config.get("plex", {}).get("token", "")):
+            new_config.setdefault("plex", {})["token"] = existing.get("plex", {}).get("token", "")
+
+        # Preserve email password if masked
+        if is_masked(new_config.get("email", {}).get("smtp_password", "")):
+            new_config.setdefault("email", {})["smtp_password"] = existing.get("email", {}).get("smtp_password", "")
+
+        # Preserve notification secrets if masked
+        existing_notif = existing.get("notifications", {})
+        new_notif = new_config.get("notifications", {})
+
+        if is_masked(new_notif.get("discord", {}).get("webhook_url", "")):
+            new_notif.setdefault("discord", {})["webhook_url"] = existing_notif.get("discord", {}).get("webhook_url", "")
+        if is_masked(new_notif.get("slack", {}).get("webhook_url", "")):
+            new_notif.setdefault("slack", {})["webhook_url"] = existing_notif.get("slack", {}).get("webhook_url", "")
+        if is_masked(new_notif.get("telegram", {}).get("bot_token", "")):
+            new_notif.setdefault("telegram", {})["bot_token"] = existing_notif.get("telegram", {}).get("bot_token", "")
+        if is_masked(new_notif.get("pushover", {}).get("api_token", "")):
+            new_notif.setdefault("pushover", {})["api_token"] = existing_notif.get("pushover", {}).get("api_token", "")
+        if is_masked(new_notif.get("gotify", {}).get("app_token", "")):
+            new_notif.setdefault("gotify", {})["app_token"] = existing_notif.get("gotify", {}).get("app_token", "")
 
         save_config_dict(new_config)
         return {"success": True}
@@ -288,7 +346,7 @@ async def save_config(request: Request):
 
 @router.post("/api/test-connection")
 async def test_connection(request: Request):
-    """Test connection to Radarr/Sonarr."""
+    """Test connection to Radarr/Sonarr and fetch root folders."""
     try:
         data = await request.json()
         url = data.get("url", "").rstrip("/")
@@ -304,17 +362,170 @@ async def test_connection(request: Request):
                     break
 
         async with httpx.AsyncClient(timeout=10.0) as client:
+            # Test connection
             response = await client.get(
                 f"{url}/api/v3/system/status",
                 headers={"X-Api-Key": api_key}
             )
             response.raise_for_status()
-            return {"success": True}
+            status = response.json()
+
+            # Fetch root folders
+            root_response = await client.get(
+                f"{url}/api/v3/rootfolder",
+                headers={"X-Api-Key": api_key}
+            )
+            root_response.raise_for_status()
+            root_folders = root_response.json()
+
+            return {
+                "success": True,
+                "version": status.get("version", "unknown"),
+                "root_folders": [
+                    {
+                        "path": rf.get("path"),
+                        "free_space": rf.get("freeSpace", 0),
+                        "accessible": rf.get("accessible", True),
+                    }
+                    for rf in root_folders
+                ]
+            }
 
     except httpx.TimeoutException:
         return {"success": False, "error": "Connection timed out"}
     except httpx.HTTPStatusError as e:
         return {"success": False, "error": f"HTTP {e.response.status_code}"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@router.post("/api/test-plex")
+async def test_plex(request: Request):
+    """Test connection to Plex server."""
+    try:
+        data = await request.json()
+        url = data.get("url", "").rstrip("/")
+        token = data.get("token", "")
+
+        # If token is masked, get from config
+        if token == "***" or token.endswith("..."):
+            existing = get_config_dict()
+            token = existing.get("plex", {}).get("token", "")
+
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(
+                f"{url}/identity",
+                headers={"X-Plex-Token": token, "Accept": "application/json"}
+            )
+            response.raise_for_status()
+            data = response.json()
+
+            # Get libraries
+            lib_response = await client.get(
+                f"{url}/library/sections",
+                headers={"X-Plex-Token": token, "Accept": "application/json"}
+            )
+            lib_response.raise_for_status()
+            lib_data = lib_response.json()
+
+            libraries = []
+            for lib in lib_data.get("MediaContainer", {}).get("Directory", []):
+                libraries.append({
+                    "title": lib.get("title"),
+                    "type": lib.get("type"),
+                    "key": lib.get("key"),
+                })
+
+            return {
+                "success": True,
+                "server_name": data.get("MediaContainer", {}).get("machineIdentifier", "unknown"),
+                "libraries": libraries
+            }
+
+    except httpx.TimeoutException:
+        return {"success": False, "error": "Connection timed out"}
+    except httpx.HTTPStatusError as e:
+        return {"success": False, "error": f"HTTP {e.response.status_code}"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@router.post("/api/test-notification")
+async def test_notification(request: Request):
+    """Test a notification service."""
+    try:
+        data = await request.json()
+        service = data.get("service")
+        config = get_config_dict()
+
+        if service == "discord":
+            webhook_url = data.get("webhook_url") or config.get("notifications", {}).get("discord", {}).get("webhook_url")
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                response = await client.post(
+                    webhook_url,
+                    json={
+                        "content": "Test notification from Media Janitor",
+                        "embeds": [{
+                            "title": "Test Successful",
+                            "description": "Discord notifications are working!",
+                            "color": 0xf5a623
+                        }]
+                    }
+                )
+                response.raise_for_status()
+                return {"success": True}
+
+        elif service == "slack":
+            webhook_url = data.get("webhook_url") or config.get("notifications", {}).get("slack", {}).get("webhook_url")
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                response = await client.post(
+                    webhook_url,
+                    json={"text": "Test notification from Media Janitor - Slack is working!"}
+                )
+                response.raise_for_status()
+                return {"success": True}
+
+        elif service == "telegram":
+            bot_token = data.get("bot_token") or config.get("notifications", {}).get("telegram", {}).get("bot_token")
+            chat_id = data.get("chat_id") or config.get("notifications", {}).get("telegram", {}).get("chat_id")
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                response = await client.post(
+                    f"https://api.telegram.org/bot{bot_token}/sendMessage",
+                    json={"chat_id": chat_id, "text": "Test notification from Media Janitor - Telegram is working!"}
+                )
+                response.raise_for_status()
+                return {"success": True}
+
+        elif service == "pushover":
+            user_key = data.get("user_key") or config.get("notifications", {}).get("pushover", {}).get("user_key")
+            api_token = data.get("api_token") or config.get("notifications", {}).get("pushover", {}).get("api_token")
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                response = await client.post(
+                    "https://api.pushover.net/1/messages.json",
+                    data={
+                        "token": api_token,
+                        "user": user_key,
+                        "message": "Test notification from Media Janitor - Pushover is working!"
+                    }
+                )
+                response.raise_for_status()
+                return {"success": True}
+
+        elif service == "gotify":
+            server_url = data.get("server_url") or config.get("notifications", {}).get("gotify", {}).get("server_url")
+            app_token = data.get("app_token") or config.get("notifications", {}).get("gotify", {}).get("app_token")
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                response = await client.post(
+                    f"{server_url.rstrip('/')}/message",
+                    headers={"X-Gotify-Key": app_token},
+                    json={"title": "Media Janitor", "message": "Test notification - Gotify is working!"}
+                )
+                response.raise_for_status()
+                return {"success": True}
+
+        else:
+            return {"success": False, "error": f"Unknown service: {service}"}
+
     except Exception as e:
         return {"success": False, "error": str(e)}
 
