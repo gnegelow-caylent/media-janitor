@@ -23,6 +23,7 @@ class StateManager:
             "total_scanned": 0,
             "total_invalid": 0,
             "total_replaced": 0,
+            "total_wrong_files": 0,  # Files in wrong folder (path mismatch)
             # Separate counters for movies and TV
             "movies_scanned": 0,
             "movies_total": 0,
@@ -88,13 +89,20 @@ class StateManager:
         if self._state["total_scanned"] % 10 == 0:
             self._save()
 
-    def mark_replaced(self, file_path: str):
-        """Mark a file as replaced (remove from scanned, increment counter)."""
+    def mark_replaced(self, file_path: str, wrong_file: bool = False):
+        """Mark a file as replaced (remove from scanned, increment counter).
+
+        Args:
+            file_path: Path to the file
+            wrong_file: True if this was a wrong file in folder (path mismatch)
+        """
         if file_path in self._state.get("scanned_files", {}):
             del self._state["scanned_files"][file_path]
         self._state["total_replaced"] = self._state.get("total_replaced", 0) + 1
         # Replaced files are invalid files, so count them as issues
         self._state["total_invalid"] = self._state.get("total_invalid", 0) + 1
+        if wrong_file:
+            self._state["total_wrong_files"] = self._state.get("total_wrong_files", 0) + 1
         self._save()
 
     def mark_scan_started(self):
@@ -127,6 +135,7 @@ class StateManager:
             "valid_files": valid_count,
             "invalid_files": invalid_count,
             "total_replaced": self._state.get("total_replaced", 0),
+            "total_wrong_files": self._state.get("total_wrong_files", 0),
             "scan_started": self._state.get("scan_started"),
             "scan_completed": self._state.get("scan_completed"),
             "initial_scan_done": self._state.get("scan_completed") is not None,
@@ -152,6 +161,7 @@ class StateManager:
             "total_scanned": 0,
             "total_invalid": 0,
             "total_replaced": 0,
+            "total_wrong_files": 0,
             "movies_scanned": 0,
             "movies_total": 0,
             "tv_scanned": 0,

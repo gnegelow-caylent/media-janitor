@@ -77,6 +77,18 @@
                 <p class="mt-4 text-2xl font-bold text-primary" id="stat-replaced">--</p>
                 <p class="text-sm text-gray-400">Replaced Today</p>
             </div>
+
+            <div class="stat-card card-hover animate-slide-up stagger-4">
+                <div class="flex items-center justify-between">
+                    <div class="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                        </svg>
+                    </div>
+                </div>
+                <p class="mt-4 text-2xl font-bold text-purple-400" id="stat-wrong">--</p>
+                <p class="text-sm text-gray-400">Wrong Files</p>
+            </div>
         </div>
     </div>
 
@@ -422,6 +434,7 @@
             document.getElementById('stat-valid').textContent = valid.toLocaleString();
             document.getElementById('stat-invalid').textContent = invalid.toLocaleString();
             document.getElementById('stat-replaced').textContent = `${data.replacements_today}/${data.max_replacements_per_day}`;
+            document.getElementById('stat-wrong').textContent = (data.scanner.wrong_files_count || 0).toLocaleString();
 
             // Update progress
             const percent = total > 0 ? ((scanned / total) * 100).toFixed(1) : 0;

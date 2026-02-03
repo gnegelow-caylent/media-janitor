@@ -154,9 +154,9 @@ class Scanner:
         """Mark a file as scanned (persisted to disk)."""
         self.state.mark_scanned(file_path, valid, media_type)
 
-    def mark_replaced(self, file_path: str):
+    def mark_replaced(self, file_path: str, wrong_file: bool = False):
         """Mark a file as replaced (removes from scanned list)."""
-        self.state.mark_replaced(file_path)
+        self.state.mark_replaced(file_path, wrong_file=wrong_file)
 
     def check_initial_scan_complete(self) -> bool:
         """Check if initial scan is complete and mark if so."""
@@ -185,6 +185,7 @@ class Scanner:
             "valid_count": stats["valid_files"],
             "invalid_count": stats["invalid_files"],
             "replaced_count": stats["total_replaced"],
+            "wrong_files_count": stats["total_wrong_files"],
             "last_refresh": self._last_full_refresh.isoformat() if self._last_full_refresh else None,
             "initial_scan_done": stats["initial_scan_done"],
             "scan_started": stats["scan_started"],

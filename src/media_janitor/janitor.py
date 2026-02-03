@@ -105,6 +105,9 @@ class Janitor:
         media_type = "movie" if item.arr_type == ArrType.RADARR else "tv"
         scan_result.media_type = media_type
 
+        # Track if this is a wrong file (path mismatch) vs other validation failure
+        is_wrong_file = False
+
         if validation_result.valid:
             # Check for path mismatch - if filename doesn't match expected title,
             # it's likely the wrong file entirely (not just a naming issue)
@@ -123,6 +126,7 @@ class Janitor:
                 )
                 scan_result.valid = False
                 scan_result.errors = validation_result.errors
+                is_wrong_file = True
             else:
                 # File is valid and in correct location
                 self.scanner.mark_scanned(file_path, True, media_type)
@@ -154,7 +158,7 @@ class Janitor:
             scan_result.action_taken = "replaced"
             self._increment_replacement_count()
             # Remove from scanned list so new file will be scanned
-            self.scanner.mark_replaced(file_path)
+            self.scanner.mark_replaced(file_path, wrong_file=is_wrong_file)
         else:
             # Mark as scanned if replacement failed (don't keep retrying)
             self.scanner.mark_scanned(file_path, False, media_type)
