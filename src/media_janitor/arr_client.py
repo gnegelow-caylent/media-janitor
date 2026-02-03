@@ -148,47 +148,89 @@ class ArrClient:
         return items
 
     async def _get_all_episodes(self) -> list[MediaItem]:
-        """Get all episodes from Sonarr."""
+        """Get all episodes from Sonarr using bulk episodefile endpoint."""
+        # First, get series list for title lookups (single API call)
         series_list = await self._get("series")
+        series_map = {s["id"]: s["title"] for s in series_list}
+
+        # Check total episode file count to decide fetch strategy
+        total_files = sum(
+            s.get("statistics", {}).get("episodeFileCount", 0)
+            for s in series_list
+        )
+
+        self.log.info("Fetching episodes", total_expected=total_files)
+
         items = []
 
-        for series in series_list:
-            if series.get("statistics", {}).get("episodeFileCount", 0) == 0:
-                continue
+        if total_files < 1000:
+            # Small library - fetch all at once
+            episode_files = await self._get("episodefile")
+            items = self._parse_episode_files(episode_files, series_map)
+        else:
+            # Large library - paginate in chunks
+            page_size = 500
+            page = 1
 
-            episodes = await self._get("episode", params={"seriesId": series["id"]})
+            while True:
+                self.log.debug("Fetching episode page", page=page, page_size=page_size)
+                data = await self._get("episodefile", params={
+                    "page": page,
+                    "pageSize": page_size,
+                })
 
-            for episode in episodes:
-                if not episode.get("hasFile"):
-                    continue
+                # Handle both array response and paginated response
+                if isinstance(data, list):
+                    # Some Sonarr versions return array directly
+                    episode_files = data
+                    items.extend(self._parse_episode_files(episode_files, series_map))
+                    break
+                else:
+                    # Paginated response
+                    records = data.get("records", [])
+                    items.extend(self._parse_episode_files(records, series_map))
 
-                episode_file = episode.get("episodeFile", {})
-                if not episode_file:
-                    # Need to fetch episode file separately
-                    file_id = episode.get("episodeFileId")
-                    if file_id:
-                        try:
-                            episode_file = await self._get(f"episodefile/{file_id}")
-                        except Exception:
-                            continue
-
-                items.append(
-                    MediaItem(
-                        id=episode["id"],
-                        title=f"{series['title']} - S{episode.get('seasonNumber', 0):02d}E{episode.get('episodeNumber', 0):02d}",
-                        file_path=self.translate_path(episode_file.get("path")),
-                        file_id=episode_file.get("id"),
-                        quality=episode_file.get("quality", {}).get("quality", {}).get("name"),
-                        size_bytes=episode_file.get("size"),
-                        series_id=series["id"],
-                        season_number=episode.get("seasonNumber"),
-                        episode_number=episode.get("episodeNumber"),
-                        arr_type=ArrType.SONARR,
-                        arr_instance=self.instance.name,
-                    )
-                )
+                    total_records = data.get("totalRecords", 0)
+                    if page * page_size >= total_records:
+                        break
+                    page += 1
 
         self.log.info("Fetched episodes", count=len(items))
+        return items
+
+    def _parse_episode_files(self, episode_files: list, series_map: dict) -> list[MediaItem]:
+        """Parse episode files into MediaItem objects."""
+        items = []
+        for ef in episode_files:
+            series_id = ef.get("seriesId")
+            series_title = series_map.get(series_id, "Unknown Series")
+
+            # Get season/episode from the file's first episode (files can have multiple episodes)
+            season_num = ef.get("seasonNumber", 0)
+            # Episode files have episodes array with their episode numbers
+            episodes = ef.get("episodes", [])
+            if episodes:
+                episode_num = episodes[0].get("episodeNumber", 0)
+                episode_id = episodes[0].get("id", ef.get("id"))
+            else:
+                episode_num = 0
+                episode_id = ef.get("id")
+
+            items.append(
+                MediaItem(
+                    id=episode_id,
+                    title=f"{series_title} - S{season_num:02d}E{episode_num:02d}",
+                    file_path=self.translate_path(ef.get("path")),
+                    file_id=ef.get("id"),
+                    quality=ef.get("quality", {}).get("quality", {}).get("name"),
+                    size_bytes=ef.get("size"),
+                    series_id=series_id,
+                    season_number=season_num,
+                    episode_number=episode_num,
+                    arr_type=ArrType.SONARR,
+                    arr_instance=self.instance.name,
+                )
+            )
         return items
 
     async def get_file_by_path(self, file_path: str) -> MediaItem | None:
