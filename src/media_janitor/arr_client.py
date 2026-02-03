@@ -148,52 +148,38 @@ class ArrClient:
         return items
 
     async def _get_all_episodes(self) -> list[MediaItem]:
-        """Get all episodes from Sonarr using bulk episodefile endpoint."""
-        # First, get series list for title lookups (single API call)
+        """Get all episodes from Sonarr by fetching episode files per series."""
+        # Get all series first
         series_list = await self._get("series")
         series_map = {s["id"]: s["title"] for s in series_list}
 
-        # Check total episode file count to decide fetch strategy
-        total_files = sum(
+        # Count expected total for logging
+        total_expected = sum(
             s.get("statistics", {}).get("episodeFileCount", 0)
             for s in series_list
         )
 
-        self.log.info("Fetching episodes", total_expected=total_files)
+        self.log.info("Fetching episodes from Sonarr",
+                      series_count=len(series_list),
+                      total_expected=total_expected)
 
         items = []
 
-        if total_files < 1000:
-            # Small library - fetch all at once
-            episode_files = await self._get("episodefile")
-            items = self._parse_episode_files(episode_files, series_map)
-        else:
-            # Large library - paginate in chunks
-            page_size = 500
-            page = 1
+        # Fetch episode files per series (more reliable than bulk endpoint)
+        for series in series_list:
+            series_id = series["id"]
+            episode_count = series.get("statistics", {}).get("episodeFileCount", 0)
 
-            while True:
-                self.log.debug("Fetching episode page", page=page, page_size=page_size)
-                data = await self._get("episodefile", params={
-                    "page": page,
-                    "pageSize": page_size,
-                })
+            if episode_count == 0:
+                continue
 
-                # Handle both array response and paginated response
-                if isinstance(data, list):
-                    # Some Sonarr versions return array directly
-                    episode_files = data
+            try:
+                episode_files = await self._get("episodefile", params={"seriesId": series_id})
+                if episode_files:
                     items.extend(self._parse_episode_files(episode_files, series_map))
-                    break
-                else:
-                    # Paginated response
-                    records = data.get("records", [])
-                    items.extend(self._parse_episode_files(records, series_map))
-
-                    total_records = data.get("totalRecords", 0)
-                    if page * page_size >= total_records:
-                        break
-                    page += 1
+            except Exception as e:
+                self.log.error("Failed to fetch episodes for series",
+                             series=series["title"], error=str(e))
 
         self.log.info("Fetched episodes", count=len(items))
         return items
