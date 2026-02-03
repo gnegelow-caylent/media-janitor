@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-900">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Media Janitor{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#f5a623',
+                        secondary: '#1a1a2e',
+                        accent: '#e94560',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .stat-card {
+            @apply bg-gray-800 rounded-lg p-6 border border-gray-700;
+        }
+        .nav-link {
+            @apply px-4 py-2 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors;
+        }
+        .nav-link.active {
+            @apply bg-primary text-gray-900 font-semibold;
+        }
+    </style>
+    {% block head %}{% endblock %}
+</head>
+<body class="h-full">
+    <div class="min-h-full">
+        <!-- Navigation -->
+        <nav class="bg-gray-800 border-b border-gray-700">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="flex h-16 items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <span class="text-2xl font-bold text-primary">Media Janitor</span>
+                        </div>
+                        <div class="ml-10 flex items-baseline space-x-4">
+                            <a href="/" class="nav-link {% if active_page == 'dashboard' %}active{% endif %}">Dashboard</a>
+                            <a href="/ui/library" class="nav-link {% if active_page == 'library' %}active{% endif %}">Library</a>
+                            <a href="/ui/reports" class="nav-link {% if active_page == 'reports' %}active{% endif %}">Reports</a>
+                            <a href="/ui/logs" class="nav-link {% if active_page == 'logs' %}active{% endif %}">Logs</a>
+                            <a href="/ui/settings" class="nav-link {% if active_page == 'settings' %}active{% endif %}">Settings</a>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <span id="scan-status" class="text-sm text-gray-400">
+                            <!-- Populated by JS -->
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main content -->
+        <main>
+            <div class="mx-auto max-w-7xl py-6 px-4 sm:px-6 lg:px-8">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-gray-800 border-t border-gray-700 mt-auto">
+            <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+                <p class="text-center text-sm text-gray-500">
+                    Media Janitor - Proactive media library quality monitor
+                </p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Update scan status periodically
+        async function updateStatus() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+                const statusEl = document.getElementById('scan-status');
+
+                if (data.scanner.initial_scan_done) {
+                    statusEl.innerHTML = '<span class="text-green-400">Scan Complete</span> - Watching for new imports';
+                } else {
+                    const percent = ((data.scanner.scanned_count / (data.scanner.scanned_count + data.scanner.queue_size)) * 100).toFixed(1);
+                    statusEl.innerHTML = `<span class="text-primary">Scanning...</span> ${data.scanner.scanned_count} / ${data.scanner.scanned_count + data.scanner.queue_size} (${percent}%)`;
+                }
+            } catch (e) {
+                console.error('Failed to fetch status:', e);
+            }
+        }
+
+        updateStatus();
+        setInterval(updateStatus, 30000);
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

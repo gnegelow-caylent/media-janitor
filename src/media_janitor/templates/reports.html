@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block title %}Reports - Media Janitor{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="md:flex md:items-center md:justify-between">
+        <h2 class="text-2xl font-bold text-white">Reports</h2>
+    </div>
+
+    <!-- Report Cards Grid -->
+    <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+
+        <!-- Path Mismatches -->
+        <div class="stat-card hover:border-primary transition-colors cursor-pointer" onclick="loadReport('mismatches')">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-medium text-white">Path Mismatches</h3>
+                <span class="text-2xl">📁</span>
+            </div>
+            <p class="mt-2 text-sm text-gray-400">Files in wrong folders or with wrong names</p>
+            <div class="mt-4">
+                <span class="text-primary text-sm">Click to run report →</span>
+            </div>
+        </div>
+
+        <!-- Suspiciously Small -->
+        <div class="stat-card hover:border-primary transition-colors cursor-pointer" onclick="loadReport('small')">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-medium text-white">Suspiciously Small</h3>
+                <span class="text-2xl">⚠️</span>
+            </div>
+            <p class="mt-2 text-sm text-gray-400">Files that may be corrupt or incomplete</p>
+            <div class="mt-4">
+                <span class="text-primary text-sm">Click to run report →</span>
+            </div>
+        </div>
+
+        <!-- Duplicates -->
+        <div class="stat-card hover:border-primary transition-colors cursor-pointer" onclick="loadReport('duplicates')">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-medium text-white">Duplicates</h3>
+                <span class="text-2xl">👯</span>
+            </div>
+            <p class="mt-2 text-sm text-gray-400">Same content in multiple qualities</p>
+            <div class="mt-4">
+                <span class="text-gray-500 text-sm">Coming soon</span>
+            </div>
+        </div>
+
+        <!-- Upgrade Opportunities -->
+        <div class="stat-card hover:border-primary transition-colors cursor-pointer" onclick="loadReport('upgrades')">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-medium text-white">Upgrade Opportunities</h3>
+                <span class="text-2xl">⬆️</span>
+            </div>
+            <p class="mt-2 text-sm text-gray-400">720p files that could be upgraded</p>
+            <div class="mt-4">
+                <span class="text-gray-500 text-sm">Coming soon</span>
+            </div>
+        </div>
+
+        <!-- Codec Report -->
+        <div class="stat-card hover:border-primary transition-colors cursor-pointer" onclick="loadReport('codecs')">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-medium text-white">Codec Breakdown</h3>
+                <span class="text-2xl">🎬</span>
+            </div>
+            <p class="mt-2 text-sm text-gray-400">H.264, HEVC, AV1 distribution</p>
+            <div class="mt-4">
+                <span class="text-gray-500 text-sm">Coming soon</span>
+            </div>
+        </div>
+
+        <!-- HDR Report -->
+        <div class="stat-card hover:border-primary transition-colors cursor-pointer" onclick="loadReport('hdr')">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-medium text-white">HDR Content</h3>
+                <span class="text-2xl">🌈</span>
+            </div>
+            <p class="mt-2 text-sm text-gray-400">HDR10, Dolby Vision, HDR10+</p>
+            <div class="mt-4">
+                <span class="text-gray-500 text-sm">Coming soon</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Report Results Modal -->
+    <div id="report-modal" class="fixed inset-0 bg-black bg-opacity-75 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-gray-800 rounded-lg max-w-4xl w-full max-h-[80vh] overflow-hidden">
+                <div class="flex justify-between items-center p-4 border-b border-gray-700">
+                    <h3 class="text-xl font-bold text-white" id="modal-title">Report</h3>
+                    <button onclick="closeModal()" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+                </div>
+                <div class="p-4 overflow-y-auto max-h-[60vh]" id="modal-content">
+                    <!-- Report content loaded here -->
+                </div>
+                <div class="flex justify-end p-4 border-t border-gray-700">
+                    <button onclick="closeModal()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40 flex items-center justify-center">
+        <div class="text-center">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            <p class="mt-4 text-white">Generating report...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function showLoading() {
+        document.getElementById('loading-overlay').classList.remove('hidden');
+    }
+
+    function hideLoading() {
+        document.getElementById('loading-overlay').classList.add('hidden');
+    }
+
+    function showModal(title, content) {
+        document.getElementById('modal-title').textContent = title;
+        document.getElementById('modal-content').innerHTML = content;
+        document.getElementById('report-modal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+        document.getElementById('report-modal').classList.add('hidden');
+    }
+
+    async function loadReport(type) {
+        showLoading();
+
+        try {
+            switch (type) {
+                case 'mismatches':
+                    await loadMismatchReport();
+                    break;
+                case 'small':
+                    await loadSmallFilesReport();
+                    break;
+                case 'duplicates':
+                    showModal('Duplicates', '<p class="text-gray-400">Coming soon - will detect same movie in multiple qualities.</p>');
+                    break;
+                case 'upgrades':
+                    showModal('Upgrade Opportunities', '<p class="text-gray-400">Coming soon - will find 720p files that could be upgraded to 1080p/4K.</p>');
+                    break;
+                case 'codecs':
+                    showModal('Codec Breakdown', '<p class="text-gray-400">Coming soon - will show H.264 vs HEVC vs AV1 distribution.</p>');
+                    break;
+                case 'hdr':
+                    showModal('HDR Content', '<p class="text-gray-400">Coming soon - will identify HDR10, Dolby Vision, and HDR10+ content.</p>');
+                    break;
+            }
+        } catch (e) {
+            showModal('Error', `<p class="text-red-400">Failed to load report: ${e.message}</p>`);
+        } finally {
+            hideLoading();
+        }
+    }
+
+    async function loadMismatchReport() {
+        const response = await fetch('/report/mismatches?source=movies');
+        const data = await response.json();
+
+        let content = '';
+
+        if (data.count === 0) {
+            content = '<p class="text-green-400">No path mismatches found!</p>';
+        } else {
+            content = `
+                <p class="text-yellow-400 mb-4">Found ${data.count} potential mismatches</p>
+                <div class="space-y-4">
+            `;
+
+            data.mismatches.forEach(m => {
+                content += `
+                    <div class="bg-gray-700 rounded-lg p-4">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-white font-medium">${m.title} (${m.year || 'Unknown year'})</p>
+                                <p class="text-sm text-gray-400 mt-1">Expected: ${m.expected_folder}</p>
+                                <p class="text-sm text-red-400 mt-1">Actual: ${m.actual_filename}</p>
+                            </div>
+                            <span class="text-xs bg-yellow-600 text-white px-2 py-1 rounded">${m.mismatch_type}</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2 truncate">${m.file_path}</p>
+                    </div>
+                `;
+            });
+
+            content += '</div>';
+        }
+
+        showModal('Path Mismatches', content);
+    }
+
+    async function loadSmallFilesReport() {
+        const response = await fetch('/report/library?source=movies');
+        const data = await response.json();
+
+        // Filter for suspiciously small files (< 500MB for movies)
+        const smallFiles = (data.smallest_files || []).filter(f => f.size_bytes < 500000000);
+
+        let content = '';
+
+        if (smallFiles.length === 0) {
+            content = '<p class="text-green-400">No suspiciously small files found!</p>';
+        } else {
+            content = `
+                <p class="text-yellow-400 mb-4">Found ${smallFiles.length} suspiciously small files</p>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-700">
+                        <thead>
+                            <tr>
+                                <th class="px-4 py-2 text-left text-xs text-gray-400">Title</th>
+                                <th class="px-4 py-2 text-left text-xs text-gray-400">Size</th>
+                                <th class="px-4 py-2 text-left text-xs text-gray-400">Quality</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-700">
+            `;
+
+            smallFiles.forEach(f => {
+                const sizeClass = f.size_bytes < 100000000 ? 'text-red-400' : 'text-yellow-400';
+                content += `
+                    <tr>
+                        <td class="px-4 py-2 text-sm text-white">${f.title}</td>
+                        <td class="px-4 py-2 text-sm ${sizeClass} font-mono">${f.size_human}</td>
+                        <td class="px-4 py-2 text-sm text-gray-400">${f.quality || '-'}</td>
+                    </tr>
+                `;
+            });
+
+            content += '</tbody></table></div>';
+        }
+
+        showModal('Suspiciously Small Files', content);
+    }
+
+    // Close modal on escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeModal();
+    });
+</script>
+{% endblock %}

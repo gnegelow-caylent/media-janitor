@@ -1,0 +1,557 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Media Janitor{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="md:flex md:items-center md:justify-between">
+        <h2 class="text-2xl font-bold text-white">Settings</h2>
+        <button onclick="saveAllSettings()" class="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-yellow-500">
+            Save All Changes
+        </button>
+    </div>
+
+    <!-- Tabs -->
+    <div class="border-b border-gray-700">
+        <nav class="flex space-x-8">
+            <button onclick="showTab('connections')" class="tab-btn active" data-tab="connections">Connections</button>
+            <button onclick="showTab('scanner')" class="tab-btn" data-tab="scanner">Scanner</button>
+            <button onclick="showTab('validation')" class="tab-btn" data-tab="validation">Validation</button>
+            <button onclick="showTab('actions')" class="tab-btn" data-tab="actions">Actions</button>
+            <button onclick="showTab('email')" class="tab-btn" data-tab="email">Email</button>
+        </nav>
+    </div>
+
+    <!-- Connections Tab -->
+    <div id="tab-connections" class="tab-content">
+        <!-- Radarr Instances -->
+        <div class="stat-card mb-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium text-white">Radarr Instances</h3>
+                <button onclick="addInstance('radarr')" class="text-sm text-primary hover:text-yellow-400">+ Add Instance</button>
+            </div>
+            <div id="radarr-instances" class="space-y-4">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- Sonarr Instances -->
+        <div class="stat-card">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium text-white">Sonarr Instances</h3>
+                <button onclick="addInstance('sonarr')" class="text-sm text-primary hover:text-yellow-400">+ Add Instance</button>
+            </div>
+            <div id="sonarr-instances" class="space-y-4">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scanner Tab -->
+    <div id="tab-scanner" class="tab-content hidden">
+        <div class="stat-card">
+            <h3 class="text-lg font-medium text-white mb-4">Scanner Settings</h3>
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300">Scanner Enabled</label>
+                    <select id="scanner-enabled" class="input-field mt-1">
+                        <option value="true">Enabled</option>
+                        <option value="false">Disabled</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300">Files Per Hour</label>
+                    <input type="number" id="scanner-files-per-hour" class="input-field mt-1" min="1" max="1000">
+                    <p class="mt-1 text-xs text-gray-500">Lower = less bandwidth usage</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300">Scan Mode</label>
+                    <select id="scanner-mode" class="input-field mt-1">
+                        <option value="watch_only">Watch Only (scan once, then webhooks)</option>
+                        <option value="continuous">Continuous (keep re-scanning)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300">TV Refresh Schedule</label>
+                    <input type="text" id="scanner-tv-schedule" class="input-field mt-1" placeholder="0 3 * * *">
+                    <p class="mt-1 text-xs text-gray-500">Cron format (default: 3am daily)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Validation Tab -->
+    <div id="tab-validation" class="tab-content hidden">
+        <div class="stat-card">
+            <h3 class="text-lg font-medium text-white mb-4">Validation Settings</h3>
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300">Check Duration</label>
+                    <select id="validation-duration" class="input-field mt-1">
+                        <option value="true">Enabled</option>
+                        <option value="false">Disabled</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300">Max Duration (hours)</label>
+                    <input type="number" id="validation-max-duration" class="input-field mt-1" min="1" max="48">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300">Check Bitrate</label>
+                    <select id="validation-bitrate" class="input-field mt-1">
+                        <option value="true">Enabled</option>
+                        <option value="false">Disabled</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300">Min Bitrate 720p (kbps)</label>
+                    <input type="number" id="validation-bitrate-720" class="input-field mt-1" min="500" max="10000">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300">Min Bitrate 1080p (kbps)</label>
+                    <input type="number" id="validation-bitrate-1080" class="input-field mt-1" min="1000" max="20000">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300">Min Bitrate 4K (kbps)</label>
+                    <input type="number" id="validation-bitrate-4k" class="input-field mt-1" min="2000" max="50000">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300">Deep Scan</label>
+                    <select id="validation-deep-scan" class="input-field mt-1">
+                        <option value="true">Enabled (recommended)</option>
+                        <option value="false">Disabled</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300">Sample Duration (seconds)</label>
+                    <input type="number" id="validation-sample-duration" class="input-field mt-1" min="5" max="120">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300">Full Decode Test</label>
+                    <select id="validation-full-decode" class="input-field mt-1">
+                        <option value="false">Disabled (recommended)</option>
+                        <option value="true">Enabled (very slow)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions Tab -->
+    <div id="tab-actions" class="tab-content hidden">
+        <div class="stat-card">
+            <h3 class="text-lg font-medium text-white mb-4">Action Settings</h3>
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300">Auto Replace</label>
+                    <select id="actions-auto-replace" class="input-field mt-1">
+                        <option value="true">Enabled - auto delete & re-download bad files</option>
+                        <option value="false">Disabled - report only</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300">Blocklist Bad Releases</label>
+                    <select id="actions-blocklist" class="input-field mt-1">
+                        <option value="true">Enabled</option>
+                        <option value="false">Disabled</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300">Max Replacements Per Day</label>
+                    <input type="number" id="actions-max-replacements" class="input-field mt-1" min="1" max="100">
+                    <p class="mt-1 text-xs text-gray-500">Limits bandwidth usage</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Tab -->
+    <div id="tab-email" class="tab-content hidden">
+        <div class="stat-card">
+            <h3 class="text-lg font-medium text-white mb-4">Email Settings</h3>
+
+            <!-- Quick setup buttons -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-300 mb-2">Quick Setup</label>
+                <div class="flex space-x-3">
+                    <button onclick="setupGmail()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">
+                        Gmail
+                    </button>
+                    <button onclick="setupOutlook()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">
+                        Outlook
+                    </button>
+                    <button onclick="setupCustom()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm">
+                        Custom SMTP
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300">Email Enabled</label>
+                    <select id="email-enabled" class="input-field mt-1">
+                        <option value="true">Enabled</option>
+                        <option value="false">Disabled</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300">SMTP Server</label>
+                    <input type="text" id="email-smtp-host" class="input-field mt-1" placeholder="smtp.gmail.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300">SMTP Port</label>
+                    <input type="number" id="email-smtp-port" class="input-field mt-1" placeholder="587">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300">Username</label>
+                    <input type="text" id="email-smtp-user" class="input-field mt-1" placeholder="you@gmail.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300">Password / App Password</label>
+                    <input type="password" id="email-smtp-password" class="input-field mt-1" placeholder="xxxx xxxx xxxx xxxx">
+                    <p class="mt-1 text-xs text-gray-500">For Gmail, use an App Password</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300">From Address</label>
+                    <input type="email" id="email-from" class="input-field mt-1" placeholder="you@gmail.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300">To Address</label>
+                    <input type="email" id="email-to" class="input-field mt-1" placeholder="you@gmail.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300">Daily Summary Time</label>
+                    <input type="time" id="email-summary-time" class="input-field mt-1" value="08:00">
+                </div>
+            </div>
+
+            <div class="mt-6">
+                <button onclick="testEmail()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                    Send Test Email
+                </button>
+                <span id="email-test-result" class="ml-3 text-sm"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast notification -->
+    <div id="toast" class="fixed bottom-4 right-4 hidden">
+        <div class="bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg">
+            <span id="toast-message">Saved successfully!</span>
+        </div>
+    </div>
+</div>
+
+<style>
+    .tab-btn {
+        @apply pb-4 text-sm font-medium text-gray-400 border-b-2 border-transparent hover:text-white hover:border-gray-500;
+    }
+    .tab-btn.active {
+        @apply text-primary border-primary;
+    }
+    .input-field {
+        @apply block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm px-3 py-2;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentConfig = {};
+
+    function showTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+        document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    }
+
+    function showToast(message, isError = false) {
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toast-message');
+        toastMsg.textContent = message;
+        toast.firstElementChild.className = isError
+            ? 'bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg'
+            : 'bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg';
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), 3000);
+    }
+
+    async function loadConfig() {
+        try {
+            const response = await fetch('/api/config');
+            currentConfig = await response.json();
+            populateForm();
+        } catch (e) {
+            console.error('Failed to load config:', e);
+            showToast('Failed to load configuration', true);
+        }
+    }
+
+    function populateForm() {
+        // Scanner
+        document.getElementById('scanner-enabled').value = String(currentConfig.scanner?.enabled ?? true);
+        document.getElementById('scanner-files-per-hour').value = currentConfig.scanner?.files_per_hour ?? 100;
+        document.getElementById('scanner-mode').value = currentConfig.scanner?.mode ?? 'watch_only';
+        document.getElementById('scanner-tv-schedule').value = currentConfig.scanner?.tv_refresh_schedule ?? '0 3 * * *';
+
+        // Validation
+        document.getElementById('validation-duration').value = String(currentConfig.validation?.check_duration_sanity ?? true);
+        document.getElementById('validation-max-duration').value = currentConfig.validation?.max_duration_hours ?? 12;
+        document.getElementById('validation-bitrate').value = String(currentConfig.validation?.check_bitrate ?? true);
+        document.getElementById('validation-bitrate-720').value = currentConfig.validation?.min_bitrate_720p ?? 1500;
+        document.getElementById('validation-bitrate-1080').value = currentConfig.validation?.min_bitrate_1080p ?? 3000;
+        document.getElementById('validation-bitrate-4k').value = currentConfig.validation?.min_bitrate_4k ?? 8000;
+        document.getElementById('validation-deep-scan').value = String(currentConfig.validation?.deep_scan_enabled ?? true);
+        document.getElementById('validation-sample-duration').value = currentConfig.validation?.sample_duration_seconds ?? 30;
+        document.getElementById('validation-full-decode').value = String(currentConfig.validation?.full_decode_enabled ?? false);
+
+        // Actions
+        document.getElementById('actions-auto-replace').value = String(currentConfig.actions?.auto_replace ?? true);
+        document.getElementById('actions-blocklist').value = String(currentConfig.actions?.blocklist_bad_releases ?? true);
+        document.getElementById('actions-max-replacements').value = currentConfig.actions?.max_replacements_per_day ?? 10;
+
+        // Email
+        document.getElementById('email-enabled').value = String(currentConfig.email?.enabled ?? false);
+        document.getElementById('email-smtp-host').value = currentConfig.email?.smtp_host ?? '';
+        document.getElementById('email-smtp-port').value = currentConfig.email?.smtp_port ?? 587;
+        document.getElementById('email-smtp-user').value = currentConfig.email?.smtp_user ?? '';
+        document.getElementById('email-from').value = currentConfig.email?.from_address ?? '';
+        document.getElementById('email-to').value = currentConfig.email?.to_address ?? '';
+        document.getElementById('email-summary-time').value = currentConfig.email?.daily_summary_time ?? '08:00';
+
+        // Instances
+        renderInstances('radarr', currentConfig.radarr || []);
+        renderInstances('sonarr', currentConfig.sonarr || []);
+    }
+
+    function renderInstances(type, instances) {
+        const container = document.getElementById(`${type}-instances`);
+        container.innerHTML = '';
+
+        instances.forEach((inst, idx) => {
+            container.innerHTML += `
+                <div class="bg-gray-700 rounded-lg p-4" data-instance="${type}-${idx}">
+                    <div class="flex justify-between items-start mb-3">
+                        <input type="text" value="${inst.name}" class="input-field w-48" placeholder="Instance name" data-field="name">
+                        <button onclick="removeInstance('${type}', ${idx})" class="text-red-400 hover:text-red-300 text-sm">Remove</button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <input type="text" value="${inst.url}" class="input-field" placeholder="http://192.168.1.3:7878" data-field="url">
+                        <input type="password" value="${inst.api_key}" class="input-field" placeholder="API Key" data-field="api_key">
+                    </div>
+                    <div class="mt-3">
+                        <label class="text-xs text-gray-400">Path Mappings</label>
+                        <div class="path-mappings space-y-2 mt-1">
+                            ${(inst.path_mappings || []).map((pm, pmIdx) => `
+                                <div class="flex space-x-2">
+                                    <input type="text" value="${pm.from_path}" class="input-field flex-1" placeholder="/movies" data-field="from_path" data-pm-idx="${pmIdx}">
+                                    <span class="text-gray-500 py-2">→</span>
+                                    <input type="text" value="${pm.to_path}" class="input-field flex-1" placeholder="/mnt/remotes/..." data-field="to_path" data-pm-idx="${pmIdx}">
+                                    <button onclick="removePathMapping('${type}', ${idx}, ${pmIdx})" class="text-red-400 hover:text-red-300 text-xs">×</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <button onclick="addPathMapping('${type}', ${idx})" class="text-xs text-primary hover:text-yellow-400 mt-2">+ Add Path Mapping</button>
+                    </div>
+                    <div class="mt-3">
+                        <button onclick="testConnection('${type}', ${idx})" class="text-xs bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-500">
+                            Test Connection
+                        </button>
+                        <span class="connection-status text-xs ml-2"></span>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function addInstance(type) {
+        if (!currentConfig[type]) currentConfig[type] = [];
+        currentConfig[type].push({
+            name: `${type}-${currentConfig[type].length + 1}`,
+            url: '',
+            api_key: '',
+            path_mappings: []
+        });
+        renderInstances(type, currentConfig[type]);
+    }
+
+    function removeInstance(type, idx) {
+        currentConfig[type].splice(idx, 1);
+        renderInstances(type, currentConfig[type]);
+    }
+
+    function addPathMapping(type, instIdx) {
+        if (!currentConfig[type][instIdx].path_mappings) {
+            currentConfig[type][instIdx].path_mappings = [];
+        }
+        currentConfig[type][instIdx].path_mappings.push({ from_path: '', to_path: '' });
+        renderInstances(type, currentConfig[type]);
+    }
+
+    function removePathMapping(type, instIdx, pmIdx) {
+        currentConfig[type][instIdx].path_mappings.splice(pmIdx, 1);
+        renderInstances(type, currentConfig[type]);
+    }
+
+    function setupGmail() {
+        document.getElementById('email-smtp-host').value = 'smtp.gmail.com';
+        document.getElementById('email-smtp-port').value = '587';
+        showToast('Gmail configured - use an App Password, not your regular password');
+    }
+
+    function setupOutlook() {
+        document.getElementById('email-smtp-host').value = 'smtp.office365.com';
+        document.getElementById('email-smtp-port').value = '587';
+        showToast('Outlook configured');
+    }
+
+    function setupCustom() {
+        document.getElementById('email-smtp-host').value = '';
+        document.getElementById('email-smtp-port').value = '587';
+    }
+
+    async function testEmail() {
+        const result = document.getElementById('email-test-result');
+        result.textContent = 'Sending...';
+        result.className = 'ml-3 text-sm text-gray-400';
+
+        try {
+            const response = await fetch('/api/test-email', { method: 'POST' });
+            const data = await response.json();
+
+            if (data.success) {
+                result.textContent = 'Test email sent!';
+                result.className = 'ml-3 text-sm text-green-400';
+            } else {
+                result.textContent = `Failed: ${data.error}`;
+                result.className = 'ml-3 text-sm text-red-400';
+            }
+        } catch (e) {
+            result.textContent = 'Failed to send';
+            result.className = 'ml-3 text-sm text-red-400';
+        }
+    }
+
+    async function testConnection(type, idx) {
+        const container = document.querySelector(`[data-instance="${type}-${idx}"]`);
+        const status = container.querySelector('.connection-status');
+        status.textContent = 'Testing...';
+        status.className = 'connection-status text-xs ml-2 text-gray-400';
+
+        // Get current values from form
+        const url = container.querySelector('[data-field="url"]').value;
+        const api_key = container.querySelector('[data-field="api_key"]').value;
+
+        try {
+            const response = await fetch('/api/test-connection', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type, url, api_key })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                status.textContent = 'Connected!';
+                status.className = 'connection-status text-xs ml-2 text-green-400';
+            } else {
+                status.textContent = `Failed: ${data.error}`;
+                status.className = 'connection-status text-xs ml-2 text-red-400';
+            }
+        } catch (e) {
+            status.textContent = 'Connection failed';
+            status.className = 'connection-status text-xs ml-2 text-red-400';
+        }
+    }
+
+    function collectFormData() {
+        // Collect instance data from DOM
+        ['radarr', 'sonarr'].forEach(type => {
+            const containers = document.querySelectorAll(`[data-instance^="${type}-"]`);
+            currentConfig[type] = [];
+
+            containers.forEach(container => {
+                const inst = {
+                    name: container.querySelector('[data-field="name"]').value,
+                    url: container.querySelector('[data-field="url"]').value,
+                    api_key: container.querySelector('[data-field="api_key"]').value,
+                    path_mappings: []
+                };
+
+                container.querySelectorAll('.path-mappings > div').forEach(pmDiv => {
+                    inst.path_mappings.push({
+                        from_path: pmDiv.querySelector('[data-field="from_path"]').value,
+                        to_path: pmDiv.querySelector('[data-field="to_path"]').value
+                    });
+                });
+
+                currentConfig[type].push(inst);
+            });
+        });
+
+        // Collect other settings
+        currentConfig.scanner = {
+            enabled: document.getElementById('scanner-enabled').value === 'true',
+            files_per_hour: parseInt(document.getElementById('scanner-files-per-hour').value),
+            mode: document.getElementById('scanner-mode').value,
+            tv_refresh_schedule: document.getElementById('scanner-tv-schedule').value || null
+        };
+
+        currentConfig.validation = {
+            check_duration_sanity: document.getElementById('validation-duration').value === 'true',
+            max_duration_hours: parseInt(document.getElementById('validation-max-duration').value),
+            check_bitrate: document.getElementById('validation-bitrate').value === 'true',
+            min_bitrate_720p: parseInt(document.getElementById('validation-bitrate-720').value),
+            min_bitrate_1080p: parseInt(document.getElementById('validation-bitrate-1080').value),
+            min_bitrate_4k: parseInt(document.getElementById('validation-bitrate-4k').value),
+            deep_scan_enabled: document.getElementById('validation-deep-scan').value === 'true',
+            sample_duration_seconds: parseInt(document.getElementById('validation-sample-duration').value),
+            full_decode_enabled: document.getElementById('validation-full-decode').value === 'true'
+        };
+
+        currentConfig.actions = {
+            auto_replace: document.getElementById('actions-auto-replace').value === 'true',
+            blocklist_bad_releases: document.getElementById('actions-blocklist').value === 'true',
+            max_replacements_per_day: parseInt(document.getElementById('actions-max-replacements').value)
+        };
+
+        currentConfig.email = {
+            enabled: document.getElementById('email-enabled').value === 'true',
+            smtp_host: document.getElementById('email-smtp-host').value,
+            smtp_port: parseInt(document.getElementById('email-smtp-port').value),
+            smtp_user: document.getElementById('email-smtp-user').value,
+            smtp_password: document.getElementById('email-smtp-password').value || currentConfig.email?.smtp_password,
+            from_address: document.getElementById('email-from').value,
+            to_address: document.getElementById('email-to').value,
+            daily_summary_time: document.getElementById('email-summary-time').value
+        };
+
+        return currentConfig;
+    }
+
+    async function saveAllSettings() {
+        const config = collectFormData();
+
+        try {
+            const response = await fetch('/api/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(config)
+            });
+
+            if (response.ok) {
+                showToast('Settings saved! Restart may be required for some changes.');
+            } else {
+                const data = await response.json();
+                showToast(`Failed to save: ${data.error}`, true);
+            }
+        } catch (e) {
+            showToast('Failed to save settings', true);
+        }
+    }
+
+    // Initial load
+    loadConfig();
+</script>
+{% endblock %}

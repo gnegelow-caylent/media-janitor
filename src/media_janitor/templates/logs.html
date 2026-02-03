@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Logs - Media Janitor{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="md:flex md:items-center md:justify-between">
+        <h2 class="text-2xl font-bold text-white">Logs</h2>
+        <div class="flex space-x-3">
+            <select id="log-level" onchange="loadLogs()" class="rounded-md bg-gray-700 border-gray-600 text-white px-3 py-2 text-sm">
+                <option value="all">All Levels</option>
+                <option value="error">Errors Only</option>
+                <option value="warning">Warnings & Errors</option>
+            </select>
+            <select id="log-lines" onchange="loadLogs()" class="rounded-md bg-gray-700 border-gray-600 text-white px-3 py-2 text-sm">
+                <option value="50">50 lines</option>
+                <option value="100" selected>100 lines</option>
+                <option value="200">200 lines</option>
+                <option value="500">500 lines</option>
+            </select>
+            <button onclick="loadLogs()" class="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-yellow-500">
+                Refresh
+            </button>
+            <label class="flex items-center text-sm text-gray-300">
+                <input type="checkbox" id="auto-refresh" class="mr-2 rounded bg-gray-700 border-gray-600">
+                Auto-refresh
+            </label>
+        </div>
+    </div>
+
+    <!-- Log stats -->
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-4">
+        <div class="stat-card">
+            <dt class="text-sm font-medium text-gray-400">Total Entries</dt>
+            <dd class="mt-1 text-2xl font-semibold text-white" id="log-count">-</dd>
+        </div>
+        <div class="stat-card">
+            <dt class="text-sm font-medium text-gray-400">Errors</dt>
+            <dd class="mt-1 text-2xl font-semibold text-red-400" id="error-count">-</dd>
+        </div>
+        <div class="stat-card">
+            <dt class="text-sm font-medium text-gray-400">Warnings</dt>
+            <dd class="mt-1 text-2xl font-semibold text-yellow-400" id="warning-count">-</dd>
+        </div>
+        <div class="stat-card">
+            <dt class="text-sm font-medium text-gray-400">Info</dt>
+            <dd class="mt-1 text-2xl font-semibold text-green-400" id="info-count">-</dd>
+        </div>
+    </div>
+
+    <!-- Log entries -->
+    <div class="stat-card">
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead>
+                    <tr class="border-b border-gray-700">
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase w-32">Time</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase w-20">Level</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase w-32">Component</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Event</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Details</th>
+                    </tr>
+                </thead>
+                <tbody id="log-table" class="divide-y divide-gray-700/50 font-mono text-sm">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let refreshInterval = null;
+
+    async function loadLogs() {
+        const level = document.getElementById('log-level').value;
+        const lines = document.getElementById('log-lines').value;
+
+        try {
+            const response = await fetch(`/logs?lines=${lines}&level=${level}`);
+            const data = await response.json();
+
+            // Update stats
+            const logs = data.logs || [];
+            document.getElementById('log-count').textContent = logs.length;
+            document.getElementById('error-count').textContent = logs.filter(l => l.level === 'error').length;
+            document.getElementById('warning-count').textContent = logs.filter(l => l.level === 'warning').length;
+            document.getElementById('info-count').textContent = logs.filter(l => l.level === 'info').length;
+
+            // Render table
+            const tbody = document.getElementById('log-table');
+            tbody.innerHTML = '';
+
+            logs.reverse().forEach(log => {
+                const levelClass = {
+                    'error': 'text-red-400 bg-red-900/20',
+                    'warning': 'text-yellow-400 bg-yellow-900/20',
+                    'info': 'text-green-400',
+                    'debug': 'text-gray-500'
+                }[log.level] || 'text-gray-400';
+
+                const time = log.timestamp ? new Date(log.timestamp).toLocaleTimeString() : '-';
+                const details = Object.entries(log.details || {})
+                    .filter(([k, v]) => v)
+                    .map(([k, v]) => `<span class="text-gray-500">${k}:</span> ${String(v).substring(0, 50)}`)
+                    .join(', ');
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-700/30">
+                        <td class="px-4 py-2 text-gray-400 whitespace-nowrap">${time}</td>
+                        <td class="px-4 py-2"><span class="px-2 py-0.5 rounded ${levelClass}">${log.level}</span></td>
+                        <td class="px-4 py-2 text-gray-400">${log.component || '-'}</td>
+                        <td class="px-4 py-2 text-white">${log.event || '-'}</td>
+                        <td class="px-4 py-2 text-gray-400 truncate max-w-md">${details || '-'}</td>
+                    </tr>
+                `;
+            });
+
+        } catch (e) {
+            console.error('Failed to load logs:', e);
+        }
+    }
+
+    // Auto-refresh toggle
+    document.getElementById('auto-refresh').addEventListener('change', (e) => {
+        if (e.target.checked) {
+            refreshInterval = setInterval(loadLogs, 5000);
+        } else {
+            clearInterval(refreshInterval);
+        }
+    });
+
+    // Initial load
+    loadLogs();
+</script>
+{% endblock %}

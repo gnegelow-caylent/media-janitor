@@ -2,11 +2,13 @@
 
 import asyncio
 from dataclasses import asdict
+from pathlib import Path
 from typing import Any
 
 import structlog
 from fastapi import BackgroundTasks, FastAPI, Query, Request
 from fastapi.responses import HTMLResponse, PlainTextResponse
+from fastapi.staticfiles import StaticFiles
 
 from .arr_client import ArrClient, ArrType
 from .config import Config
@@ -16,6 +18,11 @@ from .reports import format_report_email, format_report_text, generate_mismatch_
 logger = structlog.get_logger()
 
 app = FastAPI(title="Media Janitor", description="Proactive media library quality monitor")
+
+# Mount static files if they exist
+static_dir = Path(__file__).parent / "static"
+if static_dir.exists():
+    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 
 # Global references set by main.py
@@ -28,6 +35,11 @@ def init_webhook_app(config: Config, janitor: Janitor) -> FastAPI:
     global _config, _janitor
     _config = config
     _janitor = janitor
+
+    # Include web UI router
+    from .web_ui import router as ui_router
+    app.include_router(ui_router)
+
     return app
 
 

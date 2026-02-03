@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+
+{% block title %}Library - Media Janitor{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="md:flex md:items-center md:justify-between">
+        <h2 class="text-2xl font-bold text-white">Library</h2>
+        <div class="flex space-x-3">
+            <select id="source-filter" onchange="loadLibrary()" class="rounded-md bg-gray-700 border-gray-600 text-white px-3 py-2 text-sm">
+                <option value="movies">Movies (fast)</option>
+                <option value="tv">TV Shows (slow)</option>
+                <option value="all">All (slowest)</option>
+            </select>
+            <button onclick="loadLibrary()" class="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-yellow-500">
+                Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Loading indicator -->
+    <div id="loading" class="hidden text-center py-12">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <p class="mt-4 text-gray-400">Loading library data...</p>
+    </div>
+
+    <!-- Stats overview -->
+    <div id="stats-section" class="grid grid-cols-1 gap-5 sm:grid-cols-4">
+        <div class="stat-card">
+            <dt class="text-sm font-medium text-gray-400">Total Files</dt>
+            <dd class="mt-1 text-3xl font-semibold text-white" id="total-files">-</dd>
+        </div>
+        <div class="stat-card">
+            <dt class="text-sm font-medium text-gray-400">Total Size</dt>
+            <dd class="mt-1 text-3xl font-semibold text-primary" id="total-size">-</dd>
+        </div>
+        <div class="stat-card">
+            <dt class="text-sm font-medium text-gray-400">Largest File</dt>
+            <dd class="mt-1 text-xl font-semibold text-white truncate" id="largest-file">-</dd>
+        </div>
+        <div class="stat-card">
+            <dt class="text-sm font-medium text-gray-400">Smallest File</dt>
+            <dd class="mt-1 text-xl font-semibold text-white truncate" id="smallest-file">-</dd>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="border-b border-gray-700">
+        <nav class="flex space-x-8">
+            <button onclick="showTab('largest')" class="tab-btn active" data-tab="largest">Largest Files</button>
+            <button onclick="showTab('smallest')" class="tab-btn" data-tab="smallest">Smallest Files</button>
+            <button onclick="showTab('quality')" class="tab-btn" data-tab="quality">By Quality</button>
+            <button onclick="showTab('instance')" class="tab-btn" data-tab="instance">By Instance</button>
+        </nav>
+    </div>
+
+    <!-- Largest Files Tab -->
+    <div id="tab-largest" class="tab-content">
+        <div class="stat-card">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-700">
+                    <thead>
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">#</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Title</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Size</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Quality</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Instance</th>
+                        </tr>
+                    </thead>
+                    <tbody id="largest-table" class="divide-y divide-gray-700">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Smallest Files Tab -->
+    <div id="tab-smallest" class="tab-content hidden">
+        <div class="stat-card">
+            <p class="text-sm text-gray-400 mb-4">Suspiciously small files may be corrupt or incomplete.</p>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-700">
+                    <thead>
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">#</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Title</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Size</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Quality</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Instance</th>
+                        </tr>
+                    </thead>
+                    <tbody id="smallest-table" class="divide-y divide-gray-700">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quality Tab -->
+    <div id="tab-quality" class="tab-content hidden">
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div class="stat-card">
+                <h3 class="text-lg font-medium text-white mb-4">Quality Distribution</h3>
+                <div class="h-80">
+                    <canvas id="quality-pie-chart"></canvas>
+                </div>
+            </div>
+            <div class="stat-card">
+                <h3 class="text-lg font-medium text-white mb-4">Files by Quality</h3>
+                <div class="overflow-y-auto max-h-80">
+                    <table class="min-w-full divide-y divide-gray-700">
+                        <thead>
+                            <tr>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase">Quality</th>
+                                <th class="px-4 py-2 text-right text-xs font-medium text-gray-400 uppercase">Count</th>
+                                <th class="px-4 py-2 text-right text-xs font-medium text-gray-400 uppercase">%</th>
+                            </tr>
+                        </thead>
+                        <tbody id="quality-table" class="divide-y divide-gray-700">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Instance Tab -->
+    <div id="tab-instance" class="tab-content hidden">
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div class="stat-card">
+                <h3 class="text-lg font-medium text-white mb-4">Files by Instance</h3>
+                <div class="h-80">
+                    <canvas id="instance-pie-chart"></canvas>
+                </div>
+            </div>
+            <div class="stat-card">
+                <h3 class="text-lg font-medium text-white mb-4">Instance Breakdown</h3>
+                <div id="instance-cards" class="space-y-4">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .tab-btn {
+        @apply pb-4 text-sm font-medium text-gray-400 border-b-2 border-transparent hover:text-white hover:border-gray-500;
+    }
+    .tab-btn.active {
+        @apply text-primary border-primary;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let libraryData = null;
+    let qualityChart = null;
+    let instanceChart = null;
+
+    function showTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    }
+
+    async function loadLibrary() {
+        const source = document.getElementById('source-filter').value;
+        document.getElementById('loading').classList.remove('hidden');
+
+        try {
+            const response = await fetch(`/report/library?source=${source}`);
+            libraryData = await response.json();
+            renderLibrary();
+        } catch (e) {
+            console.error('Failed to load library:', e);
+        } finally {
+            document.getElementById('loading').classList.add('hidden');
+        }
+    }
+
+    function renderLibrary() {
+        if (!libraryData) return;
+
+        // Stats
+        document.getElementById('total-files').textContent = libraryData.total_files?.toLocaleString() || '-';
+        document.getElementById('total-size').textContent = libraryData.total_size_human || '-';
+
+        if (libraryData.largest_files?.length > 0) {
+            document.getElementById('largest-file').textContent = libraryData.largest_files[0].title;
+        }
+        if (libraryData.smallest_files?.length > 0) {
+            document.getElementById('smallest-file').textContent = libraryData.smallest_files[0].title;
+        }
+
+        // Largest files table
+        const largestTbody = document.getElementById('largest-table');
+        largestTbody.innerHTML = '';
+        (libraryData.largest_files || []).forEach((file, idx) => {
+            largestTbody.innerHTML += `
+                <tr>
+                    <td class="px-4 py-3 text-sm text-gray-400">${idx + 1}</td>
+                    <td class="px-4 py-3 text-sm text-white">${file.title}</td>
+                    <td class="px-4 py-3 text-sm text-primary font-mono">${file.size_human}</td>
+                    <td class="px-4 py-3 text-sm text-gray-300">${file.quality || '-'}</td>
+                    <td class="px-4 py-3 text-sm text-gray-400">${file.arr_instance}</td>
+                </tr>
+            `;
+        });
+
+        // Smallest files table
+        const smallestTbody = document.getElementById('smallest-table');
+        smallestTbody.innerHTML = '';
+        (libraryData.smallest_files || []).forEach((file, idx) => {
+            const sizeClass = file.size_bytes < 100000000 ? 'text-red-400' : 'text-yellow-400';
+            smallestTbody.innerHTML += `
+                <tr>
+                    <td class="px-4 py-3 text-sm text-gray-400">${idx + 1}</td>
+                    <td class="px-4 py-3 text-sm text-white">${file.title}</td>
+                    <td class="px-4 py-3 text-sm ${sizeClass} font-mono">${file.size_human}</td>
+                    <td class="px-4 py-3 text-sm text-gray-300">${file.quality || '-'}</td>
+                    <td class="px-4 py-3 text-sm text-gray-400">${file.arr_instance}</td>
+                </tr>
+            `;
+        });
+
+        // Quality breakdown
+        const qualityData = Object.entries(libraryData.files_by_quality || {}).sort((a, b) => b[1] - a[1]);
+        const totalFiles = libraryData.total_files || 1;
+
+        const qualityTbody = document.getElementById('quality-table');
+        qualityTbody.innerHTML = '';
+        qualityData.forEach(([quality, count]) => {
+            const percent = ((count / totalFiles) * 100).toFixed(1);
+            qualityTbody.innerHTML += `
+                <tr>
+                    <td class="px-4 py-2 text-sm text-white">${quality}</td>
+                    <td class="px-4 py-2 text-sm text-gray-300 text-right">${count.toLocaleString()}</td>
+                    <td class="px-4 py-2 text-sm text-gray-400 text-right">${percent}%</td>
+                </tr>
+            `;
+        });
+
+        // Quality chart
+        const qualityCtx = document.getElementById('quality-pie-chart').getContext('2d');
+        if (qualityChart) qualityChart.destroy();
+        qualityChart = new Chart(qualityCtx, {
+            type: 'doughnut',
+            data: {
+                labels: qualityData.slice(0, 10).map(d => d[0]),
+                datasets: [{
+                    data: qualityData.slice(0, 10).map(d => d[1]),
+                    backgroundColor: [
+                        '#f5a623', '#e94560', '#4ade80', '#60a5fa', '#a78bfa',
+                        '#f472b6', '#fb923c', '#facc15', '#2dd4bf', '#818cf8'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'right', labels: { color: '#9ca3af' } }
+                }
+            }
+        });
+
+        // Instance breakdown
+        const instanceData = Object.entries(libraryData.files_by_instance || {});
+
+        const instanceCards = document.getElementById('instance-cards');
+        instanceCards.innerHTML = '';
+        instanceData.forEach(([instance, count]) => {
+            const percent = ((count / totalFiles) * 100).toFixed(1);
+            instanceCards.innerHTML += `
+                <div class="bg-gray-700 rounded-lg p-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-white font-medium">${instance}</span>
+                        <span class="text-primary">${count.toLocaleString()} files</span>
+                    </div>
+                    <div class="mt-2 w-full bg-gray-600 rounded-full h-2">
+                        <div class="bg-primary h-2 rounded-full" style="width: ${percent}%"></div>
+                    </div>
+                </div>
+            `;
+        });
+
+        // Instance chart
+        const instanceCtx = document.getElementById('instance-pie-chart').getContext('2d');
+        if (instanceChart) instanceChart.destroy();
+        instanceChart = new Chart(instanceCtx, {
+            type: 'pie',
+            data: {
+                labels: instanceData.map(d => d[0]),
+                datasets: [{
+                    data: instanceData.map(d => d[1]),
+                    backgroundColor: ['#f5a623', '#e94560', '#4ade80', '#60a5fa', '#a78bfa']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'right', labels: { color: '#9ca3af' } }
+                }
+            }
+        });
+    }
+
+    // Initial load
+    loadLibrary();
+</script>
+{% endblock %}
