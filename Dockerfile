@@ -9,12 +9,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Set working directory
 WORKDIR /app
 
-# Copy project files
+# Copy just dependency files first (for better caching)
 COPY pyproject.toml README.md ./
+
+# Create minimal src structure for pip install to work
+RUN mkdir -p src/media_janitor && touch src/media_janitor/__init__.py
+
+# Install dependencies (cached unless pyproject.toml changes)
+RUN pip install --no-cache-dir .
+
+# Now copy the actual source code
 COPY src/ src/
 
-# Install dependencies
-RUN pip install --no-cache-dir .
+# Reinstall to update the package with actual code (fast, deps already cached)
+RUN pip install --no-cache-dir . --no-deps
 
 # Create data directory
 RUN mkdir -p /data/logs
