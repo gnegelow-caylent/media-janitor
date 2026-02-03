@@ -113,7 +113,8 @@ class StateManager:
         """Get scan statistics."""
         scanned_files = self._state.get("scanned_files", {})
         valid_count = sum(1 for f in scanned_files.values() if f.get("valid", True))
-        invalid_count = len(scanned_files) - valid_count
+        # Use total_invalid counter (includes replaced files) not just current scanned_files
+        invalid_count = self._state.get("total_invalid", 0)
 
         # Count movies and TV from scanned files (for accuracy even with old state)
         movies_scanned = sum(1 for f in scanned_files.values() if f.get("media_type") == "movie")
