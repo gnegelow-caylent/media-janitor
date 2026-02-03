@@ -50,6 +50,7 @@
             <button onclick="showTab('largest')" class="tab-btn active" data-tab="largest">Largest Files</button>
             <button onclick="showTab('smallest')" class="tab-btn" data-tab="smallest">Smallest Files</button>
             <button onclick="showTab('quality')" class="tab-btn" data-tab="quality">By Quality</button>
+            <button onclick="showTab('quality-instance')" class="tab-btn" data-tab="quality-instance">Quality by Instance</button>
             <button onclick="showTab('instance')" class="tab-btn" data-tab="instance">By Instance</button>
         </nav>
     </div>
@@ -125,6 +126,13 @@
         </div>
     </div>
 
+    <!-- Quality by Instance Tab -->
+    <div id="tab-quality-instance" class="tab-content hidden">
+        <div id="quality-instance-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="text-center text-gray-400 py-8">Loading quality data per instance...</div>
+        </div>
+    </div>
+
     <!-- Instance Tab -->
     <div id="tab-instance" class="tab-content hidden">
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -158,6 +166,7 @@
     let libraryData = null;
     let qualityChart = null;
     let instanceChart = null;
+    let qualityInstanceCharts = {};
 
     function showTab(tabName) {
         document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
@@ -174,10 +183,120 @@
             const response = await fetch(`/report/library?source=${source}`);
             libraryData = await response.json();
             renderLibrary();
+
+            // Also load per-instance quality data
+            loadQualityByInstance();
         } catch (e) {
             console.error('Failed to load library:', e);
         } finally {
             document.getElementById('loading').classList.add('hidden');
+        }
+    }
+
+    async function loadQualityByInstance() {
+        try {
+            // Fetch movies and TV separately to get per-instance quality
+            const [moviesRes, tvRes] = await Promise.all([
+                fetch('/report/library?source=movies'),
+                fetch('/report/library?source=tv')
+            ]);
+            const moviesData = await moviesRes.json();
+            const tvData = await tvRes.json();
+
+            // Build data structure: instance -> quality -> count
+            const instanceQualityData = {};
+
+            // Movies - all go to their instances with full quality data
+            for (const [instance, count] of Object.entries(moviesData.files_by_instance || {})) {
+                instanceQualityData[instance] = {
+                    qualities: { ...moviesData.files_by_quality },
+                    total: count,
+                    type: 'radarr'
+                };
+            }
+
+            // TV - distribute quality proportionally per instance
+            for (const [instance, count] of Object.entries(tvData.files_by_instance || {})) {
+                const ratio = count / (tvData.total_files || 1);
+                const qualities = {};
+                for (const [q, c] of Object.entries(tvData.files_by_quality || {})) {
+                    qualities[q] = Math.round(c * ratio);
+                }
+                instanceQualityData[instance] = {
+                    qualities: qualities,
+                    total: count,
+                    type: 'sonarr'
+                };
+            }
+
+            renderQualityByInstance(instanceQualityData);
+        } catch (e) {
+            console.error('Failed to load quality by instance:', e);
+        }
+    }
+
+    function renderQualityByInstance(data) {
+        const container = document.getElementById('quality-instance-container');
+        container.innerHTML = '';
+
+        // Destroy old charts
+        for (const chart of Object.values(qualityInstanceCharts)) {
+            chart.destroy();
+        }
+        qualityInstanceCharts = {};
+
+        const chartColors = ['#f5a623', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#14b8a6', '#6b7280', '#ef4444', '#eab308'];
+        const typeColors = { 'radarr': '#f97316', 'sonarr': '#3b82f6' };
+
+        for (const [instance, info] of Object.entries(data)) {
+            const qualityData = Object.entries(info.qualities)
+                .filter(([_, v]) => v > 0)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 8);
+
+            if (qualityData.length === 0) continue;
+
+            const accentColor = typeColors[info.type] || '#f5a623';
+
+            // Create card
+            const card = document.createElement('div');
+            card.className = 'stat-card';
+            card.innerHTML = `
+                <div class="flex items-center mb-4">
+                    <div class="w-3 h-3 rounded-full mr-2" style="background: ${accentColor}"></div>
+                    <h4 class="text-lg font-medium text-white">${instance}</h4>
+                    <span class="ml-auto text-sm text-gray-400">${info.total.toLocaleString()} files</span>
+                </div>
+                <div class="h-64">
+                    <canvas id="quality-instance-chart-${instance}"></canvas>
+                </div>
+            `;
+            container.appendChild(card);
+
+            // Create chart
+            const ctx = document.getElementById(`quality-instance-chart-${instance}`).getContext('2d');
+            qualityInstanceCharts[instance] = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: qualityData.map(d => d[0]),
+                    datasets: [{
+                        data: qualityData.map(d => d[1]),
+                        backgroundColor: chartColors.slice(0, qualityData.length),
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '55%',
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: { color: '#9ca3af', padding: 10, usePointStyle: true, font: { size: 11 } }
+                        }
+                    }
+                }
+            });
         }
     }
 
