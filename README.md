@@ -471,6 +471,7 @@ When Plex is configured, Media Janitor provides additional features:
 
 Future features under consideration:
 
+- **NZBGet/SABnzbd integration** - Validate files before import, catch bad downloads earlier
 - **Storage optimization** - Find unwatched content taking up space
 - **Transcode stats** - Show which files always require transcoding
 
