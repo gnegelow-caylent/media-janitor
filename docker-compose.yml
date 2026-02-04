@@ -8,10 +8,6 @@ services:
     restart: unless-stopped
     ports:
       - "9000:9000"
-    labels:
-      # Unraid WebUI button
-      net.unraid.docker.webui: "http://[IP]:[PORT:9000]/"
-      net.unraid.docker.icon: "https://raw.githubusercontent.com/linuxserver/docker-templates/master/linuxserver.io/img/radarr-logo.png"
     volumes:
       # Configuration file
       - ./config.yaml:/data/config.yaml:ro
@@ -19,25 +15,16 @@ services:
       - ./logs:/data/logs
       - ./state:/data/state
 
-      # NAS mounts - path mappings in config.yaml translate Radarr/Sonarr paths
-      # NAS 1 (192.168.1.2) - Sonarr TV
-      - /mnt/remotes/192.168.1.2_video:/mnt/remotes/192.168.1.2_video:ro
-      # NAS 2 (192.168.1.5) - Radarr Movies
-      - /mnt/remotes/192.168.1.5_video:/mnt/remotes/192.168.1.5_video:ro
+      # Media library mounts - adjust paths for your setup
+      # The to_path in config.yaml should match these container paths
+      - /path/to/your/movies:/media/movies:ro
+      - /path/to/your/tv:/media/tv:ro
 
     environment:
       - TZ=America/New_York  # Adjust to your timezone
-    # Optional: limit CPU for background scanning
+    # Optional: limit resources for background scanning
     deploy:
       resources:
         limits:
           cpus: '2'
           memory: 2G
-    networks:
-      - media-network
-
-networks:
-  media-network:
-    external: true  # Use existing network with Radarr/Sonarr
-    # Or create a new one:
-    # driver: bridge

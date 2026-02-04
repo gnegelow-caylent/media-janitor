@@ -64,19 +64,19 @@ Create `/mnt/user/appdata/media-janitor/config.yaml`:
 ```yaml
 radarr:
   - name: "radarr"
-    url: "http://192.168.1.3:7878"
+    url: "http://YOUR_SERVER_IP:7878"
     api_key: "YOUR_RADARR_API_KEY"
     path_mappings:
-      - from_path: "/movies"
-        to_path: "/mnt/remotes/192.168.1.5_video/Movies"
+      - from_path: "/movies"           # Path inside Radarr container
+        to_path: "/media/movies"       # Path inside media-janitor container
 
 sonarr:
   - name: "sonarr"
-    url: "http://192.168.1.3:8989"
+    url: "http://YOUR_SERVER_IP:8989"
     api_key: "YOUR_SONARR_API_KEY"
     path_mappings:
-      - from_path: "/tv"
-        to_path: "/mnt/remotes/192.168.1.2_video/TV"
+      - from_path: "/tv"               # Path inside Sonarr container
+        to_path: "/media/tv"           # Path inside media-janitor container
 
 scanner:
   enabled: true
@@ -103,12 +103,14 @@ docker run -d \
   -v /mnt/user/appdata/media-janitor/config.yaml:/data/config.yaml \
   -v /mnt/user/appdata/media-janitor/logs:/data/logs \
   -v /mnt/user/appdata/media-janitor/state:/data/state \
-  -v /mnt/remotes/192.168.1.2_video:/mnt/remotes/192.168.1.2_video:ro,slave \
-  -v /mnt/remotes/192.168.1.5_video:/mnt/remotes/192.168.1.5_video:ro,slave \
+  -v /path/to/your/movies:/media/movies:ro \
+  -v /path/to/your/tv:/media/tv:ro \
   -e TZ=America/New_York \
   --restart unless-stopped \
   ghcr.io/gnegelow-caylent/media-janitor:latest
 ```
+
+> **Note**: For Unraid remote mounts, use `:ro,slave` option (e.g., `-v /mnt/remotes/nas/movies:/media/movies:ro,slave`)
 
 > **Note**: The `:ro,slave` mount option is required for Unraid remote mounts to work properly.
 
@@ -134,12 +136,12 @@ Open `http://YOUR_UNRAID_IP:9000` in your browser.
 
 Radarr/Sonarr report paths as they see them inside their containers. Media Janitor needs to translate these to actual filesystem paths.
 
-Example: If Radarr sees `/movies/Some Movie (2020)/movie.mkv` but the actual path is `/mnt/remotes/192.168.1.5_video/Movies/Some Movie (2020)/movie.mkv`:
+Example: If Radarr sees `/movies/Some Movie (2020)/movie.mkv` but the actual path on your host is `/mnt/user/media/Movies/Some Movie (2020)/movie.mkv`:
 
 ```yaml
 path_mappings:
   - from_path: "/movies"
-    to_path: "/mnt/remotes/192.168.1.5_video/Movies"
+    to_path: "/media/movies"  # Maps to your container mount
 ```
 
 Find your paths in Radarr/Sonarr → Settings → Media Management → Root Folders.
@@ -151,19 +153,19 @@ Find your paths in Radarr/Sonarr → Settings → Media Management → Root Fold
 ```yaml
 radarr:
   - name: "radarr"           # Friendly name
-    url: "http://192.168.1.3:7878"
+    url: "http://YOUR_SERVER_IP:7878"
     api_key: "YOUR_API_KEY"
     path_mappings:
       - from_path: "/movies"
-        to_path: "/mnt/remotes/nas/Movies"
+        to_path: "/media/movies"
 
 sonarr:
   - name: "sonarr-anime"
-    url: "http://192.168.1.3:8990"
+    url: "http://YOUR_SERVER_IP:8989"
     api_key: "YOUR_API_KEY"
     path_mappings:
       - from_path: "/anime"
-        to_path: "/mnt/remotes/nas/Anime"
+        to_path: "/media/anime"
 ```
 
 ### Plex Integration
@@ -171,8 +173,8 @@ sonarr:
 ```yaml
 plex:
   enabled: true
-  url: "http://192.168.1.3:32400"
-  token: "YOUR_PLEX_TOKEN"
+  url: "http://YOUR_SERVER_IP:32400"
+  token: "YOUR_PLEX_TOKEN"  # Or login via Web UI
   refresh_on_replace: true  # Trigger library refresh after replacements
 ```
 

@@ -6,35 +6,34 @@
 # =============================================================================
 radarr:
   - name: "radarr"
-    url: "http://192.168.1.3:7878"
+    url: "http://YOUR_SERVER_IP:7878"
     api_key: "YOUR_RADARR_API_KEY"
     # Path mappings translate Radarr's container paths to actual filesystem paths
     # Find your root folders in Radarr -> Settings -> Media Management
     path_mappings:
-      - from_path: "/movies"
-        to_path: "/mnt/remotes/192.168.1.5_video/Movies"
-      - from_path: "/kids"
-        to_path: "/mnt/remotes/192.168.1.5_video/Kids Stuff/Movies"
+      - from_path: "/movies"          # Path as Radarr sees it
+        to_path: "/media/movies"      # Path as media-janitor sees it
 
 # =============================================================================
 # Sonarr Instances (TV Shows)
 # =============================================================================
 sonarr:
-  - name: "sonarr-main"
-    url: "http://192.168.1.3:8989"
+  - name: "sonarr"
+    url: "http://YOUR_SERVER_IP:8989"
     api_key: "YOUR_SONARR_API_KEY"
     path_mappings:
-      - from_path: "/tv"
-        to_path: "/mnt/remotes/192.168.1.2_video/TV"
-      - from_path: "/kids"
-        to_path: "/mnt/remotes/192.168.1.2_video/Kids Stuff/TV"
+      - from_path: "/tv"              # Path as Sonarr sees it
+        to_path: "/media/tv"          # Path as media-janitor sees it
 
-  - name: "sonarr-2"
-    url: "http://192.168.1.3:8992"
-    api_key: "YOUR_SONARR2_API_KEY"
-    path_mappings:
-      - from_path: "/tv"
-        to_path: "/mnt/remotes/192.168.1.2_video/TV"
+# =============================================================================
+# Plex Integration (Optional)
+# =============================================================================
+# You can also login via OAuth in the Web UI instead of setting token here
+plex:
+  enabled: false
+  url: "http://YOUR_SERVER_IP:32400"
+  token: ""  # Optional - you can login via Web UI instead
+  refresh_on_replace: true
 
 # =============================================================================
 # Validation Settings
@@ -75,8 +74,7 @@ scanner:
   mode: "watch_only"
 
   # When to refresh TV library (cron format)
-  # TV is slow to fetch (each episode is a separate API call)
-  # Movies load on startup, TV loads on this schedule
+  # TV loads on this schedule, movies load on startup
   # Set to null to disable automatic TV refresh
   tv_refresh_schedule: "0 3 * * *"  # 3am daily
 
@@ -93,11 +91,43 @@ actions:
   # Maximum replacements per day (prevents hammering indexers)
   max_replacements_per_day: 10
 
+  # Dry run mode - report only, don't actually delete/replace
+  dry_run: false
+
 # =============================================================================
-# Email Notifications
+# Notifications (Optional)
+# =============================================================================
+# Uncomment and configure the services you want to use
+
+# notifications:
+#   discord:
+#     enabled: true
+#     webhook_url: "https://discord.com/api/webhooks/..."
+#
+#   slack:
+#     enabled: true
+#     webhook_url: "https://hooks.slack.com/services/..."
+#
+#   telegram:
+#     enabled: true
+#     bot_token: "123456:ABC-DEF..."
+#     chat_id: "-1001234567890"
+#
+#   pushover:
+#     enabled: true
+#     user_key: "your_user_key"
+#     api_token: "your_api_token"
+#
+#   gotify:
+#     enabled: true
+#     server_url: "https://gotify.example.com"
+#     app_token: "your_app_token"
+
+# =============================================================================
+# Email Notifications (Optional)
 # =============================================================================
 email:
-  enabled: true
+  enabled: false
   smtp_host: "smtp.gmail.com"
   smtp_port: 587
   smtp_user: "you@gmail.com"

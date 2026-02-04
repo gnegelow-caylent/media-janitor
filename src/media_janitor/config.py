@@ -11,7 +11,7 @@ class PathMapping(BaseModel):
     """Maps container paths to host paths."""
 
     from_path: str  # Path as reported by Radarr/Sonarr (e.g., "/tv")
-    to_path: str    # Actual path on host/in media-janitor container (e.g., "/mnt/remotes/192.168.1.2_video/TV")
+    to_path: str    # Actual path in media-janitor container (e.g., "/media/tv")
 
 
 class ArrInstance(BaseModel):
