@@ -56,6 +56,32 @@ class Janitor:
         await self.scanner.refresh_library("all")
         self.log.info("Janitor initialized")
 
+    def reload_config(self, new_config: Config):
+        """Hot-reload configuration without restart."""
+        self.log.info("Reloading configuration")
+        old_config = self.config
+        self.config = new_config
+
+        # Update scanner settings
+        self.scanner.config = new_config
+
+        # Update Plex client if settings changed
+        if new_config.plex.enabled and new_config.plex.url and new_config.plex.token:
+            if not self.plex or self.plex.config.url != new_config.plex.url or self.plex.config.token != new_config.plex.token:
+                self.plex = PlexClient(new_config.plex)
+                self.scanner.set_plex_client(self.plex)
+                self.log.info("Plex client updated")
+        elif not new_config.plex.enabled:
+            self.plex = None
+            self.scanner.set_plex_client(None)
+
+        self.log.info(
+            "Config reloaded",
+            files_per_hour=new_config.scanner.files_per_hour,
+            auto_replace=new_config.actions.auto_replace,
+            deep_scan=new_config.validation.deep_scan_enabled,
+        )
+
     def _check_rate_limit(self) -> bool:
         """Check if we can make more replacements today."""
         today = datetime.now().date()
