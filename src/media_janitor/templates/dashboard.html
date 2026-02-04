@@ -427,27 +427,28 @@
             const response = await fetch('/status');
             const data = await response.json();
 
-            const scanned = data.scanner.scanned_count;
             const valid = data.scanner.valid_count;
             const invalid = data.scanner.invalid_count;
             const queue = data.scanner.queue_size;
-            const total = scanned + queue;
+            // Total evaluated = valid + invalid (scanned_count doesn't include replaced files)
+            const totalEvaluated = valid + invalid;
 
             // Update health score
             const healthScore = calculateHealthScore(valid, invalid);
             updateHealthDisplay(healthScore);
 
-            // Update stat cards
-            document.getElementById('stat-total').textContent = total.toLocaleString();
+            // Update stat cards - show total evaluated, not scanned_count
+            document.getElementById('stat-total').textContent = (totalEvaluated + queue).toLocaleString();
             document.getElementById('stat-valid').textContent = valid.toLocaleString();
             document.getElementById('stat-invalid').textContent = invalid.toLocaleString();
             document.getElementById('stat-replaced').textContent = `${data.replacements_today}/${data.max_replacements_per_day}`;
             document.getElementById('stat-wrong').textContent = (data.scanner.wrong_files_count || 0).toLocaleString();
 
             // Update progress
-            const percent = total > 0 ? ((scanned / total) * 100).toFixed(1) : 0;
+            const total = totalEvaluated + queue;
+            const percent = total > 0 ? ((totalEvaluated / total) * 100).toFixed(1) : 0;
             document.getElementById('progress-bar').style.width = `${percent}%`;
-            document.getElementById('progress-scanned').textContent = scanned.toLocaleString();
+            document.getElementById('progress-scanned').textContent = totalEvaluated.toLocaleString();
             document.getElementById('progress-valid').textContent = valid.toLocaleString();
             document.getElementById('progress-invalid').textContent = invalid.toLocaleString();
             document.getElementById('progress-remaining').textContent = queue.toLocaleString();
