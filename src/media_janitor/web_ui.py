@@ -187,6 +187,29 @@ async def plex_login_check(request: Request, response: Response):
         # Clear pending auth cookie
         response.delete_cookie(AUTH_PENDING_COOKIE)
 
+        # Save token to config for backend services
+        try:
+            existing = get_config_dict()
+            existing.setdefault("plex", {})
+            existing["plex"]["token"] = user.auth_token
+            existing["plex"]["enabled"] = True
+
+            # Try to auto-detect Plex server URL if not set
+            if not existing["plex"].get("url"):
+                servers = await plex_auth.get_user_servers(user.auth_token)
+                if servers:
+                    # Prefer owned local server
+                    owned_local = next((s for s in servers if s["owned"] and s["local"]), None)
+                    owned = next((s for s in servers if s["owned"]), None)
+                    best = owned_local or owned or servers[0]
+                    existing["plex"]["url"] = best["uri"] or f"http://{best['address']}:{best['port']}"
+                    logger.info("Auto-detected Plex server", name=best["name"], url=existing["plex"]["url"])
+
+            save_config_dict(existing)
+            logger.info("Saved Plex token to config", username=user.username)
+        except Exception as e:
+            logger.warning("Failed to save Plex token to config", error=str(e))
+
         return {
             "success": True,
             "done": True,

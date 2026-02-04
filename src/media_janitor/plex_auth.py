@@ -195,6 +195,52 @@ async def validate_token(auth_token: str) -> bool:
     return user is not None
 
 
+async def get_user_servers(auth_token: str) -> list[dict]:
+    """
+    Get the user's Plex servers.
+
+    Args:
+        auth_token: Plex authentication token
+
+    Returns:
+        List of server dicts with name, address, port, local, owned fields.
+    """
+    headers = {**PLEX_HEADERS, "X-Plex-Token": auth_token}
+
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            f"{PLEX_API_BASE}/resources",
+            headers=headers,
+            params={"includeHttps": 1, "includeRelay": 0},
+            timeout=10,
+        )
+        response.raise_for_status()
+        data = response.json()
+
+    servers = []
+    for resource in data:
+        if resource.get("provides") != "server":
+            continue
+
+        # Get the best connection (prefer local)
+        connections = resource.get("connections", [])
+        local_conn = next((c for c in connections if c.get("local")), None)
+        remote_conn = next((c for c in connections if not c.get("local")), None)
+        best_conn = local_conn or remote_conn
+
+        if best_conn:
+            servers.append({
+                "name": resource.get("name", "Unknown"),
+                "address": best_conn.get("address"),
+                "port": best_conn.get("port", 32400),
+                "uri": best_conn.get("uri"),
+                "local": best_conn.get("local", False),
+                "owned": resource.get("owned", False),
+            })
+
+    return servers
+
+
 def cleanup_expired_pins():
     """Remove expired PINs from memory."""
     now = datetime.utcnow()

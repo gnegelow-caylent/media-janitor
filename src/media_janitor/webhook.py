@@ -6,13 +6,14 @@ from pathlib import Path
 from typing import Any
 
 import structlog
-from fastapi import BackgroundTasks, FastAPI, Query, Request
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
 from .arr_client import ArrClient, ArrType
-from .config import Config
+from .config import Config, PlexConfig
 from .janitor import Janitor
+from .plex_client import PlexClient
 from .reports import (
     format_report_email,
     format_report_text,
@@ -35,6 +36,36 @@ if static_dir.exists():
 # Global references set by main.py
 _config: Config | None = None
 _janitor: Janitor | None = None
+
+
+def _get_plex_client() -> PlexClient | None:
+    """Get a Plex client, creating from fresh config if needed."""
+    # If janitor has one, use it
+    if _janitor and _janitor.plex:
+        return _janitor.plex
+
+    # Try to create from current config file
+    try:
+        from .web_ui import get_config_dict
+        config = get_config_dict()
+        plex_cfg = config.get("plex", {})
+        if plex_cfg.get("enabled") and plex_cfg.get("url") and plex_cfg.get("token"):
+            plex_config = PlexConfig(
+                enabled=True,
+                url=plex_cfg["url"],
+                token=plex_cfg["token"],
+                refresh_on_replace=plex_cfg.get("refresh_on_replace", True),
+            )
+            client = PlexClient(plex_config)
+            # Update janitor's plex client if we created a new one
+            if _janitor:
+                _janitor.plex = client
+                _janitor.scanner.set_plex_client(client)
+            return client
+    except Exception as e:
+        logger.warning("Failed to create Plex client from config", error=str(e))
+
+    return None
 
 
 def init_webhook_app(config: Config, janitor: Janitor) -> FastAPI:
@@ -454,10 +485,11 @@ async def get_quality_upgrades(
     if not _janitor:
         return {"status": "error", "message": "Janitor not initialized"}
 
-    if not _janitor.plex:
-        return {"status": "error", "message": "Plex integration not enabled"}
+    plex = _get_plex_client()
+    if not plex:
+        raise HTTPException(status_code=400, detail="Plex integration not enabled. Login with Plex first.")
 
-    upgrades = await _janitor.plex.get_quality_upgrade_candidates(min_views, max_resolution)
+    upgrades = await plex.get_quality_upgrade_candidates(min_views, max_resolution)
 
     if format == "text":
         lines = [
@@ -508,10 +540,11 @@ async def get_playback_issues(
     if not _janitor:
         return {"status": "error", "message": "Janitor not initialized"}
 
-    if not _janitor.plex:
-        return {"status": "error", "message": "Plex integration not enabled"}
+    plex = _get_plex_client()
+    if not plex:
+        raise HTTPException(status_code=400, detail="Plex integration not enabled. Login with Plex first.")
 
-    issues = await _janitor.plex.get_playback_issues(min_progress, max_progress)
+    issues = await plex.get_playback_issues(min_progress, max_progress)
 
     if format == "text":
         lines = [
@@ -561,8 +594,9 @@ async def get_orphan_report(
     if not _janitor:
         return {"status": "error", "message": "Janitor not initialized"}
 
-    if not _janitor.plex:
-        return {"status": "error", "message": "Plex integration not enabled"}
+    plex = _get_plex_client()
+    if not plex:
+        raise HTTPException(status_code=400, detail="Plex integration not enabled. Login with Plex first.")
 
     # Get all file paths from Radarr/Sonarr
     arr_paths: set[str] = set()
@@ -575,7 +609,7 @@ async def get_orphan_report(
         except Exception as e:
             logger.warning("Failed to get media from client", client=client.instance.name, error=str(e))
 
-    in_plex_not_arr, in_arr_not_plex = await _janitor.plex.find_orphans(arr_paths)
+    in_plex_not_arr, in_arr_not_plex = await plex.find_orphans(arr_paths)
 
     if format == "text":
         lines = [
