@@ -53,9 +53,9 @@
                 <h3 class="text-lg font-medium text-white">Upgrade Opportunities</h3>
                 <span class="text-2xl">⬆️</span>
             </div>
-            <p class="mt-2 text-sm text-gray-400">720p files that could be upgraded</p>
+            <p class="mt-2 text-sm text-gray-400">Watched content that could be upgraded</p>
             <div class="mt-4">
-                <span class="text-gray-500 text-sm">Coming soon</span>
+                <span class="text-primary text-sm">Requires Plex →</span>
             </div>
         </div>
 
@@ -80,6 +80,42 @@
             <p class="mt-2 text-sm text-gray-400">HDR10, Dolby Vision, HDR10+</p>
             <div class="mt-4">
                 <span class="text-primary text-sm">Click to run report →</span>
+            </div>
+        </div>
+
+        <!-- Replaced Files -->
+        <div class="stat-card hover:border-primary transition-colors cursor-pointer" onclick="loadReport('replaced')">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-medium text-white">Replaced Files</h3>
+                <span class="text-2xl">🔄</span>
+            </div>
+            <p class="mt-2 text-sm text-gray-400">Files that were auto-replaced</p>
+            <div class="mt-4">
+                <span class="text-primary text-sm">Click to run report →</span>
+            </div>
+        </div>
+
+        <!-- Orphan Files (Plex) -->
+        <div class="stat-card hover:border-primary transition-colors cursor-pointer" onclick="loadReport('orphans')">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-medium text-white">Orphan Files</h3>
+                <span class="text-2xl">👻</span>
+            </div>
+            <p class="mt-2 text-sm text-gray-400">In Plex but not Radarr/Sonarr (or vice versa)</p>
+            <div class="mt-4">
+                <span class="text-primary text-sm">Requires Plex →</span>
+            </div>
+        </div>
+
+        <!-- Playback Issues (Plex) -->
+        <div class="stat-card hover:border-primary transition-colors cursor-pointer" onclick="loadReport('playback')">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-medium text-white">Playback Issues</h3>
+                <span class="text-2xl">⏸️</span>
+            </div>
+            <p class="mt-2 text-sm text-gray-400">Files users started but didn't finish</p>
+            <div class="mt-4">
+                <span class="text-primary text-sm">Requires Plex →</span>
             </div>
         </div>
 
@@ -150,7 +186,16 @@
                     await loadDuplicatesReport();
                     break;
                 case 'upgrades':
-                    showModal('Upgrade Opportunities', '<p class="text-gray-400">Coming soon - will find 720p files that could be upgraded to 1080p/4K.</p>');
+                    await loadUpgradesReport();
+                    break;
+                case 'replaced':
+                    await loadReplacedReport();
+                    break;
+                case 'orphans':
+                    await loadOrphansReport();
+                    break;
+                case 'playback':
+                    await loadPlaybackReport();
                     break;
                 case 'codecs':
                     await loadCodecsReport();
@@ -395,6 +440,205 @@
 
         content += '</div>';
         showModal('HDR Content', content);
+    }
+
+    async function loadReplacedReport() {
+        const response = await fetch('/report/replaced');
+        const data = await response.json();
+
+        let content = '';
+
+        if (data.count === 0) {
+            content = '<p class="text-green-400">No files have been replaced yet.</p>';
+        } else {
+            content = `
+                <p class="text-gray-400 mb-4">Total files replaced: ${data.count}</p>
+                <div class="space-y-3">
+            `;
+
+            data.replaced.forEach(r => {
+                const wrongFileTag = r.wrong_file ? '<span class="text-xs bg-red-600 text-white px-2 py-1 rounded ml-2">Wrong File</span>' : '';
+                const typeTag = r.media_type === 'movie' ? '<span class="text-xs bg-blue-600 text-white px-2 py-1 rounded">Movie</span>' : '<span class="text-xs bg-purple-600 text-white px-2 py-1 rounded">TV</span>';
+                content += `
+                    <div class="bg-gray-700 rounded-lg p-4">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-white font-medium">${r.title || 'Unknown'}</p>
+                                <p class="text-sm text-red-400 mt-1">${r.reason || 'Unknown reason'}</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                ${typeTag}${wrongFileTag}
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2 truncate">${r.path}</p>
+                        <p class="text-xs text-gray-600 mt-1">${new Date(r.timestamp).toLocaleString()}</p>
+                    </div>
+                `;
+            });
+
+            content += '</div>';
+        }
+
+        showModal('Replaced Files', content);
+    }
+
+    async function loadUpgradesReport() {
+        const response = await fetch('/report/upgrades');
+
+        if (!response.ok) {
+            const error = await response.json();
+            showModal('Upgrade Opportunities', `<p class="text-yellow-400">${error.detail || 'Plex integration required. Configure Plex in Settings.'}</p>`);
+            return;
+        }
+
+        const data = await response.json();
+
+        let content = '';
+
+        if (data.count === 0) {
+            content = '<p class="text-green-400">No upgrade opportunities found! Your watched content is already high quality.</p>';
+        } else {
+            content = `
+                <p class="text-gray-400 mb-4">Found ${data.count} items that could be upgraded</p>
+                <div class="space-y-3">
+            `;
+
+            data.upgrades.forEach(u => {
+                content += `
+                    <div class="bg-gray-700 rounded-lg p-4">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-white font-medium">${u.title}</p>
+                                <p class="text-sm text-gray-400 mt-1">Current: <span class="text-yellow-400">${u.current_quality}</span></p>
+                                <p class="text-sm text-gray-400">Suggested: <span class="text-green-400">${u.suggested_quality}</span></p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs text-gray-500">${u.view_count} views</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            content += '</div>';
+        }
+
+        showModal('Upgrade Opportunities', content);
+    }
+
+    async function loadOrphansReport() {
+        const response = await fetch('/report/orphans');
+
+        if (!response.ok) {
+            const error = await response.json();
+            showModal('Orphan Files', `<p class="text-yellow-400">${error.detail || 'Plex integration required. Configure Plex in Settings.'}</p>`);
+            return;
+        }
+
+        const data = await response.json();
+
+        let content = '';
+        const totalOrphans = data.plex_only.length + data.arr_only.length;
+
+        if (totalOrphans === 0) {
+            content = '<p class="text-green-400">No orphan files found! Libraries are in sync.</p>';
+        } else {
+            content = '<div class="space-y-6">';
+
+            if (data.plex_only.length > 0) {
+                content += `
+                    <div>
+                        <h4 class="text-white font-medium mb-3">In Plex Only (${data.plex_only.length})</h4>
+                        <p class="text-sm text-gray-400 mb-2">These files are in Plex but not tracked by Radarr/Sonarr</p>
+                        <div class="space-y-2 max-h-48 overflow-y-auto">
+                `;
+                data.plex_only.slice(0, 20).forEach(p => {
+                    content += `
+                        <div class="bg-gray-700 rounded p-2">
+                            <p class="text-sm text-white">${p.title}</p>
+                            <p class="text-xs text-gray-500 truncate">${p.file_path || 'Unknown path'}</p>
+                        </div>
+                    `;
+                });
+                if (data.plex_only.length > 20) {
+                    content += `<p class="text-xs text-gray-500">...and ${data.plex_only.length - 20} more</p>`;
+                }
+                content += '</div></div>';
+            }
+
+            if (data.arr_only.length > 0) {
+                content += `
+                    <div>
+                        <h4 class="text-white font-medium mb-3">In Radarr/Sonarr Only (${data.arr_only.length})</h4>
+                        <p class="text-sm text-gray-400 mb-2">These files are tracked but not in Plex</p>
+                        <div class="space-y-2 max-h-48 overflow-y-auto">
+                `;
+                data.arr_only.slice(0, 20).forEach(a => {
+                    content += `
+                        <div class="bg-gray-700 rounded p-2">
+                            <p class="text-sm text-white">${a.title}</p>
+                            <p class="text-xs text-gray-500 truncate">${a.file_path || 'Unknown path'}</p>
+                        </div>
+                    `;
+                });
+                if (data.arr_only.length > 20) {
+                    content += `<p class="text-xs text-gray-500">...and ${data.arr_only.length - 20} more</p>`;
+                }
+                content += '</div></div>';
+            }
+
+            content += '</div>';
+        }
+
+        showModal('Orphan Files', content);
+    }
+
+    async function loadPlaybackReport() {
+        const response = await fetch('/report/playback-issues');
+
+        if (!response.ok) {
+            const error = await response.json();
+            showModal('Playback Issues', `<p class="text-yellow-400">${error.detail || 'Plex integration required. Configure Plex in Settings.'}</p>`);
+            return;
+        }
+
+        const data = await response.json();
+
+        let content = '';
+
+        if (data.count === 0) {
+            content = '<p class="text-green-400">No playback issues detected!</p>';
+        } else {
+            content = `
+                <p class="text-gray-400 mb-4">Found ${data.count} potential playback issues</p>
+                <p class="text-sm text-gray-500 mb-4">These are files that users started watching but didn't finish - may indicate playback problems</p>
+                <div class="space-y-3">
+            `;
+
+            data.issues.forEach(i => {
+                const progressPct = Math.round(i.progress * 100);
+                content += `
+                    <div class="bg-gray-700 rounded-lg p-4">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-white font-medium">${i.title}</p>
+                                <p class="text-sm text-gray-400 mt-1">Stopped at ${progressPct}%</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs text-gray-500">${i.user || 'Unknown user'}</p>
+                            </div>
+                        </div>
+                        <div class="w-full bg-gray-600 rounded-full h-2 mt-2">
+                            <div class="bg-yellow-500 h-2 rounded-full" style="width: ${progressPct}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            content += '</div>';
+        }
+
+        showModal('Playback Issues', content);
     }
 
     // Close modal on escape key
