@@ -18,6 +18,7 @@ class StateManager:
         self.log = logger.bind(component="state")
         self._state: dict[str, Any] = {
             "scanned_files": {},  # path -> {timestamp, valid, media_type}
+            "replaced_files": [],  # list of {path, title, reason, timestamp, wrong_file}
             "scan_started": None,
             "scan_completed": None,
             "total_scanned": 0,
@@ -89,12 +90,20 @@ class StateManager:
         if self._state["total_scanned"] % 10 == 0:
             self._save()
 
-    def mark_replaced(self, file_path: str, wrong_file: bool = False):
+    def mark_replaced(
+        self,
+        file_path: str,
+        wrong_file: bool = False,
+        title: str = "",
+        reason: str = "",
+    ):
         """Mark a file as replaced (remove from scanned, increment counter).
 
         Args:
             file_path: Path to the file
             wrong_file: True if this was a wrong file in folder (path mismatch)
+            title: Title of the media item
+            reason: Reason for replacement
         """
         if file_path in self._state.get("scanned_files", {}):
             del self._state["scanned_files"][file_path]
@@ -103,6 +112,21 @@ class StateManager:
         self._state["total_invalid"] = self._state.get("total_invalid", 0) + 1
         if wrong_file:
             self._state["total_wrong_files"] = self._state.get("total_wrong_files", 0) + 1
+
+        # Record the replacement details
+        if "replaced_files" not in self._state:
+            self._state["replaced_files"] = []
+        self._state["replaced_files"].append({
+            "path": file_path,
+            "title": title,
+            "reason": reason,
+            "wrong_file": wrong_file,
+            "timestamp": datetime.now().isoformat(),
+        })
+        # Keep only last 500 replacements to avoid unbounded growth
+        if len(self._state["replaced_files"]) > 500:
+            self._state["replaced_files"] = self._state["replaced_files"][-500:]
+
         self._save()
 
     def mark_scan_started(self):
@@ -118,6 +142,10 @@ class StateManager:
     def get_scanned_paths(self) -> set[str]:
         """Get set of all scanned file paths."""
         return set(self._state.get("scanned_files", {}).keys())
+
+    def get_replaced_files(self) -> list[dict]:
+        """Get list of replaced files with details."""
+        return self._state.get("replaced_files", [])
 
     def get_stats(self) -> dict:
         """Get scan statistics."""
@@ -156,6 +184,7 @@ class StateManager:
         """Clear all state (for fresh start)."""
         self._state = {
             "scanned_files": {},
+            "replaced_files": [],
             "scan_started": None,
             "scan_completed": None,
             "total_scanned": 0,

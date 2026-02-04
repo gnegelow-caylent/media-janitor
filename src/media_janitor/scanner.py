@@ -4,6 +4,7 @@ import asyncio
 import random
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import structlog
 
@@ -11,16 +12,20 @@ from .arr_client import ArrClient, ArrType, MediaItem
 from .config import Config
 from .state import StateManager
 
+if TYPE_CHECKING:
+    from .plex_client import PlexClient
+
 logger = structlog.get_logger()
 
 
 class Scanner:
     """Background scanner for media library."""
 
-    def __init__(self, config: Config, state: StateManager):
+    def __init__(self, config: Config, state: StateManager, plex_client: "PlexClient | None" = None):
         self.config = config
         self.state = state
         self.log = logger.bind(component="scanner")
+        self._plex_client = plex_client
 
         # Track scan state (in-memory queue, persistent state in StateManager)
         self._scan_queue: list[MediaItem] = []
@@ -30,6 +35,10 @@ class Scanner:
         # Clients
         self._radarr_clients: list[ArrClient] = []
         self._sonarr_clients: list[ArrClient] = []
+
+    def set_plex_client(self, plex_client: "PlexClient | None"):
+        """Set or update the Plex client for watch-based prioritization."""
+        self._plex_client = plex_client
 
     async def initialize(self):
         """Initialize the scanner with arr clients."""
@@ -108,8 +117,24 @@ class Scanner:
         # Separate movies and TV, then interleave for balanced scanning
         movies = [item for item in new_items if item.arr_type == ArrType.RADARR]
         tv = [item for item in new_items if item.arr_type == ArrType.SONARR]
-        random.shuffle(movies)
-        random.shuffle(tv)
+
+        # Prioritize by Plex watch count if available
+        watch_counts: dict[str, int] = {}
+        if self._plex_client:
+            try:
+                watch_counts = await self._plex_client.get_watch_history()
+                self.log.info("Using Plex watch data for prioritization", watched_items=len(watch_counts))
+            except Exception as e:
+                self.log.warning("Failed to fetch Plex watch data, using random order", error=str(e))
+
+        if watch_counts:
+            # Sort by view count descending (most watched first)
+            movies.sort(key=lambda x: watch_counts.get(x.file_path or "", 0), reverse=True)
+            tv.sort(key=lambda x: watch_counts.get(x.file_path or "", 0), reverse=True)
+        else:
+            # Fallback to random shuffle
+            random.shuffle(movies)
+            random.shuffle(tv)
 
         # Interleave: for every 1 movie, scan ~10 TV (proportional to library size)
         # This ensures both get scanned even with large TV libraries
@@ -154,9 +179,15 @@ class Scanner:
         """Mark a file as scanned (persisted to disk)."""
         self.state.mark_scanned(file_path, valid, media_type)
 
-    def mark_replaced(self, file_path: str, wrong_file: bool = False):
+    def mark_replaced(
+        self,
+        file_path: str,
+        wrong_file: bool = False,
+        title: str = "",
+        reason: str = "",
+    ):
         """Mark a file as replaced (removes from scanned list)."""
-        self.state.mark_replaced(file_path, wrong_file=wrong_file)
+        self.state.mark_replaced(file_path, wrong_file=wrong_file, title=title, reason=reason)
 
     def check_initial_scan_complete(self) -> bool:
         """Check if initial scan is complete and mark if so."""

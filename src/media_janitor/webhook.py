@@ -231,6 +231,43 @@ async def email_library_report(
         return {"status": "error", "message": "Failed to send email"}
 
 
+@app.get("/report/replaced")
+async def get_replaced_report(
+    format: str = Query(default="json", description="Output format: json or text"),
+):
+    """
+    Get list of files that have been replaced.
+
+    Shows files that were deleted and re-downloaded due to validation failures.
+    """
+    if not _janitor:
+        return {"status": "error", "message": "Janitor not initialized"}
+
+    replaced = _janitor.state.get_replaced_files()
+    # Reverse to show most recent first
+    replaced = list(reversed(replaced))
+
+    if format == "text":
+        lines = [
+            "=" * 70,
+            "REPLACED FILES REPORT",
+            f"Total: {len(replaced)} files replaced",
+            "=" * 70,
+        ]
+        for r in replaced[:100]:
+            lines.append(f"\n{r.get('title', 'Unknown')} - {r.get('timestamp', '')[:10]}")
+            lines.append(f"  Path: {r.get('path', 'Unknown')}")
+            lines.append(f"  Reason: {r.get('reason', 'Unknown')}")
+            if r.get('wrong_file'):
+                lines.append("  Type: Wrong file in folder")
+        return PlainTextResponse(content="\n".join(lines))
+    else:
+        return {
+            "count": len(replaced),
+            "replaced": replaced[:100],  # Limit response size
+        }
+
+
 @app.get("/report/mismatches")
 async def get_mismatch_report(
     source: str = Query(default="movies", description="Source: movies (fast) or tv (slow)"),
@@ -395,6 +432,180 @@ async def get_codecs_report(
             "audio_codecs": stats.audio_codecs,
             "containers": stats.containers,
             "hdr_types": stats.hdr_types,
+        }
+
+
+# =============================================================================
+# Plex Reports
+# =============================================================================
+
+
+@app.get("/report/upgrades")
+async def get_quality_upgrades(
+    min_views: int = Query(default=1, ge=1, description="Minimum view count to include"),
+    max_resolution: str = Query(default="720", description="Max resolution to suggest upgrade: 480, 720, 1080"),
+    format: str = Query(default="json", description="Output format: json or text"),
+):
+    """
+    Find watched content that could be upgraded to better quality.
+
+    Requires Plex integration to be enabled.
+    """
+    if not _janitor:
+        return {"status": "error", "message": "Janitor not initialized"}
+
+    if not _janitor.plex:
+        return {"status": "error", "message": "Plex integration not enabled"}
+
+    upgrades = await _janitor.plex.get_quality_upgrade_candidates(min_views, max_resolution)
+
+    if format == "text":
+        lines = [
+            "=" * 70,
+            "QUALITY UPGRADE SUGGESTIONS",
+            f"Found {len(upgrades)} watched items that could be upgraded",
+            "=" * 70,
+        ]
+        for u in upgrades[:50]:
+            lines.append(f"\n{u.title} ({u.year or 'N/A'})")
+            lines.append(f"  Current: {u.current_resolution} @ {u.current_bitrate or 'N/A'} kbps")
+            lines.append(f"  Suggested: {u.suggested_quality}")
+            lines.append(f"  Views: {u.view_count}")
+        return PlainTextResponse(content="\n".join(lines))
+    else:
+        return {
+            "count": len(upgrades),
+            "upgrades": [
+                {
+                    "title": u.title,
+                    "year": u.year,
+                    "file_path": u.file_path,
+                    "current_resolution": u.current_resolution,
+                    "current_bitrate": u.current_bitrate,
+                    "view_count": u.view_count,
+                    "last_viewed": u.last_viewed.isoformat() if u.last_viewed else None,
+                    "suggested_quality": u.suggested_quality,
+                }
+                for u in upgrades
+            ],
+        }
+
+
+@app.get("/report/playback-issues")
+async def get_playback_issues(
+    min_progress: float = Query(default=5.0, ge=0, le=100, description="Min progress % to consider"),
+    max_progress: float = Query(default=90.0, ge=0, le=100, description="Max progress % (above = almost done)"),
+    format: str = Query(default="json", description="Output format: json or text"),
+):
+    """
+    Find potential playback issues by analyzing viewing patterns.
+
+    Detects items that were started but abandoned, which could indicate
+    playback problems (buffering, codec issues, corruption).
+
+    Requires Plex integration to be enabled.
+    """
+    if not _janitor:
+        return {"status": "error", "message": "Janitor not initialized"}
+
+    if not _janitor.plex:
+        return {"status": "error", "message": "Plex integration not enabled"}
+
+    issues = await _janitor.plex.get_playback_issues(min_progress, max_progress)
+
+    if format == "text":
+        lines = [
+            "=" * 70,
+            "POTENTIAL PLAYBACK ISSUES",
+            f"Found {len(issues)} items with suspicious viewing patterns",
+            "=" * 70,
+        ]
+        for issue in issues[:50]:
+            lines.append(f"\n{issue.title} ({issue.year or 'N/A'})")
+            lines.append(f"  {issue.details}")
+            lines.append(f"  File: {issue.file_path or 'Unknown'}")
+            if issue.last_activity:
+                lines.append(f"  Last activity: {issue.last_activity.strftime('%Y-%m-%d %H:%M')}")
+        return PlainTextResponse(content="\n".join(lines))
+    else:
+        return {
+            "count": len(issues),
+            "issues": [
+                {
+                    "rating_key": i.rating_key,
+                    "title": i.title,
+                    "year": i.year,
+                    "file_path": i.file_path,
+                    "issue_type": i.issue_type,
+                    "details": i.details,
+                    "progress_pct": round(i.view_offset_pct, 1),
+                    "last_activity": i.last_activity.isoformat() if i.last_activity else None,
+                }
+                for i in issues
+            ],
+        }
+
+
+@app.get("/report/orphans")
+async def get_orphan_report(
+    format: str = Query(default="json", description="Output format: json or text"),
+):
+    """
+    Find orphaned files between Plex and Radarr/Sonarr.
+
+    - in_plex_not_arr: Files in Plex but not in Radarr/Sonarr
+    - in_arr_not_plex: Files in Radarr/Sonarr but not in Plex
+
+    Requires Plex integration to be enabled.
+    """
+    if not _janitor:
+        return {"status": "error", "message": "Janitor not initialized"}
+
+    if not _janitor.plex:
+        return {"status": "error", "message": "Plex integration not enabled"}
+
+    # Get all file paths from Radarr/Sonarr
+    arr_paths: set[str] = set()
+    for client in _janitor.scanner.get_all_clients():
+        try:
+            media = await client.get_all_media()
+            for item in media:
+                if item.file_path:
+                    arr_paths.add(item.file_path)
+        except Exception as e:
+            logger.warning("Failed to get media from client", client=client.instance.name, error=str(e))
+
+    in_plex_not_arr, in_arr_not_plex = await _janitor.plex.find_orphans(arr_paths)
+
+    if format == "text":
+        lines = [
+            "=" * 70,
+            "ORPHAN FILES REPORT",
+            "=" * 70,
+            f"\nIn Plex but NOT in Radarr/Sonarr ({len(in_plex_not_arr)}):",
+        ]
+        for p in in_plex_not_arr[:50]:
+            lines.append(f"  {p}")
+        if len(in_plex_not_arr) > 50:
+            lines.append(f"  ... and {len(in_plex_not_arr) - 50} more")
+
+        lines.append(f"\nIn Radarr/Sonarr but NOT in Plex ({len(in_arr_not_plex)}):")
+        for p in in_arr_not_plex[:50]:
+            lines.append(f"  {p}")
+        if len(in_arr_not_plex) > 50:
+            lines.append(f"  ... and {len(in_arr_not_plex) - 50} more")
+
+        return PlainTextResponse(content="\n".join(lines))
+    else:
+        return {
+            "in_plex_not_arr": {
+                "count": len(in_plex_not_arr),
+                "files": in_plex_not_arr[:100],  # Limit response size
+            },
+            "in_arr_not_plex": {
+                "count": len(in_arr_not_plex),
+                "files": in_arr_not_plex[:100],
+            },
         }
 
 

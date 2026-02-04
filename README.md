@@ -11,7 +11,7 @@ Proactive media library quality monitor for Plex/Radarr/Sonarr. Automatically de
 - **Path mismatch detection** - Detects wrong files in folders and triggers replacement (not rename)
 - **Duplicate detection** - Finds same content in multiple qualities with space savings report
 - **Library reports** - Codec breakdown, HDR analysis, suspicious files, and more
-- **Plex integration** - OAuth login, library refresh after replacements
+- **Plex integration** - OAuth login, library refresh, watch-based prioritization, quality upgrade suggestions, playback issue detection, orphan file detection
 - **Multi-platform notifications** - Discord, Slack, Telegram, Pushover, Gotify, Email
 - **Dry run mode** - Test without making changes
 
@@ -444,6 +444,33 @@ docker stop media-janitor && docker rm media-janitor
 ## Unraid Community Applications
 
 An XML template is included for Unraid CA. See `unraid/media-janitor.xml` in the repository.
+
+## Plex Integration Features
+
+When Plex is configured, Media Janitor provides additional features:
+
+| Feature | Description |
+|---------|-------------|
+| Library refresh | Automatically refresh Plex library after file replacements |
+| Watch-based prioritization | Scan frequently-watched content first |
+| Quality upgrade suggestions | Find watched content that could be upgraded (`/report/upgrades`) |
+| Playback issue detection | Find files that users started but abandoned (`/report/playback-issues`) |
+| Orphan detection | Find files in Plex not in Radarr/Sonarr or vice versa (`/report/orphans`) |
+
+### Plex API Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `/report/upgrades` | Quality upgrade suggestions for watched content |
+| `/report/playback-issues` | Potential playback issues based on viewing patterns |
+| `/report/orphans` | Files that exist in only Plex or only Radarr/Sonarr |
+
+## Roadmap / Backlog
+
+Future features under consideration:
+
+- **Storage optimization** - Find unwatched content taking up space
+- **Transcode stats** - Show which files always require transcoding
 
 ## License
 

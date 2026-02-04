@@ -9,6 +9,7 @@ import structlog
 from .arr_client import ArrClient, ArrType, MediaItem
 from .config import Config
 from .notifications import NotificationManager, ScanResult
+from .plex_client import PlexClient
 from .reports import (
     LibraryReport,
     generate_library_report,
@@ -34,7 +35,13 @@ class Janitor:
         # Initialize state manager first
         self.state = StateManager()
 
-        self.scanner = Scanner(config, self.state)
+        # Plex client (optional)
+        self.plex: PlexClient | None = None
+        if config.plex.enabled and config.plex.url and config.plex.token:
+            self.plex = PlexClient(config.plex)
+
+        # Scanner with optional Plex for watch-based prioritization
+        self.scanner = Scanner(config, self.state, self.plex)
         self.notifications = NotificationManager(config.email)
 
         # Rate limiting
@@ -158,7 +165,13 @@ class Janitor:
             scan_result.action_taken = "replaced"
             self._increment_replacement_count()
             # Remove from scanned list so new file will be scanned
-            self.scanner.mark_replaced(file_path, wrong_file=is_wrong_file)
+            reason = "; ".join(validation_result.errors[:2]) if validation_result.errors else "Unknown"
+            self.scanner.mark_replaced(
+                file_path,
+                wrong_file=is_wrong_file,
+                title=title,
+                reason=reason,
+            )
         else:
             # Mark as scanned if replacement failed (don't keep retrying)
             self.scanner.mark_scanned(file_path, False, media_type)
@@ -201,6 +214,14 @@ class Janitor:
             log.error("Failed to trigger replacement search")
             # File is deleted but search failed - this is still a partial success
             return True
+
+        # Trigger Plex library refresh if enabled
+        if self.plex and self.config.plex.refresh_on_replace:
+            try:
+                await self.plex.refresh_library()
+                log.info("Triggered Plex library refresh")
+            except Exception as e:
+                log.warning("Failed to refresh Plex library", error=str(e))
 
         log.info("Replacement process initiated")
         return True
