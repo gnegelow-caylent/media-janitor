@@ -54,7 +54,7 @@ class ScannerConfig(BaseModel):
     """Background scanner settings."""
 
     enabled: bool = True
-    files_per_hour: int = 100
+    files_per_hour: int = 300
     schedule: str | None = None
     # Mode: "continuous" = keep re-scanning forever, "watch_only" = scan once then only watch new imports
     mode: Literal["continuous", "watch_only"] = "watch_only"

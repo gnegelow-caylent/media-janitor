@@ -8,7 +8,7 @@ Proactive media library quality monitor for Plex/Radarr/Sonarr. Automatically de
 - **Validates new imports** - Webhooks from Radarr/Sonarr trigger instant validation
 - **Background scanning** - Gradually scans existing library at configurable rate
 - **Auto-replaces bad files** - Deletes corrupt files, blocklists release, triggers re-download
-- **Path mismatch detection** - Finds files in wrong folders (e.g., wrong movie in folder)
+- **Path mismatch detection** - Detects wrong files in folders and triggers replacement (not rename)
 - **Duplicate detection** - Finds same content in multiple qualities with space savings report
 - **Library reports** - Codec breakdown, HDR analysis, suspicious files, and more
 - **Plex integration** - OAuth login, library refresh after replacements
@@ -19,9 +19,9 @@ Proactive media library quality monitor for Plex/Radarr/Sonarr. Automatically de
 
 Access the web interface at `http://your-server:9000`
 
-- **Dashboard** - Scanner status, recent activity, quick stats
+- **Dashboard** - Scanner status, recent activity, quick stats (including wrong files count)
 - **Library** - Browse movies and TV shows with quality info
-- **Reports** - Path mismatches, duplicates, codec breakdown, HDR content, suspicious files
+- **Reports** - Path mismatches, duplicates, codec breakdown, HDR content, quality by instance
 - **Logs** - Real-time log viewer with filtering
 - **Settings** - Configure everything from the browser (General, Connections, Actions, Notifications)
 
@@ -34,8 +34,19 @@ Access the web interface at `http://your-server:9000`
 | Truncated files | ffmpeg decode test fails |
 | Encoding errors | ffmpeg reports errors during sample decode |
 | Low bitrate | Below minimum for resolution (720p/1080p/4K) |
-| Path mismatches | Filename doesn't match expected movie title |
+| Path mismatches | Filename doesn't match expected title (triggers replacement) |
 | Duplicates | Same content in multiple qualities |
+
+### Path Mismatch Detection
+
+When a file passes all validation checks but the filename doesn't match the expected title from Radarr/Sonarr, it's flagged as a "wrong file". This typically happens when a completely different movie ends up in a folder (e.g., "Titanic.mkv" in an "Avatar (2009)" folder).
+
+**Important**: Wrong files trigger **replacement**, not rename. Renaming would be incorrect since the actual content is wrong. Media Janitor will:
+1. Delete the wrong file
+2. Blocklist the release (if enabled)
+3. Trigger a search for the correct content
+
+Wrong files are tracked separately and shown on the dashboard as "Wrong Files".
 
 ## Quick Start (Unraid)
 
@@ -69,7 +80,7 @@ sonarr:
 
 scanner:
   enabled: true
-  files_per_hour: 100
+  files_per_hour: 300
   mode: "watch_only"
 
 actions:
@@ -172,7 +183,7 @@ You can also authenticate via OAuth in the Web UI Settings → Connections → P
 ```yaml
 scanner:
   enabled: true
-  files_per_hour: 100        # Scan rate (lower = less bandwidth)
+  files_per_hour: 300        # Scan rate (validation reads ~2-5MB per file)
   mode: "watch_only"         # "watch_only" or "continuous"
   tv_refresh_schedule: "0 3 * * *"  # When to refresh TV library (cron format)
 ```
@@ -383,7 +394,7 @@ Or use the Web UI at `/logs` for a better experience.
 2. **Background scan**: Validates files with ffprobe at configured rate
 3. **TV schedule**: Loads TV episodes at scheduled time (default 3am) using efficient bulk API
 4. **Webhooks**: New imports are validated immediately
-5. **Auto-replace**: Bad files are deleted, blocklisted, and re-searched
+5. **Auto-replace**: Bad files (including wrong files in folders) are deleted, blocklisted, and re-searched
 6. **Notifications**: Get alerted via Discord, Slack, Telegram, etc.
 7. **Completion**: Once initial scan is done, only webhooks trigger validation
 
@@ -432,7 +443,7 @@ docker stop media-janitor && docker rm media-janitor
 
 ## Unraid Community Applications
 
-An XML template is included for Unraid CA. See `media-janitor.xml` in the repository.
+An XML template is included for Unraid CA. See `unraid/media-janitor.xml` in the repository.
 
 ## License
 

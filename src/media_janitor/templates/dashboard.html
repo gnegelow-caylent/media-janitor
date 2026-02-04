@@ -120,6 +120,12 @@
                 </svg>
                 View Reports
             </a>
+            <button onclick="restartScan()" class="inline-flex items-center px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm font-medium transition-all hover:scale-105">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+                Restart Full Scan
+            </button>
         </div>
     </div>
 
@@ -355,8 +361,10 @@
     let instanceChart = null;
     let qualityCharts = {};
 
-    // Health score calculation
-    function calculateHealthScore(valid, invalid, total) {
+    // Health score calculation - uses valid/(valid+invalid) since replaced files
+    // are removed from scanned_files but still counted in invalid
+    function calculateHealthScore(valid, invalid) {
+        const total = valid + invalid;
         if (total === 0) return 100;
         return Math.round((valid / total) * 100);
     }
@@ -426,7 +434,7 @@
             const total = scanned + queue;
 
             // Update health score
-            const healthScore = calculateHealthScore(valid, invalid, scanned);
+            const healthScore = calculateHealthScore(valid, invalid);
             updateHealthDisplay(healthScore);
 
             // Update stat cards
@@ -760,6 +768,25 @@
             }
         } catch (e) {
             showToast('Failed to send report', true);
+        }
+    }
+
+    async function restartScan() {
+        if (!confirm('This will clear all scan progress and start fresh. Are you sure?')) {
+            return;
+        }
+        try {
+            showToast('Clearing state and restarting scan...');
+            // Clear state first
+            await fetch('/state/clear', { method: 'POST' });
+            // Then refresh library to start fresh scan
+            const response = await fetch('/scan/refresh?source=all', { method: 'POST' });
+            const data = await response.json();
+            showToast(`Scan restarted! ${data.files_to_scan} files to scan`);
+            // Refresh the display
+            setTimeout(refreshAll, 1000);
+        } catch (e) {
+            showToast('Failed to restart scan', true);
         }
     }
 

@@ -249,9 +249,6 @@ class Janitor:
             except Exception as e:
                 self.log.error("Error validating file", file=item.file_path, error=str(e))
 
-            # Small delay between files
-            await asyncio.sleep(1)
-
     async def refresh_tv_library(self):
         """Refresh TV library in background (slow operation)."""
         self.log.info("Starting scheduled TV library refresh")

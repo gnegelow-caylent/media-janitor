@@ -63,10 +63,11 @@ validation:
 scanner:
   enabled: true
 
-  # How many files to scan per hour (controls bandwidth/CPU usage)
-  # 100 = ~2400/day, takes ~2-3 days for 5000 movies
-  # 50 = ~1200/day, takes ~4-5 days for 5000 movies
-  files_per_hour: 100
+  # How many files to scan per hour
+  # Each file reads ~2-5MB for validation (headers + sample decode)
+  # 300 = ~7200/day, ~1 day for 5000 movies
+  # 600 = ~14400/day, ~8 hours for 5000 movies
+  files_per_hour: 300
 
   # Scan mode:
   # "watch_only" = scan library once, then only validate new imports via webhooks
