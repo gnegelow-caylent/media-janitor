@@ -303,6 +303,66 @@
                     </div>
                 </div>
 
+                <div class="settings-group">
+                    <h3 class="settings-group-title">Scanner Settings</h3>
+                    <div class="settings-group-content space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <label class="text-sm font-medium text-white">Scanner Enabled</label>
+                                <p class="text-xs text-gray-500 mt-0.5">Enable background library scanning</p>
+                            </div>
+                            <label class="toggle">
+                                <input type="checkbox" id="scanner-enabled">
+                                <span class="toggle-track"></span>
+                            </label>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <label class="text-sm font-medium text-white">Files Per Hour</label>
+                                <p class="text-xs text-gray-500 mt-0.5">Scan rate (higher = faster, more CPU/disk)</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <input type="range" id="scanner-files-per-hour-slider" min="100" max="2000" step="100" class="w-32" oninput="document.getElementById('scanner-files-per-hour').value = this.value">
+                                <input type="number" id="scanner-files-per-hour" class="settings-input w-24 text-center" min="100" max="5000" oninput="document.getElementById('scanner-files-per-hour-slider').value = this.value">
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <label class="text-sm font-medium text-white">Scan Mode</label>
+                                <p class="text-xs text-gray-500 mt-0.5">watch_only = scan once then webhooks only</p>
+                            </div>
+                            <select id="scanner-mode" class="settings-select">
+                                <option value="watch_only">Watch Only</option>
+                                <option value="continuous">Continuous</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <label class="text-sm font-medium text-white">Deep Scan</label>
+                                <p class="text-xs text-gray-500 mt-0.5">Decode samples from start/middle/end (slower but thorough)</p>
+                            </div>
+                            <label class="toggle">
+                                <input type="checkbox" id="validation-deep-scan">
+                                <span class="toggle-track"></span>
+                            </label>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <label class="text-sm font-medium text-white">Check Bitrate</label>
+                                <p class="text-xs text-gray-500 mt-0.5">Flag files with suspiciously low bitrate</p>
+                            </div>
+                            <label class="toggle">
+                                <input type="checkbox" id="validation-check-bitrate">
+                                <span class="toggle-track"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="mt-6 flex justify-end">
                     <button onclick="saveAllSettings()" class="save-section-btn">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -702,6 +762,16 @@
         document.getElementById('actions-blocklist').checked = currentConfig.actions?.blocklist_bad_releases ?? true;
         document.getElementById('actions-max-replacements').value = currentConfig.actions?.max_replacements_per_day ?? 10;
 
+        // Scanner
+        document.getElementById('scanner-enabled').checked = currentConfig.scanner?.enabled ?? true;
+        document.getElementById('scanner-files-per-hour').value = currentConfig.scanner?.files_per_hour ?? 300;
+        document.getElementById('scanner-files-per-hour-slider').value = currentConfig.scanner?.files_per_hour ?? 300;
+        document.getElementById('scanner-mode').value = currentConfig.scanner?.mode ?? 'watch_only';
+
+        // Validation
+        document.getElementById('validation-deep-scan').checked = currentConfig.validation?.deep_scan_enabled ?? true;
+        document.getElementById('validation-check-bitrate').checked = currentConfig.validation?.check_bitrate ?? true;
+
         // Email
         document.getElementById('email-enabled').checked = currentConfig.email?.enabled ?? false;
         document.getElementById('email-smtp-host').value = currentConfig.email?.smtp_host ?? '';
@@ -950,6 +1020,19 @@
             auto_delete_duplicates: document.getElementById('actions-auto-delete-duplicates').checked,
             blocklist_bad_releases: document.getElementById('actions-blocklist').checked,
             max_replacements_per_day: parseInt(document.getElementById('actions-max-replacements').value)
+        };
+
+        currentConfig.scanner = {
+            ...currentConfig.scanner,
+            enabled: document.getElementById('scanner-enabled').checked,
+            files_per_hour: parseInt(document.getElementById('scanner-files-per-hour').value),
+            mode: document.getElementById('scanner-mode').value
+        };
+
+        currentConfig.validation = {
+            ...currentConfig.validation,
+            deep_scan_enabled: document.getElementById('validation-deep-scan').checked,
+            check_bitrate: document.getElementById('validation-check-bitrate').checked
         };
 
         currentConfig.email = {
