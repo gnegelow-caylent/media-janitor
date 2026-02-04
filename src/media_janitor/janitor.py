@@ -171,6 +171,7 @@ class Janitor:
                 wrong_file=is_wrong_file,
                 title=title,
                 reason=reason,
+                media_type=media_type,
             )
         else:
             # Mark as scanned if replacement failed (don't keep retrying)

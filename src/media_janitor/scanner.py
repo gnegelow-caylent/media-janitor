@@ -185,9 +185,16 @@ class Scanner:
         wrong_file: bool = False,
         title: str = "",
         reason: str = "",
+        media_type: str = "unknown",
     ):
         """Mark a file as replaced (removes from scanned list)."""
-        self.state.mark_replaced(file_path, wrong_file=wrong_file, title=title, reason=reason)
+        self.state.mark_replaced(
+            file_path,
+            wrong_file=wrong_file,
+            title=title,
+            reason=reason,
+            media_type=media_type,
+        )
 
     def check_initial_scan_complete(self) -> bool:
         """Check if initial scan is complete and mark if so."""

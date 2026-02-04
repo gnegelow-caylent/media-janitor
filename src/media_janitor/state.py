@@ -96,6 +96,7 @@ class StateManager:
         wrong_file: bool = False,
         title: str = "",
         reason: str = "",
+        media_type: str = "unknown",
     ):
         """Mark a file as replaced (remove from scanned, increment counter).
 
@@ -104,6 +105,7 @@ class StateManager:
             wrong_file: True if this was a wrong file in folder (path mismatch)
             title: Title of the media item
             reason: Reason for replacement
+            media_type: "movie", "tv", or "unknown"
         """
         if file_path in self._state.get("scanned_files", {}):
             del self._state["scanned_files"][file_path]
@@ -113,6 +115,12 @@ class StateManager:
         if wrong_file:
             self._state["total_wrong_files"] = self._state.get("total_wrong_files", 0) + 1
 
+        # Track replaced files by media type for accurate counts
+        if media_type == "movie":
+            self._state["movies_replaced"] = self._state.get("movies_replaced", 0) + 1
+        elif media_type == "tv":
+            self._state["tv_replaced"] = self._state.get("tv_replaced", 0) + 1
+
         # Record the replacement details
         if "replaced_files" not in self._state:
             self._state["replaced_files"] = []
@@ -121,6 +129,7 @@ class StateManager:
             "title": title,
             "reason": reason,
             "wrong_file": wrong_file,
+            "media_type": media_type,
             "timestamp": datetime.now().isoformat(),
         })
         # Keep only last 500 replacements to avoid unbounded growth
@@ -154,9 +163,15 @@ class StateManager:
         # Use total_invalid counter (includes replaced files) not just current scanned_files
         invalid_count = self._state.get("total_invalid", 0)
 
-        # Count movies and TV from scanned files (for accuracy even with old state)
-        movies_scanned = sum(1 for f in scanned_files.values() if f.get("media_type") == "movie")
-        tv_scanned = sum(1 for f in scanned_files.values() if f.get("media_type") == "tv")
+        # Count movies and TV from scanned files
+        movies_in_scanned = sum(1 for f in scanned_files.values() if f.get("media_type") == "movie")
+        tv_in_scanned = sum(1 for f in scanned_files.values() if f.get("media_type") == "tv")
+
+        # Add replaced files to get total scanned by type
+        movies_replaced = self._state.get("movies_replaced", 0)
+        tv_replaced = self._state.get("tv_replaced", 0)
+        movies_scanned = movies_in_scanned + movies_replaced
+        tv_scanned = tv_in_scanned + tv_replaced
 
         return {
             "total_scanned": len(scanned_files),
@@ -167,7 +182,7 @@ class StateManager:
             "scan_started": self._state.get("scan_started"),
             "scan_completed": self._state.get("scan_completed"),
             "initial_scan_done": self._state.get("scan_completed") is not None,
-            # Separate movie/TV counts
+            # Separate movie/TV counts (includes replaced)
             "movies_scanned": movies_scanned,
             "movies_total": self._state.get("movies_total", 0),
             "tv_scanned": tv_scanned,
@@ -193,8 +208,10 @@ class StateManager:
             "total_wrong_files": 0,
             "movies_scanned": 0,
             "movies_total": 0,
+            "movies_replaced": 0,
             "tv_scanned": 0,
             "tv_total": 0,
+            "tv_replaced": 0,
         }
         self._save()
         self.log.info("State cleared")
