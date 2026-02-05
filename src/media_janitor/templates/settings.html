@@ -306,6 +306,11 @@
                 <div class="settings-group">
                     <h3 class="settings-group-title">Scanner Settings</h3>
                     <div class="settings-group-content space-y-4">
+                        <!-- Recommendations hint -->
+                        <div class="p-3 rounded-lg bg-gray-900/50 border border-gray-700/50 mb-2">
+                            <p class="text-xs text-gray-400"><span class="text-primary font-medium">Recommendations:</span> For HDDs use 300 files/hr with 2-4 parallel. For SSDs, 600+ files/hr with 6-10 parallel is fine. Disable Deep Scan if CPU is limited.</p>
+                        </div>
+
                         <div class="flex items-center justify-between">
                             <div>
                                 <label class="text-sm font-medium text-white">Scanner Enabled</label>
@@ -320,7 +325,7 @@
                         <div class="flex items-center justify-between">
                             <div>
                                 <label class="text-sm font-medium text-white">Files Per Hour</label>
-                                <p class="text-xs text-gray-500 mt-0.5">Scan rate (higher = faster, more CPU/disk)</p>
+                                <p class="text-xs text-gray-500 mt-0.5">Overall scan rate. 300 = light load, 1000+ = aggressive</p>
                             </div>
                             <div class="flex items-center gap-3">
                                 <input type="range" id="scanner-files-per-hour-slider" min="100" max="2000" step="100" class="w-32" oninput="document.getElementById('scanner-files-per-hour').value = this.value">
@@ -331,7 +336,7 @@
                         <div class="flex items-center justify-between">
                             <div>
                                 <label class="text-sm font-medium text-white">Scan Mode</label>
-                                <p class="text-xs text-gray-500 mt-0.5">watch_only = scan once then webhooks only</p>
+                                <p class="text-xs text-gray-500 mt-0.5">Watch Only = scan library once, then only new imports</p>
                             </div>
                             <select id="scanner-mode" class="settings-select">
                                 <option value="watch_only">Watch Only</option>
@@ -342,7 +347,7 @@
                         <div class="flex items-center justify-between">
                             <div>
                                 <label class="text-sm font-medium text-white">Parallel Scans</label>
-                                <p class="text-xs text-gray-500 mt-0.5">Files to process simultaneously (higher = faster)</p>
+                                <p class="text-xs text-gray-500 mt-0.5">Simultaneous validations. HDD: 2-4, SSD: 6-10. Higher = more disk I/O</p>
                             </div>
                             <input type="number" id="scanner-concurrency" class="settings-input w-20 text-center" min="1" max="50">
                         </div>
@@ -350,7 +355,7 @@
                         <div class="flex items-center justify-between">
                             <div>
                                 <label class="text-sm font-medium text-white">Deep Scan</label>
-                                <p class="text-xs text-gray-500 mt-0.5">Decode samples from start/middle/end (slower but thorough)</p>
+                                <p class="text-xs text-gray-500 mt-0.5">Decode video samples with ffmpeg. <span class="text-yellow-500">CPU intensive</span> but catches more issues</p>
                             </div>
                             <label class="toggle">
                                 <input type="checkbox" id="validation-deep-scan">
@@ -361,7 +366,7 @@
                         <div class="flex items-center justify-between">
                             <div>
                                 <label class="text-sm font-medium text-white">Check Bitrate</label>
-                                <p class="text-xs text-gray-500 mt-0.5">Flag files with suspiciously low bitrate</p>
+                                <p class="text-xs text-gray-500 mt-0.5">Flag suspiciously low bitrate files. Minimal overhead</p>
                             </div>
                             <label class="toggle">
                                 <input type="checkbox" id="validation-check-bitrate">
