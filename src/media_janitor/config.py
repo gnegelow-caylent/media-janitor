@@ -45,7 +45,8 @@ class ValidationConfig(BaseModel):
     min_bitrate_4k: int = 8000
 
     deep_scan_enabled: bool = True
-    sample_duration_seconds: int = 30
+    sample_duration_seconds: int = 10  # Reduced for network mounts
+    decode_timeout_seconds: int = 30   # Timeout for decode test
 
     full_decode_enabled: bool = False
 

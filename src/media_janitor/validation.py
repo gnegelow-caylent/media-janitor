@@ -100,6 +100,7 @@ async def run_ffmpeg_decode_test(
     file_path: str,
     start_seconds: float | None = None,
     duration_seconds: float = 30,
+    timeout_seconds: int = 30,
 ) -> tuple[bool, list[str]]:
     """
     Run ffmpeg decode test on a portion of the file.
@@ -123,9 +124,8 @@ async def run_ffmpeg_decode_test(
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
-        # Timeout based on duration - should complete faster than real-time
-        timeout = max(120, duration_seconds * 2)
-        stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout)
+        # Use configurable timeout (default 30s is better for network mounts)
+        stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout_seconds)
 
         errors = []
         if stderr:
@@ -252,32 +252,36 @@ async def validate_file(file_path: str, config: ValidationConfig) -> ValidationR
     if config.deep_scan_enabled and probe.duration:
         log.debug("Running deep scan")
         sample_duration = config.sample_duration_seconds
+        decode_timeout = getattr(config, 'decode_timeout_seconds', 30)
 
         # Test beginning
         success, errors = await run_ffmpeg_decode_test(
-            file_path, start_seconds=0, duration_seconds=sample_duration
+            file_path, start_seconds=0, duration_seconds=sample_duration,
+            timeout_seconds=decode_timeout
         )
         if not success:
             result.valid = False
             result.errors.extend([f"Decode error (start): {e}" for e in errors])
             log.warning("Decode test failed at start", errors=errors)
 
-        # Test middle
-        if probe.duration > sample_duration * 3:
+        # Test middle (only if start test passed - fail fast)
+        if result.valid and probe.duration > sample_duration * 3:
             middle_start = (probe.duration / 2) - (sample_duration / 2)
             success, errors = await run_ffmpeg_decode_test(
-                file_path, start_seconds=middle_start, duration_seconds=sample_duration
+                file_path, start_seconds=middle_start, duration_seconds=sample_duration,
+                timeout_seconds=decode_timeout
             )
             if not success:
                 result.valid = False
                 result.errors.extend([f"Decode error (middle): {e}" for e in errors])
                 log.warning("Decode test failed at middle", errors=errors)
 
-        # Test end
-        if probe.duration > sample_duration * 2:
+        # Test end (only if still valid - fail fast)
+        if result.valid and probe.duration > sample_duration * 2:
             end_start = probe.duration - sample_duration
             success, errors = await run_ffmpeg_decode_test(
-                file_path, start_seconds=end_start, duration_seconds=sample_duration
+                file_path, start_seconds=end_start, duration_seconds=sample_duration,
+                timeout_seconds=decode_timeout
             )
             if not success:
                 result.valid = False
