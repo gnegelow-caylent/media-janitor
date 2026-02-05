@@ -10,7 +10,7 @@ from fastapi import BackgroundTasks, FastAPI, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
-from .arr_client import ArrClient, ArrType
+from .arr_client import ArrClient, ArrType, MediaItem
 from .config import Config, PlexConfig
 from .janitor import Janitor
 from .plex_client import PlexClient
@@ -143,26 +143,78 @@ async def _handle_arr_webhook(
         log.debug("Ignoring event type")
         return {"status": "ignored", "reason": f"Event type {event_type} not processed"}
 
-    # Extract file path from payload
+    # Extract file info from payload and create MediaItem for cache
     file_path = None
+    media_item = None
+    instance_name = payload.get("instanceName", "")
+
+    # Find the appropriate client for path translation
+    client = None
+    if _janitor:
+        for c in _janitor.scanner.get_all_clients():
+            if c.arr_type == arr_type and (not instance_name or c.instance.name == instance_name):
+                client = c
+                break
 
     if arr_type == ArrType.RADARR:
+        movie = payload.get("movie", {})
         movie_file = payload.get("movieFile", {})
-        file_path = movie_file.get("path") or movie_file.get("relativePath")
-        title = payload.get("movie", {}).get("title", "Unknown Movie")
+        raw_path = movie_file.get("path") or movie_file.get("relativePath")
+        title = movie.get("title", "Unknown Movie")
+
+        # Translate path using client's path mappings
+        file_path = client.translate_path(raw_path) if client else raw_path
+
+        # Create MediaItem from webhook payload
+        if file_path and movie_file.get("id"):
+            media_item = MediaItem(
+                id=movie.get("id", 0),
+                title=title,
+                file_path=file_path,
+                file_id=movie_file.get("id"),
+                quality=movie_file.get("quality", {}).get("quality", {}).get("name"),
+                size_bytes=movie_file.get("size"),
+                arr_type=ArrType.RADARR,
+                arr_instance=instance_name or "radarr",
+                year=movie.get("year"),
+                folder_path=client.translate_path(movie.get("folderPath")) if client else movie.get("folderPath"),
+            )
     else:
-        episode_file = payload.get("episodeFile", {})
-        file_path = episode_file.get("path") or episode_file.get("relativePath")
         series = payload.get("series", {})
+        episode_file = payload.get("episodeFile", {})
         episodes = payload.get("episodes", [{}])
         ep_info = episodes[0] if episodes else {}
+        raw_path = episode_file.get("path") or episode_file.get("relativePath")
         title = f"{series.get('title', 'Unknown')} S{ep_info.get('seasonNumber', 0):02d}E{ep_info.get('episodeNumber', 0):02d}"
+
+        # Translate path using client's path mappings
+        file_path = client.translate_path(raw_path) if client else raw_path
+
+        # Create MediaItem from webhook payload
+        if file_path and episode_file.get("id"):
+            media_item = MediaItem(
+                id=ep_info.get("id", 0),
+                title=title,
+                file_path=file_path,
+                file_id=episode_file.get("id"),
+                quality=episode_file.get("quality", {}).get("quality", {}).get("name"),
+                size_bytes=episode_file.get("size"),
+                series_id=series.get("id"),
+                season_number=ep_info.get("seasonNumber"),
+                episode_number=ep_info.get("episodeNumber"),
+                arr_type=ArrType.SONARR,
+                arr_instance=instance_name or "sonarr",
+            )
 
     if not file_path:
         log.warning("No file path in webhook payload")
         return {"status": "error", "message": "No file path found in payload"}
 
     log.info("Processing imported file", file_path=file_path, title=title)
+
+    # Add to cache so validate_and_process can find it
+    if _janitor and media_item:
+        _janitor.scanner.add_to_cache(media_item)
 
     # Queue validation in background
     if _janitor:

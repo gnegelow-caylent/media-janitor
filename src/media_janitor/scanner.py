@@ -308,6 +308,12 @@ class Scanner:
         """Get all configured clients."""
         return self._radarr_clients + self._sonarr_clients
 
+    def add_to_cache(self, item: MediaItem) -> None:
+        """Add a media item to the cache (used by webhook for newly imported files)."""
+        if item.file_path:
+            self._media_cache[item.file_path] = item
+            self.log.debug("Added to cache", file_path=item.file_path)
+
     def get_cached_media(self, source: str = "all") -> list[MediaItem]:
         """
         Get cached media items without fetching from arrs.
