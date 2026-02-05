@@ -149,27 +149,27 @@ async def generate_library_report(
     top_n: int = 50,
     source: str = "all",  # "all", "movies", "tv"
 ) -> LibraryReport:
-    """Generate a report of library statistics."""
+    """Generate a report of library statistics using cached media."""
     log = logger.bind(component="reports")
     log.info("Generating library report", source=source)
 
-    all_media: list[MediaItem] = []
-
-    # Fetch from selected clients
-    for client in scanner.get_all_clients():
-        # Filter by source type
-        if source == "movies" and client.arr_type != ArrType.RADARR:
-            continue
-        if source == "tv" and client.arr_type != ArrType.SONARR:
-            continue
-
-        try:
-            log.info(f"Fetching from {client.instance.name}...")
-            media = await client.get_all_media()
-            all_media.extend(media)
-            log.info(f"Fetched {len(media)} items from {client.instance.name}")
-        except Exception as e:
-            log.error("Failed to fetch media", client=client.instance.name, error=str(e))
+    # Use cached media to avoid memory-intensive API calls
+    all_media = scanner.get_cached_media(source)
+    if all_media:
+        log.info("Using cached media", count=len(all_media))
+    else:
+        # Cache empty - fall back to fetching (only happens if refresh_library wasn't called)
+        log.warning("Cache empty, fetching from API (slow, consider refreshing library first)")
+        for client in scanner.get_all_clients():
+            if source == "movies" and client.arr_type != ArrType.RADARR:
+                continue
+            if source == "tv" and client.arr_type != ArrType.SONARR:
+                continue
+            try:
+                media = await client.get_all_media()
+                all_media.extend(media)
+            except Exception as e:
+                log.error("Failed to fetch media", client=client.instance.name, error=str(e))
 
     # Filter to items with files and sizes
     files_with_size = [m for m in all_media if m.file_path and m.size_bytes]
@@ -367,24 +367,26 @@ async def generate_mismatch_report(
     scanner: Scanner,
     source: str = "movies",
 ) -> list[PathMismatch]:
-    """Generate a report of files with mismatched paths."""
+    """Generate a report of files with mismatched paths using cached media."""
     log = logger.bind(component="reports")
     log.info("Generating mismatch report", source=source)
 
-    all_media: list[MediaItem] = []
-
-    for client in scanner.get_all_clients():
-        if source == "movies" and client.arr_type != ArrType.RADARR:
-            continue
-        if source == "tv" and client.arr_type != ArrType.SONARR:
-            continue
-
-        try:
-            log.info(f"Checking {client.instance.name} for mismatches...")
-            media = await client.get_all_media()
-            all_media.extend(media)
-        except Exception as e:
-            log.error("Failed to fetch media", client=client.instance.name, error=str(e))
+    # Use cached media to avoid memory-intensive API calls
+    all_media = scanner.get_cached_media(source)
+    if all_media:
+        log.info("Using cached media", count=len(all_media))
+    else:
+        log.warning("Cache empty, fetching from API")
+        for client in scanner.get_all_clients():
+            if source == "movies" and client.arr_type != ArrType.RADARR:
+                continue
+            if source == "tv" and client.arr_type != ArrType.SONARR:
+                continue
+            try:
+                media = await client.get_all_media()
+                all_media.extend(media)
+            except Exception as e:
+                log.error("Failed to fetch media", client=client.instance.name, error=str(e))
 
     mismatches = []
     for item in all_media:
@@ -413,23 +415,26 @@ async def find_duplicates(
     scanner: Scanner,
     source: str = "movies",
 ) -> list[DuplicateGroup]:
-    """Find duplicate content (same movie/show in multiple qualities)."""
+    """Find duplicate content (same movie/show in multiple qualities) using cached media."""
     log = logger.bind(component="reports")
     log.info("Finding duplicates", source=source)
 
-    all_media: list[MediaItem] = []
-
-    for client in scanner.get_all_clients():
-        if source == "movies" and client.arr_type != ArrType.RADARR:
-            continue
-        if source == "tv" and client.arr_type != ArrType.SONARR:
-            continue
-
-        try:
-            media = await client.get_all_media()
-            all_media.extend(media)
-        except Exception as e:
-            log.error("Failed to fetch media", client=client.instance.name, error=str(e))
+    # Use cached media to avoid memory-intensive API calls
+    all_media = scanner.get_cached_media(source)
+    if all_media:
+        log.info("Using cached media", count=len(all_media))
+    else:
+        log.warning("Cache empty, fetching from API")
+        for client in scanner.get_all_clients():
+            if source == "movies" and client.arr_type != ArrType.RADARR:
+                continue
+            if source == "tv" and client.arr_type != ArrType.SONARR:
+                continue
+            try:
+                media = await client.get_all_media()
+                all_media.extend(media)
+            except Exception as e:
+                log.error("Failed to fetch media", client=client.instance.name, error=str(e))
 
     # Group by normalized title + year
     from collections import defaultdict
@@ -498,7 +503,7 @@ async def get_codec_breakdown(
     scanner: Scanner,
     source: str = "movies",
 ) -> CodecStats:
-    """Get codec breakdown of the library."""
+    """Get codec breakdown of the library using cached media."""
     log = logger.bind(component="reports")
     log.info("Getting codec breakdown", source=source)
 
@@ -508,55 +513,61 @@ async def get_codec_breakdown(
     hdr_types: dict[str, int] = {}
     total = 0
 
-    for client in scanner.get_all_clients():
-        if source == "movies" and client.arr_type != ArrType.RADARR:
+    # Use cached media to avoid memory-intensive API calls
+    all_media = scanner.get_cached_media(source)
+    if all_media:
+        log.info("Using cached media", count=len(all_media))
+    else:
+        log.warning("Cache empty, fetching from API")
+        for client in scanner.get_all_clients():
+            if source == "movies" and client.arr_type != ArrType.RADARR:
+                continue
+            if source == "tv" and client.arr_type != ArrType.SONARR:
+                continue
+            try:
+                media = await client.get_all_media()
+                all_media.extend(media)
+            except Exception as e:
+                log.error("Failed to fetch media", client=client.instance.name, error=str(e))
+
+    for item in all_media:
+        if not item.file_path:
             continue
-        if source == "tv" and client.arr_type != ArrType.SONARR:
-            continue
 
-        try:
-            media = await client.get_all_media()
-            for item in media:
-                if not item.file_path:
-                    continue
+        total += 1
 
-                total += 1
+        # Extract container from file extension
+        ext = Path(item.file_path).suffix.lower().lstrip('.')
+        containers[ext] = containers.get(ext, 0) + 1
 
-                # Extract container from file extension
-                ext = Path(item.file_path).suffix.lower().lstrip('.')
-                containers[ext] = containers.get(ext, 0) + 1
+        # Quality string often contains codec info
+        quality = item.quality or ""
+        quality_lower = quality.lower()
 
-                # Quality string often contains codec info
-                quality = item.quality or ""
-                quality_lower = quality.lower()
+        # Detect video codec from quality
+        if "hevc" in quality_lower or "x265" in quality_lower or "h265" in quality_lower:
+            video_codecs["HEVC/H.265"] = video_codecs.get("HEVC/H.265", 0) + 1
+        elif "av1" in quality_lower:
+            video_codecs["AV1"] = video_codecs.get("AV1", 0) + 1
+        elif "x264" in quality_lower or "h264" in quality_lower or "avc" in quality_lower:
+            video_codecs["H.264/AVC"] = video_codecs.get("H.264/AVC", 0) + 1
+        elif "mpeg" in quality_lower:
+            video_codecs["MPEG"] = video_codecs.get("MPEG", 0) + 1
+        else:
+            video_codecs["Unknown"] = video_codecs.get("Unknown", 0) + 1
 
-                # Detect video codec from quality
-                if "hevc" in quality_lower or "x265" in quality_lower or "h265" in quality_lower:
-                    video_codecs["HEVC/H.265"] = video_codecs.get("HEVC/H.265", 0) + 1
-                elif "av1" in quality_lower:
-                    video_codecs["AV1"] = video_codecs.get("AV1", 0) + 1
-                elif "x264" in quality_lower or "h264" in quality_lower or "avc" in quality_lower:
-                    video_codecs["H.264/AVC"] = video_codecs.get("H.264/AVC", 0) + 1
-                elif "mpeg" in quality_lower:
-                    video_codecs["MPEG"] = video_codecs.get("MPEG", 0) + 1
-                else:
-                    video_codecs["Unknown"] = video_codecs.get("Unknown", 0) + 1
+        # Detect HDR
+        if "dv" in quality_lower or "dolby vision" in quality_lower:
+            hdr_types["Dolby Vision"] = hdr_types.get("Dolby Vision", 0) + 1
+        elif "hdr10+" in quality_lower:
+            hdr_types["HDR10+"] = hdr_types.get("HDR10+", 0) + 1
+        elif "hdr" in quality_lower or "2160p" in quality_lower:
+            hdr_types["HDR10"] = hdr_types.get("HDR10", 0) + 1
+        else:
+            hdr_types["SDR"] = hdr_types.get("SDR", 0) + 1
 
-                # Detect HDR
-                if "dv" in quality_lower or "dolby vision" in quality_lower:
-                    hdr_types["Dolby Vision"] = hdr_types.get("Dolby Vision", 0) + 1
-                elif "hdr10+" in quality_lower:
-                    hdr_types["HDR10+"] = hdr_types.get("HDR10+", 0) + 1
-                elif "hdr" in quality_lower or "2160p" in quality_lower:
-                    hdr_types["HDR10"] = hdr_types.get("HDR10", 0) + 1
-                else:
-                    hdr_types["SDR"] = hdr_types.get("SDR", 0) + 1
-
-                # Audio codec detection would require ffprobe - skip for now
-                audio_codecs["Unknown"] = audio_codecs.get("Unknown", 0) + 1
-
-        except Exception as e:
-            log.error("Failed to fetch media", client=client.instance.name, error=str(e))
+        # Audio codec detection would require ffprobe - skip for now
+        audio_codecs["Unknown"] = audio_codecs.get("Unknown", 0) + 1
 
     return CodecStats(
         video_codecs=video_codecs,

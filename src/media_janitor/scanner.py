@@ -308,6 +308,27 @@ class Scanner:
         """Get all configured clients."""
         return self._radarr_clients + self._sonarr_clients
 
+    def get_cached_media(self, source: str = "all") -> list[MediaItem]:
+        """
+        Get cached media items without fetching from arrs.
+
+        This is much faster and uses less memory than fetching all media.
+        Returns empty list if cache is not populated (refresh_library not called yet).
+
+        Args:
+            source: "all", "movies" (Radarr only), or "tv" (Sonarr only)
+        """
+        if not self._media_cache:
+            return []
+
+        items = list(self._media_cache.values())
+
+        if source == "movies":
+            return [item for item in items if item.arr_type == ArrType.RADARR]
+        elif source == "tv":
+            return [item for item in items if item.arr_type == ArrType.SONARR]
+        return items
+
     async def find_item_by_path(self, file_path: str) -> tuple[MediaItem | None, ArrClient | None]:
         """Find a media item and its client by file path."""
         # First, check the cache (fast path)
