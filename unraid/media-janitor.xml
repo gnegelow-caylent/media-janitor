@@ -20,12 +20,12 @@ Features:&#xD;
 - Plex integration (OAuth login, watch-based prioritization)&#xD;
 - Multi-platform notifications (Discord, Slack, Telegram, etc)&#xD;
 &#xD;
-After install, create config.yaml and add media path mappings.</Overview>
+Memory: 6GB recommended for large libraries (50K+ files). After install, create config.yaml and add media path mappings.</Overview>
   <Category>MediaServer:Other Tools:</Category>
   <WebUI>http://[IP]:[PORT:9000]/</WebUI>
   <TemplateURL>https://raw.githubusercontent.com/gnegelow-caylent/media-janitor/main/unraid/media-janitor.xml</TemplateURL>
   <Icon>https://raw.githubusercontent.com/gnegelow-caylent/media-janitor/main/unraid/icon2.png</Icon>
-  <ExtraParams/>
+  <ExtraParams>--memory=6g</ExtraParams>
   <PostArgs/>
   <CPUset/>
   <DateInstalled/>
