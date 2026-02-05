@@ -311,7 +311,6 @@ def is_masked(value: str) -> bool:
     return value == "***" or value.endswith("...")
 
 
-@router.post("/api/config")
 def deep_merge(base: dict, updates: dict) -> dict:
     """Deep merge updates into base config, preserving unspecified keys."""
     result = base.copy()
@@ -323,6 +322,7 @@ def deep_merge(base: dict, updates: dict) -> dict:
     return result
 
 
+@router.post("/api/config")
 async def save_config(request: Request):
     """Save configuration."""
     try:
