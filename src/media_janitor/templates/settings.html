@@ -366,6 +366,22 @@
 
                         <div class="flex items-center justify-between">
                             <div>
+                                <label class="text-sm font-medium text-white">Sample Duration</label>
+                                <p class="text-xs text-gray-500 mt-0.5">Seconds to decode per sample. <span class="text-gray-400">Local: 30</span> | <span class="text-blue-400">Network: 5-10</span></p>
+                            </div>
+                            <input type="number" id="validation-sample-duration" class="settings-input w-20 text-center" min="1" max="60">
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <label class="text-sm font-medium text-white">Decode Timeout</label>
+                                <p class="text-xs text-gray-500 mt-0.5">Max seconds per decode test. <span class="text-gray-400">Local: 60</span> | <span class="text-blue-400">Network: 15-30</span></p>
+                            </div>
+                            <input type="number" id="validation-decode-timeout" class="settings-input w-20 text-center" min="5" max="300">
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <div>
                                 <label class="text-sm font-medium text-white">Check Bitrate</label>
                                 <p class="text-xs text-gray-500 mt-0.5">Flag suspiciously low bitrate files. Minimal overhead</p>
                             </div>
@@ -785,6 +801,8 @@
 
         // Validation
         document.getElementById('validation-deep-scan').checked = currentConfig.validation?.deep_scan_enabled ?? true;
+        document.getElementById('validation-sample-duration').value = currentConfig.validation?.sample_duration_seconds ?? 10;
+        document.getElementById('validation-decode-timeout').value = currentConfig.validation?.decode_timeout_seconds ?? 30;
         document.getElementById('validation-check-bitrate').checked = currentConfig.validation?.check_bitrate ?? true;
 
         // Email
@@ -1072,6 +1090,8 @@
         currentConfig.validation = {
             ...currentConfig.validation,
             deep_scan_enabled: document.getElementById('validation-deep-scan').checked,
+            sample_duration_seconds: parseInt(document.getElementById('validation-sample-duration').value) || 10,
+            decode_timeout_seconds: parseInt(document.getElementById('validation-decode-timeout').value) || 30,
             check_bitrate: document.getElementById('validation-check-bitrate').checked
         };
 
