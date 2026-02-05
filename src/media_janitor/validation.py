@@ -30,6 +30,9 @@ class ValidationResult:
     height: int | None = None
     codec: str | None = None
 
+    # Set to True if validation failed due to timeout (should retry later)
+    timed_out: bool = False
+
     def __bool__(self) -> bool:
         return self.valid
 
@@ -101,10 +104,10 @@ async def run_ffmpeg_decode_test(
     start_seconds: float | None = None,
     duration_seconds: float = 30,
     timeout_seconds: int = 30,
-) -> tuple[bool, list[str]]:
+) -> tuple[bool, list[str], bool]:
     """
     Run ffmpeg decode test on a portion of the file.
-    Returns (success, list of errors).
+    Returns (success, list of errors, timed_out).
     """
     cmd = ["ffmpeg", "-v", "error"]
 
@@ -136,12 +139,12 @@ async def run_ffmpeg_decode_test(
                 if line and not _is_ignorable_ffmpeg_warning(line):
                     errors.append(line)
 
-        return process.returncode == 0 and len(errors) == 0, errors
+        return process.returncode == 0 and len(errors) == 0, errors, False
 
     except asyncio.TimeoutError:
-        return False, ["ffmpeg decode test timed out"]
+        return False, ["ffmpeg decode test timed out"], True  # timed_out=True for retry
     except Exception as e:
-        return False, [str(e)]
+        return False, [str(e)], False
 
 
 def _is_ignorable_ffmpeg_warning(line: str) -> bool:
@@ -255,45 +258,49 @@ async def validate_file(file_path: str, config: ValidationConfig) -> ValidationR
         decode_timeout = getattr(config, 'decode_timeout_seconds', 30)
 
         # Test beginning
-        success, errors = await run_ffmpeg_decode_test(
+        success, errors, timed_out = await run_ffmpeg_decode_test(
             file_path, start_seconds=0, duration_seconds=sample_duration,
             timeout_seconds=decode_timeout
         )
         if not success:
             result.valid = False
+            result.timed_out = result.timed_out or timed_out
             result.errors.extend([f"Decode error (start): {e}" for e in errors])
             log.warning("Decode test failed at start", errors=errors)
 
         # Test middle (only if start test passed - fail fast)
         if result.valid and probe.duration > sample_duration * 3:
             middle_start = (probe.duration / 2) - (sample_duration / 2)
-            success, errors = await run_ffmpeg_decode_test(
+            success, errors, timed_out = await run_ffmpeg_decode_test(
                 file_path, start_seconds=middle_start, duration_seconds=sample_duration,
                 timeout_seconds=decode_timeout
             )
             if not success:
                 result.valid = False
+                result.timed_out = result.timed_out or timed_out
                 result.errors.extend([f"Decode error (middle): {e}" for e in errors])
                 log.warning("Decode test failed at middle", errors=errors)
 
         # Test end (only if still valid - fail fast)
         if result.valid and probe.duration > sample_duration * 2:
             end_start = probe.duration - sample_duration
-            success, errors = await run_ffmpeg_decode_test(
+            success, errors, timed_out = await run_ffmpeg_decode_test(
                 file_path, start_seconds=end_start, duration_seconds=sample_duration,
                 timeout_seconds=decode_timeout
             )
             if not success:
                 result.valid = False
+                result.timed_out = result.timed_out or timed_out
                 result.errors.extend([f"Decode error (end): {e}" for e in errors])
                 log.warning("Decode test failed at end", errors=errors)
 
     # Step 5: Full decode (if enabled - very slow)
     if config.full_decode_enabled and result.valid:
         log.info("Running full decode test")
-        success, errors = await run_ffmpeg_decode_test(file_path, duration_seconds=0)
+        success, errors, timed_out = await run_ffmpeg_decode_test(file_path, duration_seconds=0)
         if not success:
             result.valid = False
+            result.timed_out = result.timed_out or timed_out
             result.errors.extend([f"Full decode error: {e}" for e in errors])
             log.warning("Full decode test failed", errors=errors)
 

@@ -179,6 +179,13 @@ class Janitor:
         # File is invalid (either failed validation or path mismatch)
         log.warning("File validation failed", title=title, errors=validation_result.errors)
 
+        # If validation timed out, don't mark as scanned - let it retry later
+        if validation_result.timed_out:
+            log.info("Validation timed out, will retry later", title=title)
+            scan_result.action_taken = "timeout_retry"
+            self.notifications.record_result(scan_result)
+            return scan_result
+
         # Check if auto-replace is enabled
         if not self.config.actions.auto_replace:
             # Mark as scanned since user doesn't want auto-replace
