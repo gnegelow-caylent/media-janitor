@@ -399,8 +399,14 @@ async def test_connection(request: Request):
     """Test connection to Radarr/Sonarr and fetch root folders."""
     try:
         data = await request.json()
-        url = data.get("url", "").rstrip("/")
+        url = data.get("url", "").strip().rstrip("/")
         api_key = data.get("api_key", "")
+
+        # Validate and fix URL
+        if not url:
+            return {"success": False, "error": "URL is required"}
+        if not url.startswith(("http://", "https://")):
+            url = f"http://{url}"
 
         # If API key is masked, get from config
         if api_key.endswith("..."):
@@ -454,8 +460,14 @@ async def test_plex(request: Request):
     """Test connection to Plex server."""
     try:
         data = await request.json()
-        url = data.get("url", "").rstrip("/")
+        url = data.get("url", "").strip().rstrip("/")
         token = data.get("token", "")
+
+        # Validate and fix URL
+        if not url:
+            return {"success": False, "error": "URL is required"}
+        if not url.startswith(("http://", "https://")):
+            url = f"http://{url}"
 
         # If token is masked, get from config
         if token == "***" or token.endswith("..."):
