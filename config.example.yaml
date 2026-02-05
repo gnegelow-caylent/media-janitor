@@ -50,8 +50,22 @@ validation:
   min_bitrate_4k: 8000     # kbps
 
   # Deep scan - decode samples from start/middle/end of file
+  # This catches corruption that metadata checks miss
   deep_scan_enabled: true
-  sample_duration_seconds: 30
+
+  # How many seconds to decode from each sample point (start/middle/end)
+  # RECOMMENDED VALUES:
+  #   Local SSD/NVMe:    30 (thorough)
+  #   Local HDD:         15-20
+  #   Network mounts:    5-10 (faster, reduces timeouts)
+  sample_duration_seconds: 10
+
+  # Timeout for each decode test
+  # RECOMMENDED VALUES:
+  #   Local storage:     60
+  #   Network mounts:    30 (fails faster on slow connections)
+  #   Unreliable network: 15
+  decode_timeout_seconds: 30
 
   # Full decode - decode entire file (VERY slow, use sparingly)
   full_decode_enabled: false
@@ -66,7 +80,15 @@ scanner:
   # Each file reads ~2-5MB for validation (headers + sample decode)
   # 300 = ~7200/day, ~1 day for 5000 movies
   # 600 = ~14400/day, ~8 hours for 5000 movies
-  files_per_hour: 300
+  files_per_hour: 600
+
+  # Number of files to validate in parallel
+  # Higher = faster but more CPU/memory usage
+  # RECOMMENDED VALUES:
+  #   Powerful server:      10-20
+  #   NAS/Low-power:        3-5
+  #   Network mounts:       5-10 (limited by network, not CPU)
+  concurrency: 10
 
   # Scan mode:
   # "watch_only" = scan library once, then only validate new imports via webhooks
