@@ -367,7 +367,7 @@
                         <div class="flex items-center justify-between">
                             <div>
                                 <label class="text-sm font-medium text-white">Sample Duration</label>
-                                <p class="text-xs text-gray-500 mt-0.5">Seconds to decode per sample. <span class="text-gray-400">Local: 30</span> | <span class="text-blue-400">Network: 5-10</span></p>
+                                <p class="text-xs text-gray-500 mt-0.5">Seconds to decode per sample. <span class="text-gray-400">Local: 30</span> | <span class="text-blue-400">Network: 5-10</span> (less data to transfer)</p>
                             </div>
                             <input type="number" id="validation-sample-duration" class="settings-input w-20 text-center" min="1" max="60">
                         </div>
@@ -375,7 +375,7 @@
                         <div class="flex items-center justify-between">
                             <div>
                                 <label class="text-sm font-medium text-white">Decode Timeout</label>
-                                <p class="text-xs text-gray-500 mt-0.5">Max seconds per decode test. <span class="text-gray-400">Local: 60</span> | <span class="text-blue-400">Network: 15-30</span></p>
+                                <p class="text-xs text-gray-500 mt-0.5">Max seconds per decode test. <span class="text-gray-400">Local: 30-60</span> | <span class="text-blue-400">Network: 60-120</span> (slower I/O)</p>
                             </div>
                             <input type="number" id="validation-decode-timeout" class="settings-input w-20 text-center" min="5" max="300">
                         </div>

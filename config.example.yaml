@@ -54,18 +54,20 @@ validation:
   deep_scan_enabled: true
 
   # How many seconds to decode from each sample point (start/middle/end)
+  # Shorter = less data to read, faster validation
   # RECOMMENDED VALUES:
   #   Local SSD/NVMe:    30 (thorough)
   #   Local HDD:         15-20
-  #   Network mounts:    5-10 (faster, reduces timeouts)
+  #   Network mounts:    5-10 (less data to transfer over slow connection)
   sample_duration_seconds: 10
 
   # Timeout for each decode test
+  # Network mounts need MORE time because I/O is slower
   # RECOMMENDED VALUES:
-  #   Local storage:     60
-  #   Network mounts:    30 (fails faster on slow connections)
-  #   Unreliable network: 15
-  decode_timeout_seconds: 30
+  #   Local SSD/NVMe:    30
+  #   Local HDD:         45-60
+  #   Network mounts:    60-120 (slow I/O needs more time)
+  decode_timeout_seconds: 60
 
   # Full decode - decode entire file (VERY slow, use sparingly)
   full_decode_enabled: false
