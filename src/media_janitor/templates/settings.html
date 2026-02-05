@@ -326,11 +326,11 @@
                         <div class="flex items-center justify-between">
                             <div>
                                 <label class="text-sm font-medium text-white">Files Per Hour</label>
-                                <p class="text-xs text-gray-500 mt-0.5">Overall scan rate. 300 = light load, 1000+ = aggressive</p>
+                                <p class="text-xs text-gray-500 mt-0.5">Network: 500-1500, Local SSD: 3000-5000, NVMe: 5000+</p>
                             </div>
                             <div class="flex items-center gap-3">
-                                <input type="range" id="scanner-files-per-hour-slider" min="100" max="2000" step="100" class="w-32" oninput="document.getElementById('scanner-files-per-hour').value = this.value">
-                                <input type="number" id="scanner-files-per-hour" class="settings-input w-24 text-center" min="100" max="5000" oninput="document.getElementById('scanner-files-per-hour-slider').value = this.value">
+                                <input type="range" id="scanner-files-per-hour-slider" min="100" max="10000" step="100" class="w-32" oninput="document.getElementById('scanner-files-per-hour').value = this.value">
+                                <input type="number" id="scanner-files-per-hour" class="settings-input w-24 text-center" min="100" max="10000" oninput="document.getElementById('scanner-files-per-hour-slider').value = this.value">
                             </div>
                         </div>
 
