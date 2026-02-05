@@ -19,6 +19,7 @@ class StateManager:
         self._state: dict[str, Any] = {
             "scanned_files": {},  # path -> {timestamp, valid, media_type}
             "replaced_files": [],  # list of {path, title, reason, timestamp, wrong_file}
+            "missing_files": [],  # list of {path, arr_type, timestamp}
             "scan_started": None,
             "scan_completed": None,
             "total_scanned": 0,
@@ -138,6 +139,36 @@ class StateManager:
 
         self._save()
 
+    def mark_missing(self, file_path: str, media_type: str = "unknown"):
+        """Record a missing file (exists in arr but not on disk)."""
+        if "missing_files" not in self._state:
+            self._state["missing_files"] = []
+
+        # Avoid duplicates
+        existing_paths = {f["path"] for f in self._state["missing_files"]}
+        if file_path not in existing_paths:
+            self._state["missing_files"].append({
+                "path": file_path,
+                "media_type": media_type,
+                "timestamp": datetime.now().isoformat(),
+            })
+            # Keep only last 1000 missing files
+            if len(self._state["missing_files"]) > 1000:
+                self._state["missing_files"] = self._state["missing_files"][-1000:]
+
+            # Save periodically
+            if len(self._state["missing_files"]) % 50 == 0:
+                self._save()
+
+    def get_missing_files(self) -> list[dict]:
+        """Get list of missing files."""
+        return self._state.get("missing_files", [])
+
+    def clear_missing_files(self):
+        """Clear the missing files list."""
+        self._state["missing_files"] = []
+        self._save()
+
     def mark_scan_started(self):
         """Mark the start of a full library scan."""
         self._state["scan_started"] = datetime.now().isoformat()
@@ -200,6 +231,7 @@ class StateManager:
         self._state = {
             "scanned_files": {},
             "replaced_files": [],
+            "missing_files": [],
             "scan_started": None,
             "scan_completed": None,
             "total_scanned": 0,

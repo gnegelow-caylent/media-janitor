@@ -299,6 +299,66 @@ async def get_replaced_report(
         }
 
 
+@app.get("/report/missing")
+async def get_missing_report(
+    format: str = Query(default="json", description="Output format: json or text"),
+):
+    """
+    Get list of files that exist in Radarr/Sonarr but not on disk.
+
+    These are files that may have been deleted or moved outside of arr management.
+    """
+    if not _janitor:
+        return {"status": "error", "message": "Janitor not initialized"}
+
+    missing = _janitor.state.get_missing_files()
+    # Reverse to show most recent first
+    missing = list(reversed(missing))
+
+    # Separate by media type
+    movies = [m for m in missing if m.get("media_type") == "movie"]
+    tv = [m for m in missing if m.get("media_type") == "tv"]
+
+    if format == "text":
+        lines = [
+            "=" * 70,
+            "MISSING FILES REPORT",
+            f"Total: {len(missing)} files (Movies: {len(movies)}, TV: {len(tv)})",
+            "=" * 70,
+            "",
+            "These files exist in Radarr/Sonarr but not on disk.",
+            "Consider removing them from your arr apps or re-downloading.",
+            "",
+        ]
+        if movies:
+            lines.append("--- MOVIES ---")
+            for m in movies[:100]:
+                lines.append(f"  {m.get('path', 'Unknown')}")
+        if tv:
+            lines.append("\n--- TV EPISODES ---")
+            for m in tv[:200]:
+                lines.append(f"  {m.get('path', 'Unknown')}")
+        return PlainTextResponse(content="\n".join(lines))
+    else:
+        return {
+            "count": len(missing),
+            "movies_count": len(movies),
+            "tv_count": len(tv),
+            "movies": movies[:100],
+            "tv": tv[:200],
+        }
+
+
+@app.post("/report/missing/clear")
+async def clear_missing_report():
+    """Clear the missing files report."""
+    if not _janitor:
+        return {"status": "error", "message": "Janitor not initialized"}
+
+    _janitor.state.clear_missing_files()
+    return {"status": "ok", "message": "Missing files report cleared"}
+
+
 @app.get("/report/mismatches")
 async def get_mismatch_report(
     source: str = Query(default="movies", description="Source: movies (fast) or tv (slow)"),

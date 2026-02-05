@@ -68,6 +68,10 @@ class Scanner:
 
     async def initialize(self):
         """Initialize the scanner with arr clients."""
+        # Clear any existing clients to prevent duplicates if called multiple times
+        self._radarr_clients = []
+        self._sonarr_clients = []
+
         for instance in self.config.radarr:
             client = ArrClient(instance, ArrType.RADARR)
             if await client.test_connection():

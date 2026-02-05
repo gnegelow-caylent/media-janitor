@@ -114,7 +114,13 @@ class Janitor:
 
         # Check file exists
         if not Path(file_path).exists():
-            log.warning("File does not exist")
+            log.warning("File does not exist - marking as scanned to skip in future")
+            # Determine media type from arr_type if provided
+            media_type = "movie" if arr_type == ArrType.RADARR else "tv" if arr_type == ArrType.SONARR else "unknown"
+            # Record as missing file for reporting
+            self.state.mark_missing(file_path, media_type)
+            # Mark as scanned so we don't keep retrying missing files
+            self.scanner.mark_scanned(file_path, valid=True, media_type=media_type)
             return None
 
         # Find the media item in Radarr/Sonarr

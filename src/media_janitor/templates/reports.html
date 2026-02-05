@@ -95,6 +95,18 @@
             </div>
         </div>
 
+        <!-- Missing Files -->
+        <div class="stat-card hover:border-primary transition-colors cursor-pointer" onclick="loadReport('missing')">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-medium text-white">Missing Files</h3>
+                <span class="text-2xl">❓</span>
+            </div>
+            <p class="mt-2 text-sm text-gray-400">In Radarr/Sonarr but not on disk</p>
+            <div class="mt-4">
+                <span class="text-primary text-sm">Click to run report →</span>
+            </div>
+        </div>
+
         <!-- Orphan Files (Plex) -->
         <div class="stat-card hover:border-primary transition-colors cursor-pointer" onclick="loadReport('orphans')">
             <div class="flex items-center justify-between">
@@ -190,6 +202,9 @@
                     break;
                 case 'replaced':
                     await loadReplacedReport();
+                    break;
+                case 'missing':
+                    await loadMissingReport();
                     break;
                 case 'orphans':
                     await loadOrphansReport();
@@ -480,6 +495,77 @@
         }
 
         showModal('Replaced Files', content);
+    }
+
+    async function loadMissingReport() {
+        const response = await fetch('/report/missing');
+        const data = await response.json();
+
+        let content = '';
+
+        if (data.count === 0) {
+            content = '<p class="text-green-400">No missing files found! All files in Radarr/Sonarr exist on disk.</p>';
+        } else {
+            content = `
+                <div class="mb-4">
+                    <p class="text-yellow-400">Found ${data.count} missing files</p>
+                    <p class="text-sm text-gray-400">Movies: ${data.movies_count} | TV Episodes: ${data.tv_count}</p>
+                    <p class="text-sm text-gray-500 mt-2">These files exist in Radarr/Sonarr but not on disk. Consider removing them from your arr apps or re-downloading.</p>
+                </div>
+                <div class="flex justify-end mb-4">
+                    <button onclick="clearMissingReport()" class="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-500">
+                        Clear Report
+                    </button>
+                </div>
+            `;
+
+            if (data.movies && data.movies.length > 0) {
+                content += `
+                    <div class="mb-6">
+                        <h4 class="text-white font-medium mb-3">Movies (${data.movies_count})</h4>
+                        <div class="space-y-2 max-h-48 overflow-y-auto">
+                `;
+                data.movies.forEach(m => {
+                    const filename = m.path.split('/').pop();
+                    content += `
+                        <div class="bg-gray-700 rounded p-2">
+                            <p class="text-sm text-white truncate">${filename}</p>
+                            <p class="text-xs text-gray-500 truncate">${m.path}</p>
+                        </div>
+                    `;
+                });
+                content += '</div></div>';
+            }
+
+            if (data.tv && data.tv.length > 0) {
+                content += `
+                    <div>
+                        <h4 class="text-white font-medium mb-3">TV Episodes (${data.tv_count})</h4>
+                        <div class="space-y-2 max-h-64 overflow-y-auto">
+                `;
+                data.tv.forEach(m => {
+                    const filename = m.path.split('/').pop();
+                    content += `
+                        <div class="bg-gray-700 rounded p-2">
+                            <p class="text-sm text-white truncate">${filename}</p>
+                            <p class="text-xs text-gray-500 truncate">${m.path}</p>
+                        </div>
+                    `;
+                });
+                content += '</div></div>';
+            }
+        }
+
+        showModal('Missing Files', content);
+    }
+
+    async function clearMissingReport() {
+        if (!confirm('Clear the missing files report? This will reset the list.')) return;
+
+        const response = await fetch('/report/missing/clear', { method: 'POST' });
+        if (response.ok) {
+            loadMissingReport(); // Reload the report
+        }
     }
 
     async function loadUpgradesReport() {
