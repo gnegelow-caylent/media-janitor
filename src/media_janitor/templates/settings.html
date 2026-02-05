@@ -878,6 +878,18 @@
     }
 
     function addPathMapping(type, instIdx) {
+        // Sync current input values to currentConfig before adding new mapping
+        const advDiv = document.getElementById(`advanced-${type}-${instIdx}`);
+        if (advDiv) {
+            currentConfig[type][instIdx].path_mappings = [];
+            advDiv.querySelectorAll('.path-mappings > div').forEach(pmDiv => {
+                const fromPath = pmDiv.querySelector('[data-field="from_path"]');
+                const toPath = pmDiv.querySelector('[data-field="to_path"]');
+                if (fromPath && toPath) {
+                    currentConfig[type][instIdx].path_mappings.push({ from_path: fromPath.value, to_path: toPath.value });
+                }
+            });
+        }
         if (!currentConfig[type][instIdx].path_mappings) currentConfig[type][instIdx].path_mappings = [];
         currentConfig[type][instIdx].path_mappings.push({ from_path: '', to_path: '' });
         renderInstances(type, currentConfig[type]);
@@ -885,6 +897,18 @@
     }
 
     function removePathMapping(type, instIdx, pmIdx) {
+        // Sync current input values to currentConfig before removing
+        const advDiv = document.getElementById(`advanced-${type}-${instIdx}`);
+        if (advDiv) {
+            currentConfig[type][instIdx].path_mappings = [];
+            advDiv.querySelectorAll('.path-mappings > div').forEach(pmDiv => {
+                const fromPath = pmDiv.querySelector('[data-field="from_path"]');
+                const toPath = pmDiv.querySelector('[data-field="to_path"]');
+                if (fromPath && toPath) {
+                    currentConfig[type][instIdx].path_mappings.push({ from_path: fromPath.value, to_path: toPath.value });
+                }
+            });
+        }
         currentConfig[type][instIdx].path_mappings.splice(pmIdx, 1);
         renderInstances(type, currentConfig[type]);
         document.getElementById(`advanced-${type}-${instIdx}`).classList.remove('hidden');
