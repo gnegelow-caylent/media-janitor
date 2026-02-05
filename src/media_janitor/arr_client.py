@@ -148,24 +148,25 @@ class ArrClient:
         return items
 
     async def _get_all_episodes(self) -> list[MediaItem]:
-        """Get all episodes from Sonarr by fetching episode files per series."""
-        # Get all series first
+        """Get all episodes from Sonarr using the most memory-efficient approach."""
+        # Get all series first (needed for title mapping)
         series_list = await self._get("series")
         series_map = {s["id"]: s["title"] for s in series_list}
 
-        # Count expected total for logging
-        total_expected = sum(
-            s.get("statistics", {}).get("episodeFileCount", 0)
-            for s in series_list
-        )
+        self.log.info("Fetching episodes from Sonarr", series_count=len(series_list))
 
-        self.log.info("Fetching episodes from Sonarr",
-                      series_count=len(series_list),
-                      total_expected=total_expected)
+        # Try bulk endpoint first (Sonarr v3.0.9+) - single API call
+        try:
+            all_episode_files = await self._get("episodefile")
+            if isinstance(all_episode_files, list) and len(all_episode_files) > 0:
+                items = self._parse_episode_files(all_episode_files, series_map)
+                self.log.info("Fetched episodes via bulk endpoint", count=len(items))
+                return items
+        except Exception as e:
+            self.log.warning("Bulk endpoint failed, falling back to per-series fetch", error=str(e))
 
+        # Fallback: fetch per series (slower, more memory, but more compatible)
         items = []
-
-        # Fetch episode files per series (more reliable than bulk endpoint)
         for series in series_list:
             series_id = series["id"]
             episode_count = series.get("statistics", {}).get("episodeFileCount", 0)

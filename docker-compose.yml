@@ -23,8 +23,9 @@ services:
     environment:
       - TZ=America/New_York  # Adjust to your timezone
     # Optional: limit resources for background scanning
+    # Note: Large libraries (50K+ files) need more memory for caching
     deploy:
       resources:
         limits:
           cpus: '2'
-          memory: 2G
+          memory: 4G
