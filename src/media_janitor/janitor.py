@@ -290,28 +290,51 @@ class Janitor:
                 self.log.info("All files have been scanned")
                 return
 
-        # Get next batch
-        batch = self.scanner.get_next_batch(batch_size)
-        if not batch:
+        # Get next batch - pull extra to account for missing files
+        # We want batch_size files that actually exist
+        concurrency = getattr(self.config.scanner, 'concurrency', 10)
+        existing_files = []
+        missing_count = 0
+        max_pull = batch_size * 5  # Pull up to 5x to find enough existing files
+        pulled = 0
+
+        while len(existing_files) < batch_size and pulled < max_pull:
+            # Pull a chunk from the queue
+            chunk_size = min(batch_size, max_pull - pulled)
+            batch = self.scanner.get_next_batch(chunk_size)
+            if not batch:
+                break
+            pulled += len(batch)
+
+            # Check which files exist
+            for item in batch:
+                if not item.file_path:
+                    continue
+                if Path(item.file_path).exists():
+                    existing_files.append(item)
+                else:
+                    # Mark missing file immediately
+                    media_type = "movie" if item.arr_type == ArrType.RADARR else "tv"
+                    self.state.mark_missing(item.file_path, media_type)
+                    self.scanner.mark_scanned(item.file_path, valid=True, media_type=media_type)
+                    missing_count += 1
+
+        if not existing_files:
+            if missing_count > 0:
+                self.log.info("No existing files found in batch", missing=missing_count)
             return
 
-        self.log.info("Running background scan batch", count=len(batch))
-
-        # Process files in parallel using asyncio.gather
-        # Use concurrency limit from config (default 10)
-        concurrency = getattr(self.config.scanner, 'concurrency', 10)
+        self.log.info("Running background scan batch", count=len(existing_files), skipped_missing=missing_count)
 
         async def process_item(item):
-            if not item.file_path:
-                return
             try:
                 await self.validate_and_process(item.file_path, item.arr_type)
             except Exception as e:
                 self.log.error("Error validating file", file=item.file_path, error=str(e))
 
         # Process in chunks to respect concurrency limit
-        for i in range(0, len(batch), concurrency):
-            chunk = batch[i:i + concurrency]
+        for i in range(0, len(existing_files), concurrency):
+            chunk = existing_files[i:i + concurrency]
             await asyncio.gather(*[process_item(item) for item in chunk])
 
     async def refresh_tv_library(self):
