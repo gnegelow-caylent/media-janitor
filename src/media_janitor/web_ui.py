@@ -417,7 +417,7 @@ async def test_connection(request: Request):
                     api_key = inst.get("api_key", "")
                     break
 
-        async with httpx.AsyncClient(timeout=10.0) as client:
+        async with httpx.AsyncClient(timeout=30.0) as client:
             # Test connection
             response = await client.get(
                 f"{url}/api/v3/system/status",
@@ -474,7 +474,7 @@ async def test_plex(request: Request):
             existing = get_config_dict()
             token = existing.get("plex", {}).get("token", "")
 
-        async with httpx.AsyncClient(timeout=10.0) as client:
+        async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.get(
                 f"{url}/identity",
                 headers={"X-Plex-Token": token, "Accept": "application/json"}
@@ -522,7 +522,7 @@ async def test_notification(request: Request):
 
         if service == "discord":
             webhook_url = data.get("webhook_url") or config.get("notifications", {}).get("discord", {}).get("webhook_url")
-            async with httpx.AsyncClient(timeout=10.0) as client:
+            async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.post(
                     webhook_url,
                     json={
@@ -539,7 +539,7 @@ async def test_notification(request: Request):
 
         elif service == "slack":
             webhook_url = data.get("webhook_url") or config.get("notifications", {}).get("slack", {}).get("webhook_url")
-            async with httpx.AsyncClient(timeout=10.0) as client:
+            async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.post(
                     webhook_url,
                     json={"text": "Test notification from Media Janitor - Slack is working!"}
@@ -550,7 +550,7 @@ async def test_notification(request: Request):
         elif service == "telegram":
             bot_token = data.get("bot_token") or config.get("notifications", {}).get("telegram", {}).get("bot_token")
             chat_id = data.get("chat_id") or config.get("notifications", {}).get("telegram", {}).get("chat_id")
-            async with httpx.AsyncClient(timeout=10.0) as client:
+            async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.post(
                     f"https://api.telegram.org/bot{bot_token}/sendMessage",
                     json={"chat_id": chat_id, "text": "Test notification from Media Janitor - Telegram is working!"}
@@ -561,7 +561,7 @@ async def test_notification(request: Request):
         elif service == "pushover":
             user_key = data.get("user_key") or config.get("notifications", {}).get("pushover", {}).get("user_key")
             api_token = data.get("api_token") or config.get("notifications", {}).get("pushover", {}).get("api_token")
-            async with httpx.AsyncClient(timeout=10.0) as client:
+            async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.post(
                     "https://api.pushover.net/1/messages.json",
                     data={
@@ -576,7 +576,7 @@ async def test_notification(request: Request):
         elif service == "gotify":
             server_url = data.get("server_url") or config.get("notifications", {}).get("gotify", {}).get("server_url")
             app_token = data.get("app_token") or config.get("notifications", {}).get("gotify", {}).get("app_token")
-            async with httpx.AsyncClient(timeout=10.0) as client:
+            async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.post(
                     f"{server_url.rstrip('/')}/message",
                     headers={"X-Gotify-Key": app_token},
