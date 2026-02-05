@@ -34,6 +34,9 @@ class Scanner:
         self._refreshing: bool = False
         self._refresh_source: str | None = None
 
+        # Cache of media items for fast lookups (populated during refresh)
+        self._media_cache: dict[str, MediaItem] = {}
+
         # Clients
         self._radarr_clients: list[ArrClient] = []
         self._sonarr_clients: list[ArrClient] = []
@@ -47,6 +50,7 @@ class Scanner:
         self.log.info("Reinitializing arr clients")
         self._radarr_clients = []
         self._sonarr_clients = []
+        self._media_cache = {}  # Clear cache on reinit
 
         for instance in self.config.radarr:
             client = ArrClient(instance, ArrType.RADARR)
@@ -189,6 +193,14 @@ class Scanner:
             self._scan_queue = interleaved
             self._last_full_refresh = datetime.now()
 
+            # Build media cache for fast path lookups (avoid re-fetching all media)
+            self._media_cache = {
+                item.file_path: item
+                for item in all_media
+                if item.file_path
+            }
+            self.log.info("Media cache built", cache_size=len(self._media_cache))
+
             # Mark scan started if this is the first run
             if not self._initial_scan_complete and len(new_items) > 0:
                 self.state.mark_scan_started()
@@ -298,10 +310,21 @@ class Scanner:
 
     async def find_item_by_path(self, file_path: str) -> tuple[MediaItem | None, ArrClient | None]:
         """Find a media item and its client by file path."""
+        # First, check the cache (fast path)
+        if file_path in self._media_cache:
+            item = self._media_cache[file_path]
+            client = self.get_client_for_item(item)
+            if client:
+                return item, client
+
+        # Cache miss - fall back to API lookup (slow, but handles new files)
+        self.log.debug("Cache miss, fetching from API", path=file_path)
         for client in self._radarr_clients + self._sonarr_clients:
             try:
                 item = await client.get_file_by_path(file_path)
                 if item:
+                    # Add to cache for future lookups
+                    self._media_cache[file_path] = item
                     return item, client
             except Exception as e:
                 self.log.warning("Error searching for file", client=client.instance.name, error=str(e))
