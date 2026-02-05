@@ -254,7 +254,7 @@ class Janitor:
         return True
 
     async def run_background_scan(self):
-        """Run a batch of background scans."""
+        """Run a batch of background scans in parallel."""
         if not self.config.scanner.enabled:
             self.log.debug("Background scanner disabled")
             return
@@ -288,14 +288,22 @@ class Janitor:
 
         self.log.info("Running background scan batch", count=len(batch))
 
-        for item in batch:
-            if not item.file_path:
-                continue
+        # Process files in parallel using asyncio.gather
+        # Use concurrency limit from config (default 10)
+        concurrency = getattr(self.config.scanner, 'concurrency', 10)
 
+        async def process_item(item):
+            if not item.file_path:
+                return
             try:
                 await self.validate_and_process(item.file_path, item.arr_type)
             except Exception as e:
                 self.log.error("Error validating file", file=item.file_path, error=str(e))
+
+        # Process in chunks to respect concurrency limit
+        for i in range(0, len(batch), concurrency):
+            chunk = batch[i:i + concurrency]
+            await asyncio.gather(*[process_item(item) for item in chunk])
 
     async def refresh_tv_library(self):
         """Refresh TV library in background (slow operation)."""

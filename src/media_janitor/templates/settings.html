@@ -341,6 +341,14 @@
 
                         <div class="flex items-center justify-between">
                             <div>
+                                <label class="text-sm font-medium text-white">Parallel Scans</label>
+                                <p class="text-xs text-gray-500 mt-0.5">Files to process simultaneously (higher = faster)</p>
+                            </div>
+                            <input type="number" id="scanner-concurrency" class="settings-input w-20 text-center" min="1" max="50">
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <div>
                                 <label class="text-sm font-medium text-white">Deep Scan</label>
                                 <p class="text-xs text-gray-500 mt-0.5">Decode samples from start/middle/end (slower but thorough)</p>
                             </div>
@@ -767,6 +775,7 @@
         document.getElementById('scanner-files-per-hour').value = currentConfig.scanner?.files_per_hour ?? 300;
         document.getElementById('scanner-files-per-hour-slider').value = currentConfig.scanner?.files_per_hour ?? 300;
         document.getElementById('scanner-mode').value = currentConfig.scanner?.mode ?? 'watch_only';
+        document.getElementById('scanner-concurrency').value = currentConfig.scanner?.concurrency ?? 10;
 
         // Validation
         document.getElementById('validation-deep-scan').checked = currentConfig.validation?.deep_scan_enabled ?? true;
@@ -1026,7 +1035,8 @@
             ...currentConfig.scanner,
             enabled: document.getElementById('scanner-enabled').checked,
             files_per_hour: parseInt(document.getElementById('scanner-files-per-hour').value),
-            mode: document.getElementById('scanner-mode').value
+            mode: document.getElementById('scanner-mode').value,
+            concurrency: parseInt(document.getElementById('scanner-concurrency').value) || 10
         };
 
         currentConfig.validation = {
