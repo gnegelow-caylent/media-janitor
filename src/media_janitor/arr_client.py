@@ -221,7 +221,18 @@ class ArrClient:
         return items
 
     async def get_file_by_path(self, file_path: str) -> MediaItem | None:
-        """Find a media item by its file path."""
+        """Find a media item by its file path.
+
+        NOTE: This method fetches ALL media which is expensive.
+        Prefer using Scanner.find_item_by_path() which uses the cache.
+        This method should only be called as a fallback for new files not in cache.
+        """
+        # For Radarr, we can search more efficiently
+        if self.arr_type == ArrType.RADARR:
+            # Unfortunately Radarr doesn't have a path search endpoint
+            # so we still need to iterate, but we log a warning
+            self.log.debug("Fetching all movies to find path (consider using cache)", path=file_path)
+
         all_media = await self.get_all_media()
         for item in all_media:
             if item.file_path == file_path:

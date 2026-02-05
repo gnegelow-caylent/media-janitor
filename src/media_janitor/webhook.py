@@ -658,16 +658,24 @@ async def get_orphan_report(
     if not plex:
         raise HTTPException(status_code=400, detail="Plex integration not enabled. Login with Plex first.")
 
-    # Get all file paths from Radarr/Sonarr
+    # Get all file paths from cache (avoid expensive API calls)
     arr_paths: set[str] = set()
-    for client in _janitor.scanner.get_all_clients():
-        try:
-            media = await client.get_all_media()
-            for item in media:
-                if item.file_path:
-                    arr_paths.add(item.file_path)
-        except Exception as e:
-            logger.warning("Failed to get media from client", client=client.instance.name, error=str(e))
+    cached_media = _janitor.scanner.get_cached_media("all")
+    if cached_media:
+        for item in cached_media:
+            if item.file_path:
+                arr_paths.add(item.file_path)
+    else:
+        # Cache empty - fall back to API (shouldn't happen normally)
+        logger.warning("Cache empty for orphan report, fetching from API")
+        for client in _janitor.scanner.get_all_clients():
+            try:
+                media = await client.get_all_media()
+                for item in media:
+                    if item.file_path:
+                        arr_paths.add(item.file_path)
+            except Exception as e:
+                logger.warning("Failed to get media from client", client=client.instance.name, error=str(e))
 
     in_plex_not_arr, in_arr_not_plex = await plex.find_orphans(arr_paths)
 
