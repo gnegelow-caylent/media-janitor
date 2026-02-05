@@ -168,6 +168,8 @@ sonarr:
         to_path: "/media/anime"
 ```
 
+> **Multiple Instances**: If running multiple Sonarr instances that share the same download client (NZBGet/SABnzbd), configure each instance to use a **different category** (e.g., `tv`, `tv-kids`). This prevents instances from seeing each other's downloads and causing "series mismatch" errors.
+
 ### Plex Integration
 
 ```yaml
@@ -186,10 +188,15 @@ You can also authenticate via OAuth in the Web UI Settings → Connections → P
 scanner:
   enabled: true
   files_per_hour: 300        # Scan rate (validation reads ~2-5MB per file)
+  concurrency: 10            # Parallel file validations
   mode: "watch_only"         # "watch_only" or "continuous"
   tv_refresh_schedule: "0 3 * * *"  # When to refresh TV library (cron format)
 ```
 
+- **files_per_hour**: Recommended rates by storage type:
+  - Network mounts: 500-1500
+  - Local SSD: 3000-5000
+  - NVMe: 5000+
 - **watch_only**: Scan library once, then only validate new imports via webhooks
 - **continuous**: Keep re-scanning library forever
 - **tv_refresh_schedule**: TV episodes load on a schedule (default 3am) because large libraries can take time
@@ -222,6 +229,11 @@ actions:
   max_replacements_per_day: 10  # Daily limit to control bandwidth
   dry_run: false               # Report only, no actual changes
 ```
+
+**Rate Limiting**: The `max_replacements_per_day` counter:
+- Persists across container restarts (stored in state file)
+- Resets automatically at midnight
+- Resets when you clear state via "Restart Full Scan" in the UI
 
 ### Notifications
 
@@ -357,7 +369,7 @@ logging:
 |----------|--------|-------------|
 | `/scan/trigger` | POST | Trigger a background scan batch |
 | `/scan/refresh?source=movies` | POST | Refresh library list |
-| `/state/clear` | POST | Clear scan state (forces full re-scan) |
+| `/state/clear` | POST | Clear all state (forces full re-scan, resets daily counter) |
 
 ### Logs
 
@@ -435,6 +447,16 @@ Use the "Test" button in Settings → Notifications to verify each service is co
 
 This is normal for large libraries. The scanner uses an efficient bulk API that fetches all episode files in 1-2 API calls instead of per-series, but parsing thousands of files still takes time. Check the logs for progress.
 
+### State lost after container update
+
+Ensure the state volume is mounted correctly:
+```yaml
+volumes:
+  - /path/to/appdata/state:/data/state
+```
+
+The state directory must persist outside the container. On Unraid, use `/mnt/user/appdata/media-janitor/state:/data/state`.
+
 ## Updating
 
 ```bash
@@ -442,6 +464,8 @@ docker pull ghcr.io/gnegelow-caylent/media-janitor:latest
 docker stop media-janitor && docker rm media-janitor
 # Run docker run command again
 ```
+
+> **Note**: Scan progress, replacement history, and daily counters persist across updates when the `/data/state` volume is mounted correctly.
 
 ## Unraid Community Applications
 
