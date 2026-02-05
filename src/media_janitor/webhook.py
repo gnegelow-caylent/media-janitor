@@ -795,6 +795,7 @@ async def clear_state():
         return {"status": "error", "message": "Janitor not initialized"}
 
     _janitor.state.clear()
+    _janitor.reset_replacement_count()
     return {"status": "ok", "message": "State cleared, will re-scan all files"}
 
 

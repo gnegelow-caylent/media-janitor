@@ -98,6 +98,12 @@ class Janitor:
         """Increment the replacement counter."""
         self._replacements_today += 1
 
+    def reset_replacement_count(self):
+        """Reset the daily replacement counter (called when state is cleared)."""
+        self._replacements_today = 0
+        self._replacement_reset_date = datetime.now().date()
+        self.log.info("Replacement counter reset")
+
     async def validate_and_process(
         self,
         file_path: str,
