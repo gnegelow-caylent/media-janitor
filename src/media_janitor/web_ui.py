@@ -383,7 +383,7 @@ async def save_config(request: Request):
             from . import webhook
             if webhook._janitor:
                 parsed_config = Config(**new_config)
-                webhook._janitor.reload_config(parsed_config)
+                await webhook._janitor.reload_config(parsed_config)
                 logger.info("Hot-reloaded config into janitor")
         except Exception as reload_err:
             logger.warning("Config saved but hot-reload failed", error=str(reload_err))

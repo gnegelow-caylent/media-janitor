@@ -40,6 +40,32 @@ class Scanner:
         """Set or update the Plex client for watch-based prioritization."""
         self._plex_client = plex_client
 
+    async def reinitialize_clients(self):
+        """Reinitialize arr clients with updated config (e.g., after path mapping changes)."""
+        self.log.info("Reinitializing arr clients")
+        self._radarr_clients = []
+        self._sonarr_clients = []
+
+        for instance in self.config.radarr:
+            client = ArrClient(instance, ArrType.RADARR)
+            if await client.test_connection():
+                self._radarr_clients.append(client)
+            else:
+                self.log.error("Failed to connect to Radarr", instance=instance.name)
+
+        for instance in self.config.sonarr:
+            client = ArrClient(instance, ArrType.SONARR)
+            if await client.test_connection():
+                self._sonarr_clients.append(client)
+            else:
+                self.log.error("Failed to connect to Sonarr", instance=instance.name)
+
+        self.log.info(
+            "Clients reinitialized",
+            radarr_instances=len(self._radarr_clients),
+            sonarr_instances=len(self._sonarr_clients),
+        )
+
     async def initialize(self):
         """Initialize the scanner with arr clients."""
         for instance in self.config.radarr:

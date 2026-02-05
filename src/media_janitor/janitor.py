@@ -56,7 +56,7 @@ class Janitor:
         await self.scanner.refresh_library("all")
         self.log.info("Janitor initialized")
 
-    def reload_config(self, new_config: Config):
+    async def reload_config(self, new_config: Config):
         """Hot-reload configuration without restart."""
         self.log.info("Reloading configuration")
         old_config = self.config
@@ -64,6 +64,9 @@ class Janitor:
 
         # Update scanner settings
         self.scanner.config = new_config
+
+        # Reinitialize arr clients to pick up new path mappings
+        await self.scanner.reinitialize_clients()
 
         # Update Plex client if settings changed
         if new_config.plex.enabled and new_config.plex.url and new_config.plex.token:
