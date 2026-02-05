@@ -192,8 +192,9 @@ async def _handle_arr_webhook(
 
         # Create MediaItem from webhook payload
         if file_path and episode_file.get("id"):
+            episode_id = ep_info.get("id")  # The actual episode ID for searches
             media_item = MediaItem(
-                id=ep_info.get("id", 0),
+                id=episode_id or 0,
                 title=title,
                 file_path=file_path,
                 file_id=episode_file.get("id"),
@@ -202,6 +203,7 @@ async def _handle_arr_webhook(
                 series_id=series.get("id"),
                 season_number=ep_info.get("seasonNumber"),
                 episode_number=ep_info.get("episodeNumber"),
+                episode_id=episode_id,  # Explicit episode ID for Sonarr searches
                 arr_type=ArrType.SONARR,
                 arr_instance=instance_name or "sonarr",
             )

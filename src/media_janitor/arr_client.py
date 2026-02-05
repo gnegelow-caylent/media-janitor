@@ -21,16 +21,17 @@ class ArrType(Enum):
 class MediaItem:
     """Represents a movie or episode."""
 
-    id: int
+    id: int  # Movie ID (Radarr) or Episode ID (Sonarr) - used for searches
     title: str
     file_path: str | None
-    file_id: int | None
+    file_id: int | None  # Episode FILE ID (Sonarr) or Movie FILE ID (Radarr) - used for deletions
     quality: str | None
     size_bytes: int | None
     # For episodes
     series_id: int | None = None
     season_number: int | None = None
     episode_number: int | None = None
+    episode_id: int | None = None  # Explicit episode ID for Sonarr (may differ from file_id)
     # Source info
     arr_type: ArrType | None = None
     arr_instance: str | None = None
@@ -194,26 +195,30 @@ class ArrClient:
 
             # Get season/episode from the file's first episode (files can have multiple episodes)
             season_num = ef.get("seasonNumber", 0)
+            file_id = ef.get("id")  # Episode FILE ID (for deletions)
+
             # Episode files have episodes array with their episode numbers
             episodes = ef.get("episodes", [])
             if episodes:
                 episode_num = episodes[0].get("episodeNumber", 0)
-                episode_id = episodes[0].get("id", ef.get("id"))
+                # Get the actual EPISODE ID (for searches) - NOT the file ID
+                episode_id = episodes[0].get("id")  # May be None if not included
             else:
                 episode_num = 0
-                episode_id = ef.get("id")
+                episode_id = None  # Don't fall back to file_id - they're different!
 
             items.append(
                 MediaItem(
-                    id=episode_id,
+                    id=episode_id or file_id,  # Fallback for display/compatibility
                     title=f"{series_title} - S{season_num:02d}E{episode_num:02d}",
                     file_path=self.translate_path(ef.get("path")),
-                    file_id=ef.get("id"),
+                    file_id=file_id,
                     quality=ef.get("quality", {}).get("quality", {}).get("name"),
                     size_bytes=ef.get("size"),
                     series_id=series_id,
                     season_number=season_num,
                     episode_number=episode_num,
+                    episode_id=episode_id,  # Explicit episode ID (may be None)
                     arr_type=ArrType.SONARR,
                     arr_instance=self.instance.name,
                 )
@@ -263,15 +268,65 @@ class ArrClient:
                     {"name": "MoviesSearch", "movieIds": [item.id]},
                 )
             else:
+                # For Sonarr, we need the EPISODE ID, not the file ID
+                episode_id = item.episode_id
+                if not episode_id:
+                    # Try to fetch the episode ID using series/season/episode info
+                    # This works even after the file has been deleted
+                    episode_id = await self._get_episode_id_by_info(
+                        item.series_id, item.season_number, item.episode_number
+                    )
+                    if not episode_id:
+                        self.log.error(
+                            "Cannot search: no episode ID available",
+                            title=item.title,
+                            series_id=item.series_id,
+                            season=item.season_number,
+                            episode=item.episode_number,
+                        )
+                        return False
+
                 await self._post(
                     "command",
-                    {"name": "EpisodeSearch", "episodeIds": [item.id]},
+                    {"name": "EpisodeSearch", "episodeIds": [episode_id]},
                 )
             self.log.info("Triggered search", title=item.title)
             return True
         except Exception as e:
             self.log.error("Failed to trigger search", title=item.title, error=str(e))
             return False
+
+    async def _get_episode_id_by_info(
+        self, series_id: int | None, season: int | None, episode: int | None
+    ) -> int | None:
+        """Get the episode ID using series/season/episode info.
+
+        This works even after the episode file has been deleted.
+        """
+        if not series_id or season is None or episode is None:
+            return None
+        try:
+            # Fetch all episodes for this series (Sonarr API)
+            episodes = await self._get("episode", params={"seriesId": series_id})
+            for ep in episodes:
+                if ep.get("seasonNumber") == season and ep.get("episodeNumber") == episode:
+                    return ep.get("id")
+            self.log.warning(
+                "Episode not found",
+                series_id=series_id,
+                season=season,
+                episode=episode,
+            )
+            return None
+        except Exception as e:
+            self.log.warning(
+                "Failed to get episode ID",
+                series_id=series_id,
+                season=season,
+                episode=episode,
+                error=str(e),
+            )
+            return None
 
     async def add_to_blocklist(
         self,
