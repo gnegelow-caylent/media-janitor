@@ -458,7 +458,14 @@
             const statusText = document.getElementById('scan-status-text');
             const fileContainer = document.getElementById('current-file-container');
 
-            if (data.scanner.initial_scan_done) {
+            if (data.scanner.refreshing) {
+                // Library is being loaded from Radarr/Sonarr
+                indicator.className = 'w-3 h-3 rounded-full bg-blue-400 mr-3 animate-pulse';
+                const source = data.scanner.refresh_source || 'library';
+                statusText.textContent = `Loading ${source}...`;
+                fileContainer.classList.remove('hidden');
+                document.getElementById('current-file').textContent = `Fetching media list from ${source === 'all' ? 'Radarr & Sonarr' : source}...`;
+            } else if (data.scanner.initial_scan_done) {
                 indicator.className = 'w-3 h-3 rounded-full bg-green-400 mr-3';
                 statusText.textContent = 'Complete - Watching for new imports';
                 fileContainer.classList.add('hidden');

@@ -31,6 +31,8 @@ class Scanner:
         self._scan_queue: list[MediaItem] = []
         self._last_full_refresh: datetime | None = None
         self._initial_scan_complete = state.get_stats()["initial_scan_done"]
+        self._refreshing: bool = False
+        self._refresh_source: str | None = None
 
         # Clients
         self._radarr_clients: list[ArrClient] = []
@@ -102,102 +104,108 @@ class Scanner:
         Args:
             source: "all", "movies" (Radarr only), or "tv" (Sonarr only)
         """
+        self._refreshing = True
+        self._refresh_source = source
         self.log.info("Refreshing library list", source=source)
         all_media: list[MediaItem] = []
         movies_total = 0
         tv_total = 0
 
-        if source in ("all", "movies"):
-            for client in self._radarr_clients:
+        try:
+            if source in ("all", "movies"):
+                for client in self._radarr_clients:
+                    try:
+                        media = await client.get_all_media()
+                        movies_total += len(media)
+                        all_media.extend(media)
+                    except Exception as e:
+                        self.log.error("Failed to fetch from Radarr", instance=client.instance.name, error=str(e))
+
+            if source in ("all", "tv"):
+                for client in self._sonarr_clients:
+                    try:
+                        media = await client.get_all_media()
+                        tv_total += len(media)
+                        all_media.extend(media)
+                    except Exception as e:
+                        self.log.error("Failed to fetch from Sonarr", instance=client.instance.name, error=str(e))
+
+            # Update library totals in state
+            if source == "all":
+                self.state.set_library_totals(movies_total, tv_total)
+            elif source == "movies":
+                current_stats = self.state.get_stats()
+                self.state.set_library_totals(movies_total, current_stats.get("tv_total", 0))
+            elif source == "tv":
+                current_stats = self.state.get_stats()
+                self.state.set_library_totals(current_stats.get("movies_total", 0), tv_total)
+
+            # Get already scanned paths from persistent state
+            scanned_paths = self.state.get_scanned_paths()
+
+            # Filter to unscanned files
+            new_items = [
+                item for item in all_media
+                if item.file_path and item.file_path not in scanned_paths
+            ]
+
+            # Separate movies and TV, then interleave for balanced scanning
+            movies = [item for item in new_items if item.arr_type == ArrType.RADARR]
+            tv = [item for item in new_items if item.arr_type == ArrType.SONARR]
+
+            # Prioritize by Plex watch count if available
+            watch_counts: dict[str, int] = {}
+            if self._plex_client:
                 try:
-                    media = await client.get_all_media()
-                    movies_total += len(media)
-                    all_media.extend(media)
+                    watch_counts = await self._plex_client.get_watch_history()
+                    self.log.info("Using Plex watch data for prioritization", watched_items=len(watch_counts))
                 except Exception as e:
-                    self.log.error("Failed to fetch from Radarr", instance=client.instance.name, error=str(e))
+                    self.log.warning("Failed to fetch Plex watch data, using random order", error=str(e))
 
-        if source in ("all", "tv"):
-            for client in self._sonarr_clients:
-                try:
-                    media = await client.get_all_media()
-                    tv_total += len(media)
-                    all_media.extend(media)
-                except Exception as e:
-                    self.log.error("Failed to fetch from Sonarr", instance=client.instance.name, error=str(e))
+            if watch_counts:
+                # Sort by view count descending (most watched first)
+                movies.sort(key=lambda x: watch_counts.get(x.file_path or "", 0), reverse=True)
+                tv.sort(key=lambda x: watch_counts.get(x.file_path or "", 0), reverse=True)
+            else:
+                # Fallback to random shuffle
+                random.shuffle(movies)
+                random.shuffle(tv)
 
-        # Update library totals in state
-        if source == "all":
-            self.state.set_library_totals(movies_total, tv_total)
-        elif source == "movies":
-            current_stats = self.state.get_stats()
-            self.state.set_library_totals(movies_total, current_stats.get("tv_total", 0))
-        elif source == "tv":
-            current_stats = self.state.get_stats()
-            self.state.set_library_totals(current_stats.get("movies_total", 0), tv_total)
+            # Interleave: for every 1 movie, scan ~10 TV (proportional to library size)
+            # This ensures both get scanned even with large TV libraries
+            interleaved = []
+            mi, ti = 0, 0
+            while mi < len(movies) or ti < len(tv):
+                # Add a movie
+                if mi < len(movies):
+                    interleaved.append(movies[mi])
+                    mi += 1
+                # Add up to 10 TV episodes
+                for _ in range(10):
+                    if ti < len(tv):
+                        interleaved.append(tv[ti])
+                        ti += 1
 
-        # Get already scanned paths from persistent state
-        scanned_paths = self.state.get_scanned_paths()
+            self._scan_queue = interleaved
+            self._last_full_refresh = datetime.now()
 
-        # Filter to unscanned files
-        new_items = [
-            item for item in all_media
-            if item.file_path and item.file_path not in scanned_paths
-        ]
+            # Mark scan started if this is the first run
+            if not self._initial_scan_complete and len(new_items) > 0:
+                self.state.mark_scan_started()
 
-        # Separate movies and TV, then interleave for balanced scanning
-        movies = [item for item in new_items if item.arr_type == ArrType.RADARR]
-        tv = [item for item in new_items if item.arr_type == ArrType.SONARR]
+            self.log.info(
+                "Library refreshed",
+                total_files=len(all_media),
+                movies=movies_total,
+                tv_episodes=tv_total,
+                new_to_scan=len(new_items),
+                already_scanned=len(scanned_paths),
+            )
 
-        # Prioritize by Plex watch count if available
-        watch_counts: dict[str, int] = {}
-        if self._plex_client:
-            try:
-                watch_counts = await self._plex_client.get_watch_history()
-                self.log.info("Using Plex watch data for prioritization", watched_items=len(watch_counts))
-            except Exception as e:
-                self.log.warning("Failed to fetch Plex watch data, using random order", error=str(e))
-
-        if watch_counts:
-            # Sort by view count descending (most watched first)
-            movies.sort(key=lambda x: watch_counts.get(x.file_path or "", 0), reverse=True)
-            tv.sort(key=lambda x: watch_counts.get(x.file_path or "", 0), reverse=True)
-        else:
-            # Fallback to random shuffle
-            random.shuffle(movies)
-            random.shuffle(tv)
-
-        # Interleave: for every 1 movie, scan ~10 TV (proportional to library size)
-        # This ensures both get scanned even with large TV libraries
-        interleaved = []
-        mi, ti = 0, 0
-        while mi < len(movies) or ti < len(tv):
-            # Add a movie
-            if mi < len(movies):
-                interleaved.append(movies[mi])
-                mi += 1
-            # Add up to 10 TV episodes
-            for _ in range(10):
-                if ti < len(tv):
-                    interleaved.append(tv[ti])
-                    ti += 1
-
-        self._scan_queue = interleaved
-        self._last_full_refresh = datetime.now()
-
-        # Mark scan started if this is the first run
-        if not self._initial_scan_complete and len(new_items) > 0:
-            self.state.mark_scan_started()
-
-        self.log.info(
-            "Library refreshed",
-            total_files=len(all_media),
-            movies=movies_total,
-            tv_episodes=tv_total,
-            new_to_scan=len(new_items),
-            already_scanned=len(scanned_paths),
-        )
-
-        return len(new_items)
+            return len(new_items)
+        finally:
+            self._refreshing = False
+            self._refresh_source = None
 
     def get_next_batch(self, count: int) -> list[MediaItem]:
         """Get the next batch of items to scan."""
@@ -267,6 +275,9 @@ class Scanner:
             "tv_scanned": stats["tv_scanned"],
             "tv_total": stats["tv_total"],
             "tv_in_queue": tv_in_queue,
+            # Refresh status
+            "refreshing": self._refreshing,
+            "refresh_source": self._refresh_source,
         }
 
     def get_client_for_item(self, item: MediaItem) -> ArrClient | None:
