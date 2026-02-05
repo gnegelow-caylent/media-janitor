@@ -479,6 +479,8 @@
             const statusText = document.getElementById('scan-status-text');
             const fileContainer = document.getElementById('current-file-container');
 
+            const progressBar = document.getElementById('progress-bar');
+
             if (data.scanner.refreshing) {
                 // Library is being loaded from Radarr/Sonarr
                 indicator.className = 'w-3 h-3 rounded-full bg-blue-400 mr-3 animate-pulse';
@@ -486,15 +488,24 @@
                 statusText.textContent = `Loading ${source}...`;
                 fileContainer.classList.remove('hidden');
                 document.getElementById('current-file').textContent = `Fetching media list from ${source === 'all' ? 'Radarr & Sonarr' : source}...`;
+                // Show indeterminate loading state - full width, blue color, pulsing
+                progressBar.style.width = '100%';
+                progressBar.className = 'h-full rounded-full bg-blue-500 animate-pulse';
             } else if (data.scanner.initial_scan_done) {
                 indicator.className = 'w-3 h-3 rounded-full bg-green-400 mr-3';
                 statusText.textContent = 'Complete - Watching for new imports';
                 fileContainer.classList.add('hidden');
+                // Show complete state - full width, green color
+                progressBar.style.width = '100%';
+                progressBar.className = 'h-full rounded-full bg-green-500';
             } else {
                 indicator.className = 'w-3 h-3 rounded-full bg-primary mr-3 animate-pulse';
                 statusText.textContent = `${percent}% complete`;
                 fileContainer.classList.remove('hidden');
                 document.getElementById('current-file').textContent = data.scanner.current_file || 'Processing...';
+                // Show actual progress - animated stripes
+                progressBar.style.width = `${percent}%`;
+                progressBar.className = 'h-full progress-bar-animated rounded-full';
             }
 
             // Update connections
