@@ -139,7 +139,11 @@ async def run_ffmpeg_decode_test(
                 if line and not _is_ignorable_ffmpeg_warning(line):
                     errors.append(line)
 
-        return process.returncode == 0 and len(errors) == 0, errors, False
+        success = process.returncode == 0 and len(errors) == 0
+        # If ffmpeg failed but no error output, add a generic error
+        if not success and not errors:
+            errors = [f"ffmpeg exited with code {process.returncode}"]
+        return success, errors, False
 
     except asyncio.TimeoutError:
         return False, ["ffmpeg decode test timed out"], True  # timed_out=True for retry
