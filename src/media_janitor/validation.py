@@ -253,11 +253,12 @@ async def validate_file(file_path: str, config: ValidationConfig) -> ValidationR
 
     # Step 4: Deep scan (sample decode test)
     if config.deep_scan_enabled and probe.duration:
-        log.debug("Running deep scan")
+        deep_scan_mode = getattr(config, 'deep_scan_mode', 'partial')
+        log.debug("Running deep scan", mode=deep_scan_mode)
         sample_duration = config.sample_duration_seconds
-        decode_timeout = getattr(config, 'decode_timeout_seconds', 30)
+        decode_timeout = getattr(config, 'decode_timeout_seconds', 60)
 
-        # Test beginning
+        # Test beginning (always)
         success, errors, timed_out = await run_ffmpeg_decode_test(
             file_path, start_seconds=0, duration_seconds=sample_duration,
             timeout_seconds=decode_timeout
@@ -268,31 +269,33 @@ async def validate_file(file_path: str, config: ValidationConfig) -> ValidationR
             result.errors.extend([f"Decode error (start): {e}" for e in errors])
             log.warning("Decode test failed at start", errors=errors)
 
-        # Test middle (only if start test passed - fail fast)
-        if result.valid and probe.duration > sample_duration * 3:
-            middle_start = (probe.duration / 2) - (sample_duration / 2)
-            success, errors, timed_out = await run_ffmpeg_decode_test(
-                file_path, start_seconds=middle_start, duration_seconds=sample_duration,
-                timeout_seconds=decode_timeout
-            )
-            if not success:
-                result.valid = False
-                result.timed_out = result.timed_out or timed_out
-                result.errors.extend([f"Decode error (middle): {e}" for e in errors])
-                log.warning("Decode test failed at middle", errors=errors)
+        # Test middle and end only in "full" mode (slower but more thorough)
+        if deep_scan_mode == "full":
+            # Test middle (only if start test passed - fail fast)
+            if result.valid and probe.duration > sample_duration * 3:
+                middle_start = (probe.duration / 2) - (sample_duration / 2)
+                success, errors, timed_out = await run_ffmpeg_decode_test(
+                    file_path, start_seconds=middle_start, duration_seconds=sample_duration,
+                    timeout_seconds=decode_timeout
+                )
+                if not success:
+                    result.valid = False
+                    result.timed_out = result.timed_out or timed_out
+                    result.errors.extend([f"Decode error (middle): {e}" for e in errors])
+                    log.warning("Decode test failed at middle", errors=errors)
 
-        # Test end (only if still valid - fail fast)
-        if result.valid and probe.duration > sample_duration * 2:
-            end_start = probe.duration - sample_duration
-            success, errors, timed_out = await run_ffmpeg_decode_test(
-                file_path, start_seconds=end_start, duration_seconds=sample_duration,
-                timeout_seconds=decode_timeout
-            )
-            if not success:
-                result.valid = False
-                result.timed_out = result.timed_out or timed_out
-                result.errors.extend([f"Decode error (end): {e}" for e in errors])
-                log.warning("Decode test failed at end", errors=errors)
+            # Test end (only if still valid - fail fast)
+            if result.valid and probe.duration > sample_duration * 2:
+                end_start = probe.duration - sample_duration
+                success, errors, timed_out = await run_ffmpeg_decode_test(
+                    file_path, start_seconds=end_start, duration_seconds=sample_duration,
+                    timeout_seconds=decode_timeout
+                )
+                if not success:
+                    result.valid = False
+                    result.timed_out = result.timed_out or timed_out
+                    result.errors.extend([f"Decode error (end): {e}" for e in errors])
+                    log.warning("Decode test failed at end", errors=errors)
 
     # Step 5: Full decode (if enabled - very slow)
     if config.full_decode_enabled and result.valid:

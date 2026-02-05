@@ -45,6 +45,8 @@ class ValidationConfig(BaseModel):
     min_bitrate_4k: int = 8000
 
     deep_scan_enabled: bool = True
+    # "full" = test start/middle/end, "partial" = test start only (faster)
+    deep_scan_mode: str = "partial"
     sample_duration_seconds: int = 10  # Reduced for network mounts (less data to transfer)
     decode_timeout_seconds: int = 60   # Network mounts need more time for slow I/O
 

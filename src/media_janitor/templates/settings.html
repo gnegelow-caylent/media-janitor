@@ -366,6 +366,17 @@
 
                         <div class="flex items-center justify-between">
                             <div>
+                                <label class="text-sm font-medium text-white">Deep Scan Mode</label>
+                                <p class="text-xs text-gray-500 mt-0.5"><span class="text-green-400">Partial</span> = start only (faster) | <span class="text-yellow-400">Full</span> = start/middle/end (slow on network)</p>
+                            </div>
+                            <select id="validation-deep-scan-mode" class="settings-select">
+                                <option value="partial">Partial (Recommended)</option>
+                                <option value="full">Full</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <div>
                                 <label class="text-sm font-medium text-white">Sample Duration</label>
                                 <p class="text-xs text-gray-500 mt-0.5">Seconds to decode per sample. <span class="text-gray-400">Local: 30</span> | <span class="text-blue-400">Network: 5-10</span> (less data to transfer)</p>
                             </div>
@@ -801,8 +812,9 @@
 
         // Validation
         document.getElementById('validation-deep-scan').checked = currentConfig.validation?.deep_scan_enabled ?? true;
+        document.getElementById('validation-deep-scan-mode').value = currentConfig.validation?.deep_scan_mode ?? 'partial';
         document.getElementById('validation-sample-duration').value = currentConfig.validation?.sample_duration_seconds ?? 10;
-        document.getElementById('validation-decode-timeout').value = currentConfig.validation?.decode_timeout_seconds ?? 30;
+        document.getElementById('validation-decode-timeout').value = currentConfig.validation?.decode_timeout_seconds ?? 60;
         document.getElementById('validation-check-bitrate').checked = currentConfig.validation?.check_bitrate ?? true;
 
         // Email
@@ -1090,8 +1102,9 @@
         currentConfig.validation = {
             ...currentConfig.validation,
             deep_scan_enabled: document.getElementById('validation-deep-scan').checked,
+            deep_scan_mode: document.getElementById('validation-deep-scan-mode').value,
             sample_duration_seconds: parseInt(document.getElementById('validation-sample-duration').value) || 10,
-            decode_timeout_seconds: parseInt(document.getElementById('validation-decode-timeout').value) || 30,
+            decode_timeout_seconds: parseInt(document.getElementById('validation-decode-timeout').value) || 60,
             check_bitrate: document.getElementById('validation-check-bitrate').checked
         };
 

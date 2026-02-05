@@ -49,11 +49,15 @@ validation:
   min_bitrate_1080p: 3000  # kbps
   min_bitrate_4k: 8000     # kbps
 
-  # Deep scan - decode samples from start/middle/end of file
-  # This catches corruption that metadata checks miss
+  # Deep scan - decode samples to catch corruption that metadata checks miss
   deep_scan_enabled: true
 
-  # How many seconds to decode from each sample point (start/middle/end)
+  # Deep scan mode:
+  # "partial" = test start only (faster, recommended for network mounts)
+  # "full" = test start/middle/end (thorough but 3x slower)
+  deep_scan_mode: "partial"
+
+  # How many seconds to decode from each sample point
   # Shorter = less data to read, faster validation
   # RECOMMENDED VALUES:
   #   Local SSD/NVMe:    30 (thorough)
