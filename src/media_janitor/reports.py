@@ -153,23 +153,12 @@ async def generate_library_report(
     log = logger.bind(component="reports")
     log.info("Generating library report", source=source)
 
-    # Use cached media to avoid memory-intensive API calls
+    # Use cached media only - never fetch from API to avoid bandwidth waste
     all_media = scanner.get_cached_media(source)
     if all_media:
         log.info("Using cached media", count=len(all_media))
     else:
-        # Cache empty - fall back to fetching (only happens if refresh_library wasn't called)
-        log.warning("Cache empty, fetching from API (slow, consider refreshing library first)")
-        for client in scanner.get_all_clients():
-            if source == "movies" and client.arr_type != ArrType.RADARR:
-                continue
-            if source == "tv" and client.arr_type != ArrType.SONARR:
-                continue
-            try:
-                media = await client.get_all_media()
-                all_media.extend(media)
-            except Exception as e:
-                log.error("Failed to fetch media", client=client.instance.name, error=str(e))
+        log.warning("Cache empty, returning empty report (library not loaded yet)")
 
     # Filter to items with files and sizes
     files_with_size = [m for m in all_media if m.file_path and m.size_bytes]
@@ -371,22 +360,13 @@ async def generate_mismatch_report(
     log = logger.bind(component="reports")
     log.info("Generating mismatch report", source=source)
 
-    # Use cached media to avoid memory-intensive API calls
+    # Use cached media only - never fetch from API to avoid bandwidth waste
     all_media = scanner.get_cached_media(source)
     if all_media:
         log.info("Using cached media", count=len(all_media))
     else:
-        log.warning("Cache empty, fetching from API")
-        for client in scanner.get_all_clients():
-            if source == "movies" and client.arr_type != ArrType.RADARR:
-                continue
-            if source == "tv" and client.arr_type != ArrType.SONARR:
-                continue
-            try:
-                media = await client.get_all_media()
-                all_media.extend(media)
-            except Exception as e:
-                log.error("Failed to fetch media", client=client.instance.name, error=str(e))
+        log.warning("Cache empty, returning empty report (library not loaded yet)")
+        return []
 
     mismatches = []
     for item in all_media:
@@ -419,22 +399,13 @@ async def find_duplicates(
     log = logger.bind(component="reports")
     log.info("Finding duplicates", source=source)
 
-    # Use cached media to avoid memory-intensive API calls
+    # Use cached media only - never fetch from API to avoid bandwidth waste
     all_media = scanner.get_cached_media(source)
     if all_media:
         log.info("Using cached media", count=len(all_media))
     else:
-        log.warning("Cache empty, fetching from API")
-        for client in scanner.get_all_clients():
-            if source == "movies" and client.arr_type != ArrType.RADARR:
-                continue
-            if source == "tv" and client.arr_type != ArrType.SONARR:
-                continue
-            try:
-                media = await client.get_all_media()
-                all_media.extend(media)
-            except Exception as e:
-                log.error("Failed to fetch media", client=client.instance.name, error=str(e))
+        log.warning("Cache empty, returning empty report (library not loaded yet)")
+        return []
 
     # Group by normalized title + year
     from collections import defaultdict
@@ -513,22 +484,19 @@ async def get_codec_breakdown(
     hdr_types: dict[str, int] = {}
     total = 0
 
-    # Use cached media to avoid memory-intensive API calls
+    # Use cached media only - never fetch from API to avoid bandwidth waste
     all_media = scanner.get_cached_media(source)
     if all_media:
         log.info("Using cached media", count=len(all_media))
     else:
-        log.warning("Cache empty, fetching from API")
-        for client in scanner.get_all_clients():
-            if source == "movies" and client.arr_type != ArrType.RADARR:
-                continue
-            if source == "tv" and client.arr_type != ArrType.SONARR:
-                continue
-            try:
-                media = await client.get_all_media()
-                all_media.extend(media)
-            except Exception as e:
-                log.error("Failed to fetch media", client=client.instance.name, error=str(e))
+        log.warning("Cache empty, returning empty report (library not loaded yet)")
+        return CodecStats(
+            video_codecs={},
+            audio_codecs={},
+            containers={},
+            hdr_types={},
+            total_files=0,
+        )
 
     for item in all_media:
         if not item.file_path:

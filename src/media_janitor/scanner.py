@@ -330,23 +330,18 @@ class Scanner:
         return items
 
     async def find_item_by_path(self, file_path: str) -> tuple[MediaItem | None, ArrClient | None]:
-        """Find a media item and its client by file path."""
-        # First, check the cache (fast path)
+        """Find a media item and its client by file path.
+
+        Uses cache only to avoid expensive API calls. If the file is not in cache,
+        returns None - it will be found during the next library refresh.
+        """
         if file_path in self._media_cache:
             item = self._media_cache[file_path]
             client = self.get_client_for_item(item)
             if client:
                 return item, client
 
-        # Cache miss - fall back to API lookup (slow, but handles new files)
-        self.log.debug("Cache miss, fetching from API", path=file_path)
-        for client in self._radarr_clients + self._sonarr_clients:
-            try:
-                item = await client.get_file_by_path(file_path)
-                if item:
-                    # Add to cache for future lookups
-                    self._media_cache[file_path] = item
-                    return item, client
-            except Exception as e:
-                self.log.warning("Error searching for file", client=client.instance.name, error=str(e))
+        # Cache miss - don't fetch from API (too expensive)
+        # The file will be found during the next library refresh
+        self.log.debug("Cache miss, file not found", path=file_path)
         return None, None
