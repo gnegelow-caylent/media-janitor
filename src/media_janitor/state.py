@@ -31,6 +31,9 @@ class StateManager:
             "movies_total": 0,
             "tv_scanned": 0,
             "tv_total": 0,
+            # Daily replacement rate limiting (persists across restarts)
+            "replacements_today": 0,
+            "replacements_date": None,  # ISO date string (YYYY-MM-DD)
         }
         self._load()
 
@@ -226,6 +229,33 @@ class StateManager:
         self._state["tv_total"] = tv_total
         self._save()
 
+    def get_replacements_today(self) -> int:
+        """Get the number of replacements made today, resetting if date changed."""
+        today = datetime.now().date().isoformat()
+        if self._state.get("replacements_date") != today:
+            # New day - reset counter
+            self._state["replacements_today"] = 0
+            self._state["replacements_date"] = today
+            self._save()
+        return self._state.get("replacements_today", 0)
+
+    def increment_replacements_today(self):
+        """Increment the daily replacement counter."""
+        today = datetime.now().date().isoformat()
+        if self._state.get("replacements_date") != today:
+            # New day - reset counter first
+            self._state["replacements_today"] = 0
+            self._state["replacements_date"] = today
+        self._state["replacements_today"] = self._state.get("replacements_today", 0) + 1
+        self._save()
+
+    def reset_replacements_today(self):
+        """Reset the daily replacement counter (called when state is cleared)."""
+        self._state["replacements_today"] = 0
+        self._state["replacements_date"] = datetime.now().date().isoformat()
+        self._save()
+        self.log.info("Daily replacement counter reset")
+
     def clear(self):
         """Clear all state (for fresh start)."""
         self._state = {
@@ -244,6 +274,8 @@ class StateManager:
             "tv_scanned": 0,
             "tv_total": 0,
             "tv_replaced": 0,
+            "replacements_today": 0,
+            "replacements_date": datetime.now().date().isoformat(),
         }
         self._save()
         self.log.info("State cleared")

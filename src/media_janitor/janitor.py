@@ -1,7 +1,7 @@
 """Main janitor orchestration logic."""
 
 import asyncio
-from datetime import datetime, timedelta
+from datetime import timedelta
 from pathlib import Path
 
 import structlog
@@ -44,10 +44,6 @@ class Janitor:
         self.scanner = Scanner(config, self.state, self.plex)
         self.notifications = NotificationManager(config.email)
 
-        # Rate limiting
-        self._replacements_today = 0
-        self._replacement_reset_date = datetime.now().date()
-
     async def initialize(self):
         """Initialize the janitor and all components."""
         self.log.info("Initializing janitor")
@@ -87,22 +83,15 @@ class Janitor:
 
     def _check_rate_limit(self) -> bool:
         """Check if we can make more replacements today."""
-        today = datetime.now().date()
-        if today != self._replacement_reset_date:
-            self._replacements_today = 0
-            self._replacement_reset_date = today
-
-        return self._replacements_today < self.config.actions.max_replacements_per_day
+        return self.state.get_replacements_today() < self.config.actions.max_replacements_per_day
 
     def _increment_replacement_count(self):
         """Increment the replacement counter."""
-        self._replacements_today += 1
+        self.state.increment_replacements_today()
 
     def reset_replacement_count(self):
         """Reset the daily replacement counter (called when state is cleared)."""
-        self._replacements_today = 0
-        self._replacement_reset_date = datetime.now().date()
-        self.log.info("Replacement counter reset")
+        self.state.reset_replacements_today()
 
     async def validate_and_process(
         self,
@@ -395,7 +384,7 @@ class Janitor:
         """Get current janitor status."""
         return {
             "scanner": self.scanner.get_status(),
-            "replacements_today": self._replacements_today,
+            "replacements_today": self.state.get_replacements_today(),
             "max_replacements_per_day": self.config.actions.max_replacements_per_day,
             "auto_replace_enabled": self.config.actions.auto_replace,
         }
