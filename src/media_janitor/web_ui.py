@@ -312,53 +312,68 @@ def is_masked(value: str) -> bool:
 
 
 @router.post("/api/config")
+def deep_merge(base: dict, updates: dict) -> dict:
+    """Deep merge updates into base config, preserving unspecified keys."""
+    result = base.copy()
+    for key, value in updates.items():
+        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            result[key] = deep_merge(result[key], value)
+        else:
+            result[key] = value
+    return result
+
+
 async def save_config(request: Request):
     """Save configuration."""
     try:
-        new_config = await request.json()
+        updates = await request.json()
 
-        # Load existing config to preserve secrets if not changed
+        # Load existing config and merge updates into it
         existing = get_config_dict()
+        new_config = deep_merge(existing, updates)
 
-        # Preserve Radarr API keys if masked
-        for i, inst in enumerate(new_config.get("radarr", [])):
-            if is_masked(inst.get("api_key", "")):
-                # Try to find existing instance by name or URL
-                for existing_inst in existing.get("radarr", []):
-                    if existing_inst.get("name") == inst.get("name") or existing_inst.get("url") == inst.get("url"):
-                        inst["api_key"] = existing_inst.get("api_key", "")
-                        break
+        # Preserve Radarr API keys if masked (only if radarr was in the update)
+        if "radarr" in updates:
+            for i, inst in enumerate(new_config.get("radarr", [])):
+                if is_masked(inst.get("api_key", "")):
+                    for existing_inst in existing.get("radarr", []):
+                        if existing_inst.get("name") == inst.get("name") or existing_inst.get("url") == inst.get("url"):
+                            inst["api_key"] = existing_inst.get("api_key", "")
+                            break
 
-        # Preserve Sonarr API keys if masked
-        for i, inst in enumerate(new_config.get("sonarr", [])):
-            if is_masked(inst.get("api_key", "")):
-                for existing_inst in existing.get("sonarr", []):
-                    if existing_inst.get("name") == inst.get("name") or existing_inst.get("url") == inst.get("url"):
-                        inst["api_key"] = existing_inst.get("api_key", "")
-                        break
+        # Preserve Sonarr API keys if masked (only if sonarr was in the update)
+        if "sonarr" in updates:
+            for i, inst in enumerate(new_config.get("sonarr", [])):
+                if is_masked(inst.get("api_key", "")):
+                    for existing_inst in existing.get("sonarr", []):
+                        if existing_inst.get("name") == inst.get("name") or existing_inst.get("url") == inst.get("url"):
+                            inst["api_key"] = existing_inst.get("api_key", "")
+                            break
 
-        # Preserve Plex token if masked
-        if is_masked(new_config.get("plex", {}).get("token", "")):
+        # Preserve Plex token if masked (only if plex was in the update)
+        if "plex" in updates and is_masked(updates.get("plex", {}).get("token", "")):
             new_config.setdefault("plex", {})["token"] = existing.get("plex", {}).get("token", "")
 
-        # Preserve email password if masked
-        if is_masked(new_config.get("email", {}).get("smtp_password", "")):
+        # Preserve email password if masked (only if email was in the update)
+        if "email" in updates and is_masked(updates.get("email", {}).get("smtp_password", "")):
             new_config.setdefault("email", {})["smtp_password"] = existing.get("email", {}).get("smtp_password", "")
 
-        # Preserve notification secrets if masked
-        existing_notif = existing.get("notifications", {})
-        new_notif = new_config.get("notifications", {})
+        # Preserve notification secrets if masked (only if notifications was in the update)
+        if "notifications" in updates:
+            existing_notif = existing.get("notifications", {})
+            new_notif = new_config.get("notifications", {})
+            updates_notif = updates.get("notifications", {})
 
-        if is_masked(new_notif.get("discord", {}).get("webhook_url", "")):
-            new_notif.setdefault("discord", {})["webhook_url"] = existing_notif.get("discord", {}).get("webhook_url", "")
-        if is_masked(new_notif.get("slack", {}).get("webhook_url", "")):
-            new_notif.setdefault("slack", {})["webhook_url"] = existing_notif.get("slack", {}).get("webhook_url", "")
-        if is_masked(new_notif.get("telegram", {}).get("bot_token", "")):
-            new_notif.setdefault("telegram", {})["bot_token"] = existing_notif.get("telegram", {}).get("bot_token", "")
-        if is_masked(new_notif.get("pushover", {}).get("api_token", "")):
-            new_notif.setdefault("pushover", {})["api_token"] = existing_notif.get("pushover", {}).get("api_token", "")
-        if is_masked(new_notif.get("gotify", {}).get("app_token", "")):
-            new_notif.setdefault("gotify", {})["app_token"] = existing_notif.get("gotify", {}).get("app_token", "")
+            if "discord" in updates_notif and is_masked(updates_notif.get("discord", {}).get("webhook_url", "")):
+                new_notif.setdefault("discord", {})["webhook_url"] = existing_notif.get("discord", {}).get("webhook_url", "")
+            if "slack" in updates_notif and is_masked(updates_notif.get("slack", {}).get("webhook_url", "")):
+                new_notif.setdefault("slack", {})["webhook_url"] = existing_notif.get("slack", {}).get("webhook_url", "")
+            if "telegram" in updates_notif and is_masked(updates_notif.get("telegram", {}).get("bot_token", "")):
+                new_notif.setdefault("telegram", {})["bot_token"] = existing_notif.get("telegram", {}).get("bot_token", "")
+            if "pushover" in updates_notif and is_masked(updates_notif.get("pushover", {}).get("api_token", "")):
+                new_notif.setdefault("pushover", {})["api_token"] = existing_notif.get("pushover", {}).get("api_token", "")
+            if "gotify" in updates_notif and is_masked(updates_notif.get("gotify", {}).get("app_token", "")):
+                new_notif.setdefault("gotify", {})["app_token"] = existing_notif.get("gotify", {}).get("app_token", "")
 
         save_config_dict(new_config)
 
