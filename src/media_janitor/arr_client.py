@@ -156,17 +156,7 @@ class ArrClient:
 
         self.log.info("Fetching episodes from Sonarr", series_count=len(series_list))
 
-        # Try bulk endpoint first (Sonarr v3.0.9+) - single API call
-        try:
-            all_episode_files = await self._get("episodefile")
-            if isinstance(all_episode_files, list) and len(all_episode_files) > 0:
-                items = self._parse_episode_files(all_episode_files, series_map)
-                self.log.info("Fetched episodes via bulk endpoint", count=len(items))
-                return items
-        except Exception as e:
-            self.log.warning("Bulk endpoint failed, falling back to per-series fetch", error=str(e))
-
-        # Fallback: fetch per series (slower, more memory, but more compatible)
+        # Fetch per series - we need both episode files AND episodes to get the episode ID
         items = []
         for series in series_list:
             series_id = series["id"]
@@ -176,9 +166,21 @@ class ArrClient:
                 continue
 
             try:
+                # Fetch episode files for this series
                 episode_files = await self._get("episodefile", params={"seriesId": series_id})
-                if episode_files:
-                    items.extend(self._parse_episode_files(episode_files, series_map))
+                if not episode_files:
+                    continue
+
+                # Fetch episodes for this series to get the episode IDs
+                episodes = await self._get("episode", params={"seriesId": series_id})
+
+                # Build mapping: (season, episode_number) -> episode_id
+                episode_id_map: dict[tuple[int, int], int] = {}
+                for ep in episodes:
+                    key = (ep.get("seasonNumber", 0), ep.get("episodeNumber", 0))
+                    episode_id_map[key] = ep.get("id")
+
+                items.extend(self._parse_episode_files(episode_files, series_map, episode_id_map))
             except Exception as e:
                 self.log.error("Failed to fetch episodes for series",
                              series=series["title"], error=str(e))
@@ -186,26 +188,42 @@ class ArrClient:
         self.log.info("Fetched episodes", count=len(items))
         return items
 
-    def _parse_episode_files(self, episode_files: list, series_map: dict) -> list[MediaItem]:
+    def _parse_episode_files(
+        self,
+        episode_files: list,
+        series_map: dict,
+        episode_id_map: dict[tuple[int, int], int] | None = None,
+    ) -> list[MediaItem]:
         """Parse episode files into MediaItem objects."""
         items = []
         for ef in episode_files:
             series_id = ef.get("seriesId")
             series_title = series_map.get(series_id, "Unknown Series")
 
-            # Get season/episode from the file's first episode (files can have multiple episodes)
             season_num = ef.get("seasonNumber", 0)
             file_id = ef.get("id")  # Episode FILE ID (for deletions)
 
-            # Episode files have episodes array with their episode numbers
-            episodes = ef.get("episodes", [])
-            if episodes:
-                episode_num = episodes[0].get("episodeNumber", 0)
-                # Get the actual EPISODE ID (for searches) - NOT the file ID
-                episode_id = episodes[0].get("id")  # May be None if not included
-            else:
-                episode_num = 0
-                episode_id = None  # Don't fall back to file_id - they're different!
+            # Try to get episode number from the file path or use 0
+            # The episodefile endpoint doesn't include episode number directly
+            episode_num = 0
+            episode_id = None
+
+            # If we have an episode ID map, look up the episode ID
+            # Note: episodefile doesn't tell us which episode number, so we need to parse from path
+            # For now, try to extract from relativePath which usually has SxxExx pattern
+            rel_path = ef.get("relativePath", "")
+            import re
+            match = re.search(r'S(\d+)E(\d+)', rel_path, re.IGNORECASE)
+            if match:
+                parsed_season = int(match.group(1))
+                episode_num = int(match.group(2))
+                # Verify season matches
+                if parsed_season != season_num:
+                    self.log.debug("Season mismatch in path", path=rel_path, expected=season_num, found=parsed_season)
+
+            # Look up episode ID from the map
+            if episode_id_map:
+                episode_id = episode_id_map.get((season_num, episode_num))
 
             items.append(
                 MediaItem(
@@ -218,7 +236,7 @@ class ArrClient:
                     series_id=series_id,
                     season_number=season_num,
                     episode_number=episode_num,
-                    episode_id=episode_id,  # Explicit episode ID (may be None)
+                    episode_id=episode_id,  # Explicit episode ID (may be None if not found)
                     arr_type=ArrType.SONARR,
                     arr_instance=self.instance.name,
                 )
