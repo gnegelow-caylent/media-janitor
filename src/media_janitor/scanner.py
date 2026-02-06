@@ -33,6 +33,8 @@ class Scanner:
         self._initial_scan_complete = state.get_stats()["initial_scan_done"]
         self._refreshing: bool = False
         self._refresh_source: str | None = None
+        self._refresh_phase: str | None = None  # "fetching", "building_queue", "ready"
+        self._refresh_current_instance: str | None = None  # Which arr instance is being fetched
 
         # Cache of media items for fast lookups (populated during refresh)
         # Keyed by (arr_instance, file_path) to ensure correct client routing
@@ -114,6 +116,7 @@ class Scanner:
         """
         self._refreshing = True
         self._refresh_source = source
+        self._refresh_phase = "fetching"
         self.log.info("Refreshing library list", source=source)
         all_media: list[MediaItem] = []
         movies_total = 0
@@ -123,6 +126,8 @@ class Scanner:
             if source in ("all", "movies"):
                 for client in self._radarr_clients:
                     try:
+                        self._refresh_current_instance = client.instance.name
+                        self.log.info("Fetching from Radarr", instance=client.instance.name)
                         media = await client.get_all_media()
                         movies_total += len(media)
                         all_media.extend(media)
@@ -132,6 +137,8 @@ class Scanner:
             if source in ("all", "tv"):
                 for client in self._sonarr_clients:
                     try:
+                        self._refresh_current_instance = client.instance.name
+                        self.log.info("Fetching from Sonarr", instance=client.instance.name)
                         media = await client.get_all_media()
                         tv_total += len(media)
                         all_media.extend(media)
@@ -139,6 +146,8 @@ class Scanner:
                         self.log.error("Failed to fetch from Sonarr", instance=client.instance.name, error=str(e))
 
             # Update library totals in state
+            self._refresh_phase = "processing"
+            self._refresh_current_instance = None
             if source == "all":
                 self.state.set_library_totals(movies_total, tv_total)
             elif source == "movies":
@@ -235,6 +244,8 @@ class Scanner:
         finally:
             self._refreshing = False
             self._refresh_source = None
+            self._refresh_phase = None
+            self._refresh_current_instance = None
 
     def get_next_batch(self, count: int) -> list[MediaItem]:
         """Get the next batch of items to scan."""
@@ -307,6 +318,8 @@ class Scanner:
             # Refresh status
             "refreshing": self._refreshing,
             "refresh_source": self._refresh_source,
+            "refresh_phase": self._refresh_phase,
+            "refresh_current_instance": self._refresh_current_instance,
         }
 
     def get_client_for_item(self, item: MediaItem) -> ArrClient | None:
