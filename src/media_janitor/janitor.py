@@ -321,11 +321,13 @@ class Janitor:
                 break
             pulled += len(batch)
 
-            # Check which files exist
+            # Check which files exist (use thread pool to avoid blocking event loop on NAS)
             for item in batch:
                 if not item.file_path:
                     continue
-                if Path(item.file_path).exists():
+                # Run blocking file check in thread pool
+                file_exists = await asyncio.to_thread(Path(item.file_path).exists)
+                if file_exists:
                     existing_files.append(item)
                 else:
                     # Mark missing file immediately
