@@ -803,6 +803,8 @@ async def clear_state():
 
     _janitor.state.clear()
     _janitor.reset_replacement_count()
+    # Reset scanner's in-memory initial scan flag so it doesn't think scan is done
+    _janitor.scanner._initial_scan_complete = False
     return {"status": "ok", "message": "State cleared, will re-scan all files"}
 
 
