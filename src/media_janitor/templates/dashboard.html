@@ -498,9 +498,9 @@
                     document.getElementById('current-file').textContent = 'Starting library refresh...';
                 }
                 fileContainer.classList.remove('hidden');
-                // Show indeterminate loading state - full width, blue shimmer
-                progressBar.style.width = '100%';
-                progressBar.className = 'h-full progress-bar-loading rounded-full';
+                // Show indeterminate loading state - sliding bar animation
+                progressBar.style.width = '30%';
+                progressBar.className = 'h-full progress-bar-indeterminate rounded-full';
             } else if (data.scanner.initial_scan_done) {
                 indicator.className = 'w-3 h-3 rounded-full bg-green-400 mr-3';
                 statusText.textContent = 'Complete - Watching for new imports';
