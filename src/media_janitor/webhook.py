@@ -219,8 +219,15 @@ async def _handle_arr_webhook(
         _janitor.scanner.add_to_cache(media_item)
 
     # Queue validation in background
+    # Pass media_item and client directly to avoid re-lookup which can route to wrong instance
     if _janitor:
-        background_tasks.add_task(_janitor.validate_and_process, file_path, arr_type)
+        background_tasks.add_task(
+            _janitor.validate_and_process,
+            file_path,
+            arr_type,
+            item=media_item,
+            client=client,
+        )
         return {"status": "queued", "file": file_path}
     else:
         return {"status": "error", "message": "Janitor not initialized"}
