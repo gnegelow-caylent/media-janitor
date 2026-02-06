@@ -246,7 +246,11 @@ class Janitor:
             )
 
         # Trigger search for replacement
-        log.info("Triggering search for replacement")
+        log.info(
+            "Triggering search for replacement",
+            instance=client.instance.name,
+            arr_type=str(client.arr_type),
+        )
         searched = await client.search_for_replacement(item)
         if not searched:
             log.error("Failed to trigger replacement search")

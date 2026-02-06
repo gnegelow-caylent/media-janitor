@@ -376,13 +376,30 @@ class Scanner:
         Uses per-instance cache to ensure correct client routing.
         If the file is not in cache, returns None - it will be found during the next library refresh.
         """
+        # Check which instances have this path (for debugging duplicates)
+        found_in_instances = [
+            inst for inst, cache in self._media_cache_by_instance.items()
+            if file_path in cache
+        ]
+        if len(found_in_instances) > 1:
+            self.log.warning(
+                "Path found in multiple instances!",
+                path=file_path,
+                instances=found_in_instances,
+            )
+
         # Search through per-instance caches to find the correct client
         for instance_name, instance_cache in self._media_cache_by_instance.items():
             if file_path in instance_cache:
                 item = instance_cache[file_path]
                 client = self.get_client_for_item(item)
                 if client:
-                    self.log.debug("Found item in instance cache", path=file_path, instance=instance_name)
+                    self.log.info(
+                        "Found item for validation",
+                        path=file_path,
+                        instance=instance_name,
+                        title=item.title,
+                    )
                     return item, client
 
         # Fallback to main cache (for backwards compatibility)
@@ -390,7 +407,12 @@ class Scanner:
             item = self._media_cache[file_path]
             client = self.get_client_for_item(item)
             if client:
-                self.log.debug("Found item in main cache", path=file_path, instance=item.arr_instance)
+                self.log.info(
+                    "Found item in main cache",
+                    path=file_path,
+                    instance=item.arr_instance,
+                    title=item.title,
+                )
                 return item, client
 
         # Cache miss - don't fetch from API (too expensive)
