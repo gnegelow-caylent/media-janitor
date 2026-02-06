@@ -97,7 +97,10 @@ async def get_status():
     """Get current janitor status."""
     if not _janitor:
         return {"status": "error", "message": "Janitor not initialized"}
-    return _janitor.get_status()
+    status = _janitor.get_status()
+    # Include missing_count to avoid separate API call from dashboard
+    status["missing_count"] = len(_janitor.state.get_missing_files())
+    return status
 
 
 # =============================================================================

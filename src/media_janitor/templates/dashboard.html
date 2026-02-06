@@ -336,8 +336,8 @@
         </div>
     </div>
 
-    <!-- Library Overview -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Library Overview (lazy-loaded when visible) -->
+    <div id="charts-section" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Instance Bar Chart -->
         <div class="stat-card">
             <h3 class="text-lg font-medium text-white mb-4">Files by Instance</h3>
@@ -434,10 +434,10 @@
         detailEl.textContent = detail;
     }
 
-    async function updateStatus() {
+    async function updateStatus(prefetchedData = null) {
         try {
-            const response = await fetch('/status');
-            const data = await response.json();
+            // Use prefetched data from base template's polling if available
+            const data = prefetchedData || (await (await fetch('/status')).json());
 
             const valid = data.scanner.valid_count;
             const invalid = data.scanner.invalid_count;
@@ -455,15 +455,8 @@
             document.getElementById('stat-invalid').textContent = invalid.toLocaleString();
             document.getElementById('stat-replaced').textContent = `${data.replacements_today}/${data.max_replacements_per_day}`;
             document.getElementById('stat-wrong').textContent = (data.scanner.wrong_files_count || 0).toLocaleString();
-
-            // Fetch missing files count (separate API call)
-            try {
-                const missingResponse = await fetch('/report/missing');
-                const missingData = await missingResponse.json();
-                document.getElementById('stat-missing').textContent = (missingData.count || 0).toLocaleString();
-            } catch (e) {
-                document.getElementById('stat-missing').textContent = '0';
-            }
+            // Missing count now comes from /status response
+            document.getElementById('stat-missing').textContent = (data.missing_count || 0).toLocaleString();
 
             // Update progress
             const total = totalEvaluated + queue;
@@ -844,22 +837,37 @@
         await Promise.all([
             updateStatus(),
             updateActivity(),
-            updateCharts(),
             updateConfig()
         ]);
     }
 
-    // Initial load
+    // Track if charts have been loaded
+    let chartsLoaded = false;
+
+    // Lazy-load charts when section becomes visible
+    const chartsSection = document.getElementById('charts-section');
+    if (chartsSection) {
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting && !chartsLoaded) {
+                chartsLoaded = true;
+                updateCharts();
+                // Start periodic refresh only after first load
+                setInterval(updateCharts, 60000);
+            }
+        }, { threshold: 0.1 });
+        observer.observe(chartsSection);
+    }
+
+    // Initial load (charts loaded lazily)
     refreshAll();
 
-    // Listen for status updates from base template
+    // Listen for status updates from base template's polling
     window.addEventListener('statusUpdate', (e) => {
-        // Already handled by base template, but could use for additional updates
+        // Reuse the data from base template to avoid duplicate fetch
+        updateStatus(e.detail);
     });
 
-    // Refresh periodically
-    setInterval(updateStatus, 5000);
+    // Refresh activity periodically (status handled by base template, charts lazy-loaded)
     setInterval(updateActivity, 15000);
-    setInterval(updateCharts, 60000);
 </script>
 {% endblock %}
