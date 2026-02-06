@@ -97,12 +97,20 @@ class Janitor:
         self,
         file_path: str,
         arr_type: ArrType | None = None,
+        item: MediaItem | None = None,
+        client: ArrClient | None = None,
     ) -> ScanResult | None:
         """
         Validate a file and process the result.
 
         This is the main entry point for both webhook-triggered and
         background scanner validations.
+
+        Args:
+            file_path: Path to the file to validate
+            arr_type: Type of arr (RADARR or SONARR)
+            item: Optional MediaItem if already known (avoids re-lookup)
+            client: Optional ArrClient if already known (avoids re-lookup)
         """
         log = self.log.bind(file=file_path)
         log.info("Starting validation")
@@ -118,9 +126,10 @@ class Janitor:
             self.scanner.mark_scanned(file_path, valid=True, media_type=media_type)
             return None
 
-        # Find the media item in Radarr/Sonarr
-        item, client = await self.scanner.find_item_by_path(file_path)
-        if not item:
+        # Find the media item in Radarr/Sonarr (use passed item/client if available)
+        if item is None or client is None:
+            item, client = await self.scanner.find_item_by_path(file_path)
+        if not item or not client:
             log.warning("File not found in Radarr/Sonarr")
             return None
 
@@ -334,7 +343,13 @@ class Janitor:
 
         async def process_item(item):
             try:
-                await self.validate_and_process(item.file_path, item.arr_type)
+                # Get the correct client for this item (from the item's arr_instance)
+                client = self.scanner.get_client_for_item(item)
+                if not client:
+                    self.log.warning("No client found for item", file=item.file_path, instance=item.arr_instance)
+                    return
+                # Pass item and client directly to avoid re-lookup issues
+                await self.validate_and_process(item.file_path, item.arr_type, item=item, client=client)
             except Exception as e:
                 self.log.error("Error validating file", file=item.file_path, error=str(e))
 

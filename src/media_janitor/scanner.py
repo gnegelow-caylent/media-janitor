@@ -215,8 +215,28 @@ class Scanner:
 
             # Also build per-instance cache for accurate client routing
             self._media_cache_by_instance = {}
+            # Track paths we've seen to detect duplicates
+            path_to_instance: dict[str, str] = {}
+            duplicate_count = 0
+
             for item in all_media:
                 if item.file_path and item.arr_instance:
+                    # Check for duplicate paths across instances
+                    if item.file_path in path_to_instance:
+                        existing_instance = path_to_instance[item.file_path]
+                        if existing_instance != item.arr_instance:
+                            duplicate_count += 1
+                            if duplicate_count <= 10:  # Log first 10 duplicates
+                                self.log.warning(
+                                    "DUPLICATE PATH across instances!",
+                                    path=item.file_path,
+                                    first_instance=existing_instance,
+                                    second_instance=item.arr_instance,
+                                    title=item.title,
+                                )
+                    else:
+                        path_to_instance[item.file_path] = item.arr_instance
+
                     if item.arr_instance not in self._media_cache_by_instance:
                         self._media_cache_by_instance[item.arr_instance] = {}
                     self._media_cache_by_instance[item.arr_instance][item.file_path] = item
@@ -225,6 +245,9 @@ class Scanner:
                 "Media cache built",
                 cache_size=len(self._media_cache),
                 instances=list(self._media_cache_by_instance.keys()),
+                duplicate_paths=duplicate_count,
+                sonarr_count=len(self._media_cache_by_instance.get("sonarr", {})),
+                sonarr2_count=len(self._media_cache_by_instance.get("sonarr2", {})),
             )
 
             # Mark scan started if this is the first run
