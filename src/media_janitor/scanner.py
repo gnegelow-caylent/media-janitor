@@ -45,6 +45,7 @@ class Scanner:
         # Clients
         self._radarr_clients: list[ArrClient] = []
         self._sonarr_clients: list[ArrClient] = []
+        self._init_lock = asyncio.Lock()  # Prevent concurrent client initialization
 
     def set_plex_client(self, plex_client: "PlexClient | None"):
         """Set or update the Plex client for watch-based prioritization."""
@@ -52,60 +53,62 @@ class Scanner:
 
     async def reinitialize_clients(self):
         """Reinitialize arr clients with updated config (e.g., after path mapping changes)."""
-        self.log.info("Reinitializing arr clients")
-        self._radarr_clients = []
-        self._sonarr_clients = []
-        self._media_cache = {}  # Clear cache on reinit
-        self._media_cache_by_instance = {}
+        async with self._init_lock:  # Prevent concurrent reinitialization
+            self.log.info("Reinitializing arr clients")
+            self._radarr_clients = []
+            self._sonarr_clients = []
+            self._media_cache = {}  # Clear cache on reinit
+            self._media_cache_by_instance = {}
 
-        for instance in self.config.radarr:
-            client = ArrClient(instance, ArrType.RADARR)
-            if await client.test_connection():
-                self._radarr_clients.append(client)
-            else:
-                self.log.error("Failed to connect to Radarr", instance=instance.name)
+            for instance in self.config.radarr:
+                client = ArrClient(instance, ArrType.RADARR)
+                if await client.test_connection():
+                    self._radarr_clients.append(client)
+                else:
+                    self.log.error("Failed to connect to Radarr", instance=instance.name)
 
-        for instance in self.config.sonarr:
-            client = ArrClient(instance, ArrType.SONARR)
-            if await client.test_connection():
-                self._sonarr_clients.append(client)
-            else:
-                self.log.error("Failed to connect to Sonarr", instance=instance.name)
+            for instance in self.config.sonarr:
+                client = ArrClient(instance, ArrType.SONARR)
+                if await client.test_connection():
+                    self._sonarr_clients.append(client)
+                else:
+                    self.log.error("Failed to connect to Sonarr", instance=instance.name)
 
-        self.log.info(
-            "Clients reinitialized",
-            radarr_instances=len(self._radarr_clients),
-            sonarr_instances=len(self._sonarr_clients),
-        )
+            self.log.info(
+                "Clients reinitialized",
+                radarr_instances=len(self._radarr_clients),
+                sonarr_instances=len(self._sonarr_clients),
+            )
 
     async def initialize(self):
         """Initialize the scanner with arr clients."""
-        # Clear any existing clients to prevent duplicates if called multiple times
-        self._radarr_clients = []
-        self._sonarr_clients = []
+        async with self._init_lock:  # Prevent concurrent initialization
+            # Clear any existing clients to prevent duplicates if called multiple times
+            self._radarr_clients = []
+            self._sonarr_clients = []
 
-        for instance in self.config.radarr:
-            client = ArrClient(instance, ArrType.RADARR)
-            if await client.test_connection():
-                self._radarr_clients.append(client)
-            else:
-                self.log.error("Failed to connect to Radarr", instance=instance.name)
+            for instance in self.config.radarr:
+                client = ArrClient(instance, ArrType.RADARR)
+                if await client.test_connection():
+                    self._radarr_clients.append(client)
+                else:
+                    self.log.error("Failed to connect to Radarr", instance=instance.name)
 
-        for instance in self.config.sonarr:
-            client = ArrClient(instance, ArrType.SONARR)
-            if await client.test_connection():
-                self._sonarr_clients.append(client)
-            else:
-                self.log.error("Failed to connect to Sonarr", instance=instance.name)
+            for instance in self.config.sonarr:
+                client = ArrClient(instance, ArrType.SONARR)
+                if await client.test_connection():
+                    self._sonarr_clients.append(client)
+                else:
+                    self.log.error("Failed to connect to Sonarr", instance=instance.name)
 
-        stats = self.state.get_stats()
-        self.log.info(
-            "Scanner initialized",
-            radarr_instances=len(self._radarr_clients),
-            sonarr_instances=len(self._sonarr_clients),
-            previously_scanned=stats["total_scanned"],
-            initial_scan_done=stats["initial_scan_done"],
-        )
+            stats = self.state.get_stats()
+            self.log.info(
+                "Scanner initialized",
+                radarr_instances=len(self._radarr_clients),
+                sonarr_instances=len(self._sonarr_clients),
+                previously_scanned=stats["total_scanned"],
+                initial_scan_done=stats["initial_scan_done"],
+            )
 
     async def refresh_library(self, source: str = "all") -> int:
         """
