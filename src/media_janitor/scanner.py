@@ -35,7 +35,10 @@ class Scanner:
         self._refresh_source: str | None = None
 
         # Cache of media items for fast lookups (populated during refresh)
+        # Keyed by (arr_instance, file_path) to ensure correct client routing
         self._media_cache: dict[str, MediaItem] = {}
+        # Also keep a per-instance cache for accurate client lookup
+        self._media_cache_by_instance: dict[str, dict[str, MediaItem]] = {}
 
         # Clients
         self._radarr_clients: list[ArrClient] = []
@@ -51,6 +54,7 @@ class Scanner:
         self._radarr_clients = []
         self._sonarr_clients = []
         self._media_cache = {}  # Clear cache on reinit
+        self._media_cache_by_instance = {}
 
         for instance in self.config.radarr:
             client = ArrClient(instance, ArrType.RADARR)
@@ -199,7 +203,20 @@ class Scanner:
                 for item in all_media
                 if item.file_path
             }
-            self.log.info("Media cache built", cache_size=len(self._media_cache))
+
+            # Also build per-instance cache for accurate client routing
+            self._media_cache_by_instance = {}
+            for item in all_media:
+                if item.file_path and item.arr_instance:
+                    if item.arr_instance not in self._media_cache_by_instance:
+                        self._media_cache_by_instance[item.arr_instance] = {}
+                    self._media_cache_by_instance[item.arr_instance][item.file_path] = item
+
+            self.log.info(
+                "Media cache built",
+                cache_size=len(self._media_cache),
+                instances=list(self._media_cache_by_instance.keys()),
+            )
 
             # Mark scan started if this is the first run
             if not self._initial_scan_complete and len(new_items) > 0:
@@ -312,7 +329,12 @@ class Scanner:
         """Add a media item to the cache (used by webhook for newly imported files)."""
         if item.file_path:
             self._media_cache[item.file_path] = item
-            self.log.debug("Added to cache", file_path=item.file_path)
+            # Also add to per-instance cache for correct client routing
+            if item.arr_instance:
+                if item.arr_instance not in self._media_cache_by_instance:
+                    self._media_cache_by_instance[item.arr_instance] = {}
+                self._media_cache_by_instance[item.arr_instance][item.file_path] = item
+            self.log.debug("Added to cache", file_path=item.file_path, instance=item.arr_instance)
 
     def get_cached_media(self, source: str = "all") -> list[MediaItem]:
         """
@@ -338,13 +360,24 @@ class Scanner:
     async def find_item_by_path(self, file_path: str) -> tuple[MediaItem | None, ArrClient | None]:
         """Find a media item and its client by file path.
 
-        Uses cache only to avoid expensive API calls. If the file is not in cache,
-        returns None - it will be found during the next library refresh.
+        Uses per-instance cache to ensure correct client routing.
+        If the file is not in cache, returns None - it will be found during the next library refresh.
         """
+        # Search through per-instance caches to find the correct client
+        for instance_name, instance_cache in self._media_cache_by_instance.items():
+            if file_path in instance_cache:
+                item = instance_cache[file_path]
+                client = self.get_client_for_item(item)
+                if client:
+                    self.log.debug("Found item in instance cache", path=file_path, instance=instance_name)
+                    return item, client
+
+        # Fallback to main cache (for backwards compatibility)
         if file_path in self._media_cache:
             item = self._media_cache[file_path]
             client = self.get_client_for_item(item)
             if client:
+                self.log.debug("Found item in main cache", path=file_path, instance=item.arr_instance)
                 return item, client
 
         # Cache miss - don't fetch from API (too expensive)
