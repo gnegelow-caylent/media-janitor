@@ -377,16 +377,20 @@ async def save_config(request: Request):
 
         save_config_dict(new_config)
 
-        # Hot-reload config into running janitor
-        try:
-            from .config import Config
-            from . import webhook
-            if webhook._janitor:
-                parsed_config = Config(**new_config)
-                await webhook._janitor.reload_config(parsed_config)
-                logger.info("Hot-reloaded config into janitor")
-        except Exception as reload_err:
-            logger.warning("Config saved but hot-reload failed", error=str(reload_err))
+        # Hot-reload config into running janitor (non-blocking)
+        import asyncio
+        async def background_reload():
+            try:
+                from .config import Config
+                from . import webhook
+                if webhook._janitor:
+                    parsed_config = Config(**new_config)
+                    await webhook._janitor.reload_config(parsed_config)
+                    logger.info("Hot-reloaded config into janitor")
+            except Exception as reload_err:
+                logger.warning("Config saved but hot-reload failed", error=str(reload_err))
+
+        asyncio.create_task(background_reload())
 
         return {"success": True}
 
