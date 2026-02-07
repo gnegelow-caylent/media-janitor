@@ -401,6 +401,17 @@
                                 <span class="toggle-track"></span>
                             </label>
                         </div>
+
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <label class="text-sm font-medium text-white">Replace 3D Movies</label>
+                                <p class="text-xs text-gray-500 mt-0.5">Detect and replace 3D movies with 2D versions. Checks filename, metadata, and aspect ratio</p>
+                            </div>
+                            <label class="toggle">
+                                <input type="checkbox" id="validation-replace-3d">
+                                <span class="toggle-track"></span>
+                            </label>
+                        </div>
                     </div>
                 </div>
 
@@ -816,6 +827,7 @@
         document.getElementById('validation-sample-duration').value = currentConfig.validation?.sample_duration_seconds ?? 10;
         document.getElementById('validation-decode-timeout').value = currentConfig.validation?.decode_timeout_seconds ?? 60;
         document.getElementById('validation-check-bitrate').checked = currentConfig.validation?.check_bitrate ?? true;
+        document.getElementById('validation-replace-3d').checked = currentConfig.validation?.replace_3d ?? false;
 
         // Email
         document.getElementById('email-enabled').checked = currentConfig.email?.enabled ?? false;
@@ -1105,7 +1117,8 @@
             deep_scan_mode: document.getElementById('validation-deep-scan-mode').value,
             sample_duration_seconds: parseInt(document.getElementById('validation-sample-duration').value) || 10,
             decode_timeout_seconds: parseInt(document.getElementById('validation-decode-timeout').value) || 60,
-            check_bitrate: document.getElementById('validation-check-bitrate').checked
+            check_bitrate: document.getElementById('validation-check-bitrate').checked,
+            replace_3d: document.getElementById('validation-replace-3d').checked
         };
 
         currentConfig.email = {

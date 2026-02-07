@@ -52,6 +52,9 @@ class ValidationConfig(BaseModel):
 
     full_decode_enabled: bool = False
 
+    # Replace 3D movies with 2D versions
+    replace_3d: bool = False
+
 
 class ScannerConfig(BaseModel):
     """Background scanner settings."""

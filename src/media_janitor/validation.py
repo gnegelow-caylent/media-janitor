@@ -162,6 +162,126 @@ def _is_ignorable_ffmpeg_warning(line: str) -> bool:
     return any(re.search(pattern, line, re.IGNORECASE) for pattern in ignorable_patterns)
 
 
+# 3D filename patterns - case insensitive
+_3D_FILENAME_PATTERNS = [
+    r"[\.\-_ ]3D[\.\-_ ]",       # .3D. or -3D- or _3D_ or " 3D "
+    r"[\.\-_ ]SBS[\.\-_ ]",      # Side-by-Side
+    r"[\.\-_ ]HSBS[\.\-_ ]",     # Half Side-by-Side
+    r"[\.\-_ ]H[\.\-]?SBS[\.\-_ ]",
+    r"[\.\-_ ]OU[\.\-_ ]",       # Over-Under
+    r"[\.\-_ ]HOU[\.\-_ ]",      # Half Over-Under
+    r"[\.\-_ ]H[\.\-]?OU[\.\-_ ]",
+    r"[\.\-_ ]TAB[\.\-_ ]",      # Top-and-Bottom
+    r"[\.\-_ ]HTAB[\.\-_ ]",     # Half Top-and-Bottom
+    r"Side[\.\-_ ]?by[\.\-_ ]?Side",
+    r"Half[\.\-_ ]?SBS",
+    r"Half[\.\-_ ]?OU",
+    r"[\.\-_ ]MVC[\.\-_ ]",      # Multi-View Coding (Blu-ray 3D)
+    r"BluRay3D",
+    r"Blu[\.\-_ ]?Ray[\.\-_ ]?3D",
+    r"3D[\.\-_ ]?BluRay",
+]
+
+
+def detect_3d_from_filename(file_path: str) -> str | None:
+    """
+    Detect 3D format from filename patterns.
+    Returns the detected 3D format string, or None if not 3D.
+    """
+    filename = Path(file_path).name
+    for pattern in _3D_FILENAME_PATTERNS:
+        match = re.search(pattern, filename, re.IGNORECASE)
+        if match:
+            return match.group(0).strip(".-_ ")
+    return None
+
+
+def detect_3d_from_metadata(probe: "ProbeResult") -> str | None:
+    """
+    Detect 3D format from video stream metadata.
+    Returns the detected 3D format string, or None if not 3D.
+    """
+    if not probe.video_streams:
+        return None
+
+    video = probe.video_streams[0]
+
+    # Check for stereo_mode tag (MKV/MP4)
+    stereo_mode = video.get("stereo_mode")
+    if stereo_mode:
+        return f"stereo_mode:{stereo_mode}"
+
+    # Check tags for 3D indicators
+    tags = video.get("tags", {})
+    for key, value in tags.items():
+        key_lower = key.lower()
+        if "stereo" in key_lower or "3d" in key_lower:
+            return f"{key}:{value}"
+
+    # Check side_data for stereoscopic info
+    side_data = video.get("side_data_list", [])
+    for sd in side_data:
+        sd_type = sd.get("side_data_type", "")
+        if "stereo" in sd_type.lower() or "3d" in sd_type.lower():
+            return f"side_data:{sd_type}"
+
+    return None
+
+
+def detect_3d_from_aspect_ratio(probe: "ProbeResult") -> str | None:
+    """
+    Detect 3D from unusual aspect ratios.
+    SBS 3D typically has ~4:1 ratio (e.g., 3840x1080 for "1080p" content)
+    OU 3D typically has ~1:1 ratio (e.g., 1920x2160 for "1080p" content)
+    """
+    if not probe.video_streams:
+        return None
+
+    video = probe.video_streams[0]
+    width = video.get("width")
+    height = video.get("height")
+
+    if not width or not height:
+        return None
+
+    ratio = width / height
+
+    # SBS: extremely wide aspect ratio (wider than 3:1 is suspicious)
+    # Normal movies are 1.33 (4:3) to 2.76 (ultra panavision)
+    if ratio >= 3.2:
+        return f"SBS-aspect({width}x{height}, ratio={ratio:.2f})"
+
+    # OU: nearly square or taller than wide for video content
+    # (but be careful - some older content is 4:3 = 1.33)
+    if ratio <= 1.0 and height >= 1080:
+        return f"OU-aspect({width}x{height}, ratio={ratio:.2f})"
+
+    return None
+
+
+def detect_3d(file_path: str, probe: "ProbeResult") -> str | None:
+    """
+    Detect if a file is 3D using multiple methods.
+    Returns the detection reason string, or None if not 3D.
+    """
+    # Check filename first (most reliable)
+    result = detect_3d_from_filename(file_path)
+    if result:
+        return f"filename:{result}"
+
+    # Check stream metadata
+    result = detect_3d_from_metadata(probe)
+    if result:
+        return result
+
+    # Check aspect ratio (least reliable, only for obvious cases)
+    result = detect_3d_from_aspect_ratio(probe)
+    if result:
+        return result
+
+    return None
+
+
 def get_resolution_tier(width: int, height: int) -> str:
     """Determine resolution tier from dimensions."""
     pixels = width * height
@@ -181,10 +301,11 @@ async def validate_file(file_path: str, config: ValidationConfig) -> ValidationR
 
     Performs multiple checks:
     1. ffprobe metadata extraction and sanity checks
-    2. Duration sanity check
-    3. Bitrate sanity check
-    4. Deep scan (sample decode test) if enabled
-    5. Full decode if enabled
+    2. 3D detection (if replace_3d enabled)
+    3. Duration sanity check
+    4. Bitrate sanity check
+    5. Deep scan (sample decode test) if enabled
+    6. Full decode if enabled
     """
     result = ValidationResult(file_path=file_path, valid=True)
     log = logger.bind(file=file_path)
@@ -214,7 +335,17 @@ async def validate_file(file_path: str, config: ValidationConfig) -> ValidationR
             # Use overall bitrate as approximation
             result.video_bitrate_kbps = int(probe.format_info["bit_rate"]) // 1000
 
-    # Step 2: Duration sanity check
+    # Step 2: 3D detection (if enabled)
+    if config.replace_3d:
+        detected_3d = detect_3d(file_path, probe)
+        if detected_3d:
+            result.valid = False
+            result.errors.append(f"3D content detected: {detected_3d}")
+            log.warning("3D content detected", detection=detected_3d)
+            # Return early - no need to do further validation on 3D content
+            return result
+
+    # Step 3: Duration sanity check
     if config.check_duration_sanity and probe.duration:
         max_seconds = config.max_duration_hours * 3600
         if probe.duration > max_seconds:
@@ -233,7 +364,7 @@ async def validate_file(file_path: str, config: ValidationConfig) -> ValidationR
             result.warnings.append(f"Duration is very short: {probe.duration:.1f}s")
             log.info("Suspiciously short duration", duration_seconds=probe.duration)
 
-    # Step 3: Bitrate sanity check
+    # Step 4: Bitrate sanity check
     if config.check_bitrate and result.width and result.height and result.video_bitrate_kbps:
         tier = get_resolution_tier(result.width, result.height)
         min_bitrate = {
@@ -255,7 +386,7 @@ async def validate_file(file_path: str, config: ValidationConfig) -> ValidationR
                 minimum=min_bitrate,
             )
 
-    # Step 4: Deep scan (sample decode test)
+    # Step 5: Deep scan (sample decode test)
     if config.deep_scan_enabled and probe.duration:
         deep_scan_mode = getattr(config, 'deep_scan_mode', 'partial')
         log.debug("Running deep scan", mode=deep_scan_mode)
@@ -301,7 +432,7 @@ async def validate_file(file_path: str, config: ValidationConfig) -> ValidationR
                     result.errors.extend([f"Decode error (end): {e}" for e in errors])
                     log.warning("Decode test failed at end", errors=errors)
 
-    # Step 5: Full decode (if enabled - very slow)
+    # Step 6: Full decode (if enabled - very slow)
     if config.full_decode_enabled and result.valid:
         log.info("Running full decode test")
         success, errors, timed_out = await run_ffmpeg_decode_test(file_path, duration_seconds=0)
