@@ -170,12 +170,20 @@ async def _handle_arr_webhook(
 
         # Create MediaItem from webhook payload
         if file_path and movie_file.get("id"):
+            # Safely extract quality name - Radarr may send different formats
+            quality_data = movie_file.get("quality", {})
+            if isinstance(quality_data, dict):
+                quality_inner = quality_data.get("quality", {})
+                quality_name = quality_inner.get("name") if isinstance(quality_inner, dict) else None
+            else:
+                quality_name = str(quality_data) if quality_data else None
+
             media_item = MediaItem(
                 id=movie.get("id", 0),
                 title=title,
                 file_path=file_path,
                 file_id=movie_file.get("id"),
-                quality=movie_file.get("quality", {}).get("quality", {}).get("name"),
+                quality=quality_name,
                 size_bytes=movie_file.get("size"),
                 arr_type=ArrType.RADARR,
                 arr_instance=instance_name or "radarr",
@@ -196,12 +204,21 @@ async def _handle_arr_webhook(
         # Create MediaItem from webhook payload
         if file_path and episode_file.get("id"):
             episode_id = ep_info.get("id")  # The actual episode ID for searches
+
+            # Safely extract quality name - Sonarr may send different formats
+            quality_data = episode_file.get("quality", {})
+            if isinstance(quality_data, dict):
+                quality_inner = quality_data.get("quality", {})
+                quality_name = quality_inner.get("name") if isinstance(quality_inner, dict) else None
+            else:
+                quality_name = str(quality_data) if quality_data else None
+
             media_item = MediaItem(
                 id=episode_id or 0,
                 title=title,
                 file_path=file_path,
                 file_id=episode_file.get("id"),
-                quality=episode_file.get("quality", {}).get("quality", {}).get("name"),
+                quality=quality_name,
                 size_bytes=episode_file.get("size"),
                 series_id=series.get("id"),
                 season_number=ep_info.get("seasonNumber"),
