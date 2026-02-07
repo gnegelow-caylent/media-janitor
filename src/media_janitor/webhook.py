@@ -837,6 +837,7 @@ async def clear_state():
 async def get_logs(
     lines: int = Query(default=100, ge=1, le=1000, description="Number of log lines to return"),
     level: str = Query(default="all", description="Filter by level: all, error, warning, info"),
+    activity: bool = Query(default=False, description="Filter to only show activity (exclude HTTP requests)"),
 ):
     """
     Get recent log entries.
@@ -887,6 +888,16 @@ async def get_logs(
                     if level == "error" and log_level not in ["error", "critical"]:
                         continue
                     elif level == "warning" and log_level not in ["error", "critical", "warning"]:
+                        continue
+
+                # Filter out HTTP request noise for activity view
+                event = entry.get("event", "")
+                if activity:
+                    # Skip HTTP request logs and other noise
+                    if event.startswith("HTTP Request:") or event.startswith("HTTP Response:"):
+                        continue
+                    # Skip debug-level internal messages
+                    if log_level == "debug":
                         continue
 
                 parsed_logs.append({

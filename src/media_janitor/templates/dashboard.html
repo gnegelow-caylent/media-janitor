@@ -544,7 +544,7 @@
 
     async function updateActivity() {
         try {
-            const response = await fetch('/logs?lines=8');
+            const response = await fetch('/logs?lines=20&activity=true');
             const data = await response.json();
 
             const skeleton = document.getElementById('activity-skeleton');

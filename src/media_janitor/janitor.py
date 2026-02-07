@@ -274,13 +274,15 @@ class Janitor:
             # File is deleted but search failed - this is still a partial success
             return True
 
-        # Trigger Plex library refresh if enabled
-        if self.plex and self.config.plex.refresh_on_replace:
+        # Trigger Plex library refresh if enabled and configured
+        if self.plex and self.config.plex.refresh_on_replace and self.config.plex.url:
             try:
                 await self.plex.refresh_library()
                 log.info("Triggered Plex library refresh")
             except Exception as e:
-                log.warning("Failed to refresh Plex library", error=str(e))
+                # Only log if it's not a connection/config issue
+                if "No address" not in str(e) and "Connection" not in str(e):
+                    log.warning("Failed to refresh Plex library", error=str(e), title=item.title)
 
         log.info("Replacement process initiated")
         return True
