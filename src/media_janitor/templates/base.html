@@ -464,6 +464,12 @@
         }
 
         async function startPlexLogin() {
+            // Clear any existing polling first
+            if (plexPollInterval) {
+                clearInterval(plexPollInterval);
+                plexPollInterval = null;
+            }
+
             // Show modal immediately for feedback
             document.getElementById('plex-login-modal').classList.remove('hidden');
             document.getElementById('login-waiting').classList.remove('hidden');
@@ -486,13 +492,15 @@
                     return;
                 }
 
-                plexPollInterval = setInterval(pollPlexAuth, 2000);
+                // Poll less aggressively (3 seconds instead of 2)
+                plexPollInterval = setInterval(pollPlexAuth, 3000);
 
             } catch (e) {
                 showLoginError(e.message);
             }
         }
 
+        let plexPollErrors = 0;
         async function pollPlexAuth() {
             try {
                 const response = await fetch('/auth/plex/check');
@@ -501,17 +509,29 @@
                 if (data.done) {
                     clearInterval(plexPollInterval);
                     plexPollInterval = null;
+                    plexPollErrors = 0;
 
                     if (data.success && data.user) {
                         closePlexModal();
                         checkAuthStatus();
                     } else if (data.error) {
-                        showLoginError(data.error);
+                        // Check for rate limit
+                        if (data.error.includes('429') || data.error.includes('Too Many')) {
+                            showLoginError('Plex rate limited. Please wait a few minutes and try again.');
+                        } else {
+                            showLoginError(data.error);
+                        }
                     }
                 }
             } catch (e) {
-                clearInterval(plexPollInterval);
-                showLoginError(e.message);
+                plexPollErrors++;
+                // Stop after 3 consecutive errors
+                if (plexPollErrors >= 3) {
+                    clearInterval(plexPollInterval);
+                    plexPollInterval = null;
+                    plexPollErrors = 0;
+                    showLoginError('Connection error. Please try again.');
+                }
             }
         }
 

@@ -131,6 +131,9 @@ async def check_pin(session_id: str) -> PlexUser | None:
             headers=PLEX_HEADERS,
             timeout=10,
         )
+        # Handle rate limiting gracefully
+        if response.status_code == 429:
+            raise Exception("Plex rate limited. Please wait a few minutes and try again.")
         response.raise_for_status()
         data = response.json()
 
