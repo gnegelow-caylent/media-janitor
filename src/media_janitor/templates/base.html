@@ -470,7 +470,11 @@
                 plexPollInterval = null;
             }
 
-            // Show modal immediately for feedback
+            // Open window IMMEDIATELY on user click (before any async work)
+            // This prevents popup blockers since it's directly from user action
+            plexAuthWindow = window.open('about:blank', '_blank');
+
+            // Show modal for feedback
             document.getElementById('plex-login-modal').classList.remove('hidden');
             document.getElementById('login-waiting').classList.remove('hidden');
             document.getElementById('login-error').classList.add('hidden');
@@ -480,22 +484,24 @@
                 const data = await response.json();
 
                 if (!data.success) {
+                    if (plexAuthWindow) plexAuthWindow.close();
                     showLoginError(data.error || 'Failed to start login');
                     return;
                 }
 
-                plexAuthWindow = window.open(data.auth_url, 'PlexAuth', 'width=800,height=600');
-
-                // Check if popup was blocked
-                if (!plexAuthWindow || plexAuthWindow.closed) {
-                    showLoginError('Popup was blocked. Please allow popups for this site.');
-                    return;
+                // Now redirect the already-open window to the auth URL
+                if (plexAuthWindow) {
+                    plexAuthWindow.location.href = data.auth_url;
+                } else {
+                    // Fallback - shouldn't happen but just in case
+                    window.open(data.auth_url, '_blank');
                 }
 
                 // Poll less aggressively (3 seconds instead of 2)
                 plexPollInterval = setInterval(pollPlexAuth, 3000);
 
             } catch (e) {
+                if (plexAuthWindow) plexAuthWindow.close();
                 showLoginError(e.message);
             }
         }
