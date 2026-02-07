@@ -194,21 +194,20 @@ async def plex_login_check(request: Request, response: Response):
             existing["plex"]["token"] = user.auth_token
             existing["plex"]["enabled"] = True
 
-            # Try to auto-detect Plex server URL if not set
-            if not existing["plex"].get("url"):
-                servers = await plex_auth.get_user_servers(user.auth_token)
-                if servers:
-                    # Prefer owned local server
-                    owned_local = next((s for s in servers if s["owned"] and s["local"]), None)
-                    owned = next((s for s in servers if s["owned"]), None)
-                    best = owned_local or owned or servers[0]
-                    # For local servers, use direct IP (works better in Docker)
-                    # For remote servers, use the plex.direct URI
-                    if best.get("local") and best.get("address"):
-                        existing["plex"]["url"] = f"http://{best['address']}:{best.get('port', 32400)}"
-                    else:
-                        existing["plex"]["url"] = best.get("uri") or f"http://{best['address']}:{best.get('port', 32400)}"
-                    logger.info("Auto-detected Plex server", name=best["name"], url=existing["plex"]["url"], local=best.get("local"))
+            # Always auto-detect Plex server URL on login (use local IP for Docker compatibility)
+            servers = await plex_auth.get_user_servers(user.auth_token)
+            if servers:
+                # Prefer owned local server
+                owned_local = next((s for s in servers if s["owned"] and s["local"]), None)
+                owned = next((s for s in servers if s["owned"]), None)
+                best = owned_local or owned or servers[0]
+                # For local servers, use direct IP (works better in Docker)
+                # For remote servers, use the plex.direct URI
+                if best.get("local") and best.get("address"):
+                    existing["plex"]["url"] = f"http://{best['address']}:{best.get('port', 32400)}"
+                else:
+                    existing["plex"]["url"] = best.get("uri") or f"http://{best['address']}:{best.get('port', 32400)}"
+                logger.info("Auto-detected Plex server", name=best["name"], url=existing["plex"]["url"], local=best.get("local"))
 
             save_config_dict(existing)
             logger.info("Saved Plex token to config", username=user.username)
