@@ -61,8 +61,16 @@ class Janitor:
         # Update scanner settings
         self.scanner.config = new_config
 
-        # Reinitialize arr clients to pick up new path mappings
-        await self.scanner.reinitialize_clients()
+        # Only reinitialize arr clients if arr config actually changed
+        arr_config_changed = (
+            [r.model_dump() for r in old_config.radarr] != [r.model_dump() for r in new_config.radarr] or
+            [s.model_dump() for s in old_config.sonarr] != [s.model_dump() for s in new_config.sonarr]
+        )
+        if arr_config_changed:
+            self.log.info("Arr config changed, reinitializing clients")
+            await self.scanner.reinitialize_clients()
+        else:
+            self.log.debug("Arr config unchanged, skipping client reinit")
 
         # Update Plex client if settings changed
         if new_config.plex.enabled and new_config.plex.url and new_config.plex.token:
