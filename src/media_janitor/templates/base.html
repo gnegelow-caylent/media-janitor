@@ -464,6 +464,11 @@
         }
 
         async function startPlexLogin() {
+            // Show modal immediately for feedback
+            document.getElementById('plex-login-modal').classList.remove('hidden');
+            document.getElementById('login-waiting').classList.remove('hidden');
+            document.getElementById('login-error').classList.add('hidden');
+
             try {
                 const response = await fetch('/auth/plex/start');
                 const data = await response.json();
@@ -475,9 +480,11 @@
 
                 plexAuthWindow = window.open(data.auth_url, 'PlexAuth', 'width=800,height=600');
 
-                document.getElementById('plex-login-modal').classList.remove('hidden');
-                document.getElementById('login-waiting').classList.remove('hidden');
-                document.getElementById('login-error').classList.add('hidden');
+                // Check if popup was blocked
+                if (!plexAuthWindow || plexAuthWindow.closed) {
+                    showLoginError('Popup was blocked. Please allow popups for this site.');
+                    return;
+                }
 
                 plexPollInterval = setInterval(pollPlexAuth, 2000);
 
