@@ -202,8 +202,13 @@ async def plex_login_check(request: Request, response: Response):
                     owned_local = next((s for s in servers if s["owned"] and s["local"]), None)
                     owned = next((s for s in servers if s["owned"]), None)
                     best = owned_local or owned or servers[0]
-                    existing["plex"]["url"] = best["uri"] or f"http://{best['address']}:{best['port']}"
-                    logger.info("Auto-detected Plex server", name=best["name"], url=existing["plex"]["url"])
+                    # For local servers, use direct IP (works better in Docker)
+                    # For remote servers, use the plex.direct URI
+                    if best.get("local") and best.get("address"):
+                        existing["plex"]["url"] = f"http://{best['address']}:{best.get('port', 32400)}"
+                    else:
+                        existing["plex"]["url"] = best.get("uri") or f"http://{best['address']}:{best.get('port', 32400)}"
+                    logger.info("Auto-detected Plex server", name=best["name"], url=existing["plex"]["url"], local=best.get("local"))
 
             save_config_dict(existing)
             logger.info("Saved Plex token to config", username=user.username)
