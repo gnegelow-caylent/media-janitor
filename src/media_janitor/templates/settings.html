@@ -642,7 +642,7 @@
     </div>
 </div>
 
-<style>
+<style type="text/tailwindcss">
     /* Navigation - Vertical List */
     nav {
         display: flex;
@@ -663,32 +663,51 @@
         cursor: pointer;
         text-align: left;
         transition: all 0.2s;
+        @apply text-gray-500;
     }
-    .settings-nav-item {
-        @apply text-gray-500 dark:text-gray-400;
+    .dark .settings-nav-item {
+        @apply text-gray-400;
     }
     .settings-nav-item:hover {
-        @apply text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-700/50;
+        @apply text-gray-900 bg-gray-100;
+    }
+    .dark .settings-nav-item:hover {
+        @apply text-white bg-gray-700/50;
     }
     .settings-nav-item.active {
-        @apply text-gray-900 dark:text-white bg-gray-200 dark:bg-gray-700;
+        @apply text-gray-900 bg-gray-200;
+    }
+    .dark .settings-nav-item.active {
+        @apply text-white bg-gray-700;
     }
     .settings-nav-item.active svg {
         color: #fbbf24;
     }
     .settings-nav-item svg {
-        @apply text-gray-400 dark:text-gray-500;
+        @apply text-gray-400;
+    }
+    .dark .settings-nav-item svg {
+        @apply text-gray-500;
     }
     .settings-nav-item:hover svg {
-        @apply text-gray-600 dark:text-gray-400;
+        @apply text-gray-600;
+    }
+    .dark .settings-nav-item:hover svg {
+        @apply text-gray-400;
     }
 
     /* Groups */
     .settings-group {
-        @apply bg-white/30 dark:bg-gray-800/30 rounded-2xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden;
+        @apply bg-white/30 rounded-2xl border border-gray-200/50 overflow-hidden;
+    }
+    .dark .settings-group {
+        @apply bg-gray-800/30 border-gray-700/50;
     }
     .settings-group-title {
-        @apply px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-100/50 dark:bg-gray-800/50 border-b border-gray-200/50 dark:border-gray-700/50;
+        @apply px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-100/50 border-b border-gray-200/50;
+    }
+    .dark .settings-group-title {
+        @apply bg-gray-800/50 border-gray-700/50;
     }
     .settings-group-content {
         @apply p-5;
@@ -696,13 +715,22 @@
 
     /* Form Elements */
     .settings-label {
-        @apply block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5;
+        @apply block text-xs font-medium text-gray-600 mb-1.5;
+    }
+    .dark .settings-label {
+        @apply text-gray-400;
     }
     .settings-input {
-        @apply w-full px-4 py-2.5 rounded-xl bg-gray-100/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all duration-200;
+        @apply w-full px-4 py-2.5 rounded-xl bg-gray-100/50 border border-gray-300 text-gray-900 text-sm placeholder-gray-400 focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all duration-200;
+    }
+    .dark .settings-input {
+        @apply bg-gray-900/50 border-gray-700 text-white placeholder-gray-500;
     }
     .settings-select {
-        @apply px-4 py-2.5 rounded-xl bg-gray-100/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all duration-200 cursor-pointer;
+        @apply px-4 py-2.5 rounded-xl bg-gray-100/50 border border-gray-300 text-gray-900 text-sm focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all duration-200 cursor-pointer;
+    }
+    .dark .settings-select {
+        @apply bg-gray-900/50 border-gray-700 text-white;
     }
 
     /* Toggle Switch */
@@ -713,11 +741,17 @@
         @apply sr-only;
     }
     .toggle-track {
-        @apply pointer-events-none inline-block h-6 w-11 rounded-full bg-gray-300 dark:bg-gray-700 transition-colors duration-200;
+        @apply pointer-events-none inline-block h-6 w-11 rounded-full bg-gray-300 transition-colors duration-200;
+    }
+    .dark .toggle-track {
+        @apply bg-gray-700;
     }
     .toggle-track::before {
         content: '';
-        @apply absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white dark:bg-gray-400 shadow-lg transition-all duration-200;
+        @apply absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-lg transition-all duration-200;
+    }
+    .dark .toggle-track::before {
+        @apply bg-gray-400;
     }
     .toggle input:checked + .toggle-track {
         @apply bg-primary;
@@ -731,20 +765,32 @@
         @apply cursor-pointer;
     }
     .theme-btn > div {
-        @apply flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm transition-all duration-200;
+        @apply flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 border border-gray-300 text-gray-700 text-sm transition-all duration-200;
+    }
+    .dark .theme-btn > div {
+        @apply bg-gray-800 border-gray-700 text-gray-300;
     }
     .theme-btn:hover > div {
-        @apply border-gray-400 dark:border-gray-600;
+        @apply border-gray-400;
+    }
+    .dark .theme-btn:hover > div {
+        @apply border-gray-600;
     }
 
     /* Preset Buttons */
     .preset-btn {
-        @apply px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-all duration-200;
+        @apply px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-100 text-gray-600 border border-gray-300 hover:bg-gray-200 hover:text-gray-900 transition-all duration-200;
+    }
+    .dark .preset-btn {
+        @apply bg-gray-800 text-gray-400 border-gray-700 hover:bg-gray-700 hover:text-white;
     }
 
     /* Instance Rows */
     .instance-row {
-        @apply p-4 bg-gray-100/30 dark:bg-gray-900/30 rounded-xl border border-gray-200/50 dark:border-gray-700/50;
+        @apply p-4 bg-gray-100/30 rounded-xl border border-gray-200/50;
+    }
+    .dark .instance-row {
+        @apply bg-gray-900/30 border-gray-700/50;
     }
 
     /* Save Section Button */
@@ -787,19 +833,10 @@
         setTimeout(() => toast.classList.add('hidden'), 3000);
     }
 
-    // Apply theme from settings
-    function applyTheme(theme) {
-        if (theme === 'light') {
-            document.documentElement.classList.remove('dark');
-        } else {
-            document.documentElement.classList.add('dark');
-        }
-    }
-
     // Listen for theme changes
     document.querySelectorAll('input[name="theme"]').forEach(input => {
         input.addEventListener('change', (e) => {
-            applyTheme(e.target.value);
+            window.applyTheme(e.target.value);
         });
     });
 

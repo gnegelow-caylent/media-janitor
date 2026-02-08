@@ -1,6 +1,19 @@
 <!DOCTYPE html>
 <html lang="en" class="h-full bg-white dark:bg-gray-900">
 <head>
+    <script>
+        // Apply theme immediately to prevent flash
+        (function() {
+            // Check localStorage first for immediate apply
+            const saved = localStorage.getItem('media-janitor-theme');
+            if (saved === 'light') {
+                document.documentElement.classList.remove('dark');
+            } else {
+                // Default to dark
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Media Janitor{% endblock %}</title>
@@ -44,40 +57,30 @@
             }
         }
     </script>
-    <style>
+    <style type="text/tailwindcss">
         /* Base components - light/dark mode support */
         .stat-card {
-            @apply bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm dark:shadow-none;
+            @apply bg-white rounded-xl p-6 border border-gray-200 transition-all duration-200 hover:border-gray-300 shadow-sm;
+        }
+        .dark .stat-card {
+            @apply bg-gray-800 border-gray-700 hover:border-gray-600 shadow-none;
         }
         .nav-link {
-            @apply px-4 py-2 rounded-lg text-gray-700 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-all duration-200;
+            @apply px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-200 hover:text-gray-900 transition-all duration-200;
+        }
+        .dark .nav-link {
+            @apply text-white hover:bg-gray-700 hover:text-white;
         }
         .nav-link.active {
             @apply bg-primary text-gray-900 font-semibold shadow-lg shadow-primary/20;
         }
 
-        /* Text colors for light/dark mode */
-        .text-adaptive {
-            @apply text-gray-900 dark:text-white;
-        }
-        .text-adaptive-muted {
-            @apply text-gray-600 dark:text-gray-400;
-        }
-        .text-adaptive-subtle {
-            @apply text-gray-500 dark:text-gray-500;
-        }
-
-        /* Background colors for light/dark mode */
-        .bg-adaptive {
-            @apply bg-gray-100 dark:bg-gray-700/30;
-        }
-        .bg-adaptive-dark {
-            @apply bg-gray-200 dark:bg-gray-700;
-        }
-
         /* Loading skeleton */
         .skeleton {
-            @apply bg-gradient-to-r from-gray-300 dark:from-gray-700 via-gray-200 dark:via-gray-600 to-gray-300 dark:to-gray-700 bg-[length:200%_100%] animate-shimmer rounded;
+            @apply bg-gradient-to-r from-gray-300 via-gray-200 to-gray-300 bg-[length:200%_100%] animate-shimmer rounded;
+        }
+        .dark .skeleton {
+            @apply from-gray-700 via-gray-600 to-gray-700;
         }
         .skeleton-text {
             @apply h-4 skeleton;
@@ -592,12 +595,13 @@
 
         checkAuthStatus();
 
-        // Theme initialization
+        // Theme initialization - sync with server config
         async function initTheme() {
             try {
                 const response = await fetch('/api/config');
                 const config = await response.json();
                 const theme = config.ui?.theme || 'dark';
+                localStorage.setItem('media-janitor-theme', theme);
                 if (theme === 'light') {
                     document.documentElement.classList.remove('dark');
                 } else {
@@ -609,6 +613,16 @@
             }
         }
         initTheme();
+
+        // Global theme toggle function
+        window.applyTheme = function(theme) {
+            localStorage.setItem('media-janitor-theme', theme);
+            if (theme === 'light') {
+                document.documentElement.classList.remove('dark');
+            } else {
+                document.documentElement.classList.add('dark');
+            }
+        };
     </script>
     {% block scripts %}{% endblock %}
 </body>
