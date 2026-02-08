@@ -278,19 +278,27 @@ class ArrClient:
             return False
 
     async def search_for_replacement(self, item: MediaItem) -> bool:
-        """Trigger a search for a replacement download."""
+        """Search for a replacement and grab from highest priority indexer only.
+
+        Instead of using the generic search command (which grabs from ALL indexers),
+        this method:
+        1. Gets available releases from the release API
+        2. Filters to only releases from the highest priority indexer
+        3. Pushes the best release from that indexer
+
+        This prevents duplicate grabs from multiple indexers.
+        """
         try:
+            # Get indexer priorities (lower number = higher priority)
+            indexers = await self._get("indexer")
+            indexer_priorities = {idx["name"]: idx.get("priority", 25) for idx in indexers}
+
+            # Get the item ID for the release search
             if self.arr_type == ArrType.RADARR:
-                await self._post(
-                    "command",
-                    {"name": "MoviesSearch", "movieIds": [item.id]},
-                )
+                search_params = {"movieId": item.id}
             else:
-                # For Sonarr, we need the EPISODE ID, not the file ID
                 episode_id = item.episode_id
                 if not episode_id:
-                    # Try to fetch the episode ID using series/season/episode info
-                    # This works even after the file has been deleted
                     episode_id = await self._get_episode_id_by_info(
                         item.series_id, item.season_number, item.episode_number
                     )
@@ -303,15 +311,90 @@ class ArrClient:
                             episode=item.episode_number,
                         )
                         return False
+                search_params = {"episodeId": episode_id}
 
-                await self._post(
-                    "command",
-                    {"name": "EpisodeSearch", "episodeIds": [episode_id]},
-                )
-            self.log.info("Triggered search", title=item.title)
+            # Search for available releases
+            self.log.info("Searching for releases", title=item.title)
+            releases = await self._get("release", params=search_params)
+
+            if not releases:
+                self.log.warning("No releases found", title=item.title)
+                # Fall back to standard search command
+                return await self._fallback_search(item)
+
+            # Filter out rejected releases and sort by indexer priority then quality
+            valid_releases = [r for r in releases if not r.get("rejected", False)]
+            if not valid_releases:
+                self.log.warning("All releases rejected", title=item.title)
+                return await self._fallback_search(item)
+
+            # Find the highest priority indexer that has releases
+            releases_by_indexer: dict[str, list] = {}
+            for release in valid_releases:
+                indexer = release.get("indexer", "Unknown")
+                if indexer not in releases_by_indexer:
+                    releases_by_indexer[indexer] = []
+                releases_by_indexer[indexer].append(release)
+
+            # Sort indexers by priority (lower = better)
+            sorted_indexers = sorted(
+                releases_by_indexer.keys(),
+                key=lambda x: indexer_priorities.get(x, 25)
+            )
+
+            if not sorted_indexers:
+                self.log.warning("No indexers with valid releases", title=item.title)
+                return await self._fallback_search(item)
+
+            # Get the best release from the highest priority indexer
+            best_indexer = sorted_indexers[0]
+            best_releases = releases_by_indexer[best_indexer]
+
+            # Sort by quality weight (higher = better) - Sonarr/Radarr already sorts by preferred
+            # Just pick the first one as it's usually the best match
+            best_release = best_releases[0]
+
+            self.log.info(
+                "Grabbing release from single indexer",
+                title=item.title,
+                indexer=best_indexer,
+                priority=indexer_priorities.get(best_indexer, 25),
+                release=best_release.get("title", "Unknown"),
+                quality=best_release.get("quality", {}).get("quality", {}).get("name", "Unknown"),
+            )
+
+            # Push the release to download
+            await self._post("release", best_release)
+            self.log.info("Triggered single-indexer download", title=item.title, indexer=best_indexer)
             return True
+
         except Exception as e:
             self.log.error("Failed to trigger search", title=item.title, error=str(e))
+            return False
+
+    async def _fallback_search(self, item: MediaItem) -> bool:
+        """Fall back to standard search command if release API fails."""
+        self.log.info("Falling back to standard search", title=item.title)
+        try:
+            if self.arr_type == ArrType.RADARR:
+                await self._post(
+                    "command",
+                    {"name": "MoviesSearch", "movieIds": [item.id]},
+                )
+            else:
+                episode_id = item.episode_id
+                if not episode_id:
+                    episode_id = await self._get_episode_id_by_info(
+                        item.series_id, item.season_number, item.episode_number
+                    )
+                if episode_id:
+                    await self._post(
+                        "command",
+                        {"name": "EpisodeSearch", "episodeIds": [episode_id]},
+                    )
+            return True
+        except Exception as e:
+            self.log.error("Fallback search also failed", title=item.title, error=str(e))
             return False
 
     async def _get_episode_id_by_info(
