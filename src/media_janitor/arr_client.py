@@ -318,15 +318,14 @@ class ArrClient:
             releases = await self._get("release", params=search_params)
 
             if not releases:
-                self.log.warning("No releases found", title=item.title)
-                # Fall back to standard search command
-                return await self._fallback_search(item)
+                self.log.warning("No releases found on any indexer", title=item.title)
+                return False
 
-            # Filter out rejected releases and sort by indexer priority then quality
+            # Filter out rejected releases
             valid_releases = [r for r in releases if not r.get("rejected", False)]
             if not valid_releases:
-                self.log.warning("All releases rejected", title=item.title)
-                return await self._fallback_search(item)
+                self.log.warning("All releases rejected by quality/rules", title=item.title)
+                return False
 
             # Find the highest priority indexer that has releases
             releases_by_indexer: dict[str, list] = {}
@@ -344,7 +343,7 @@ class ArrClient:
 
             if not sorted_indexers:
                 self.log.warning("No indexers with valid releases", title=item.title)
-                return await self._fallback_search(item)
+                return False
 
             # Get the best release from the highest priority indexer
             best_indexer = sorted_indexers[0]
