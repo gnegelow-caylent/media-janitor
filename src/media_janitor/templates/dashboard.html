@@ -341,7 +341,7 @@
         <!-- Instance Bar Chart -->
         <div class="stat-card">
             <h3 class="text-lg font-medium text-white mb-4">Files by Instance</h3>
-            <div class="h-64">
+            <div class="h-48 sm:h-64 relative">
                 <canvas id="instance-chart"></canvas>
             </div>
         </div>
@@ -352,7 +352,7 @@
                 <h3 class="text-lg font-medium text-white">Quality by Instance</h3>
                 <a href="/ui/library" class="text-sm text-primary hover:text-yellow-400 transition-colors">View details →</a>
             </div>
-            <div id="quality-charts-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div id="quality-charts-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <!-- Dynamically populated -->
             </div>
         </div>
@@ -713,7 +713,7 @@
                         <h4 class="text-sm font-medium text-white">${instance}</h4>
                         <span class="ml-auto text-xs text-gray-400">${total.toLocaleString()} files</span>
                     </div>
-                    <div class="h-40">
+                    <div class="h-32 sm:h-40 relative">
                         <canvas id="quality-chart-${instance}"></canvas>
                     </div>
                 `;
@@ -854,9 +854,18 @@
                 // Start periodic refresh only after first load
                 setInterval(updateCharts, 60000);
             }
-        }, { threshold: 0.1 });
+        }, { threshold: 0.1, rootMargin: '50px' });
         observer.observe(chartsSection);
     }
+
+    // Fallback: load charts after a delay if IntersectionObserver didn't trigger (mobile fix)
+    setTimeout(() => {
+        if (!chartsLoaded) {
+            chartsLoaded = true;
+            updateCharts();
+            setInterval(updateCharts, 60000);
+        }
+    }, 3000);
 
     // Initial load (charts loaded lazily)
     refreshAll();
