@@ -57,47 +57,80 @@
             }
         }
     </script>
-    <style type="text/tailwindcss">
+    <style>
         /* Base components - light/dark mode support */
         .stat-card {
-            @apply bg-white rounded-xl p-6 border border-gray-200 transition-all duration-200 hover:border-gray-300 shadow-sm;
+            background-color: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            border: 1px solid rgb(229 231 235);
+            transition: all 0.2s;
+            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        }
+        .stat-card:hover {
+            border-color: rgb(209 213 219);
         }
         .dark .stat-card {
-            @apply bg-gray-800 border-gray-700 hover:border-gray-600 shadow-none;
+            background-color: rgb(31 41 55);
+            border-color: rgb(55 65 81);
+            box-shadow: none;
         }
+        .dark .stat-card:hover {
+            border-color: rgb(75 85 99);
+        }
+
         .nav-link {
-            @apply px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-200 hover:text-gray-900 transition-all duration-200;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            color: rgb(55 65 81);
+            transition: all 0.2s;
+        }
+        .nav-link:hover {
+            background-color: rgb(229 231 235);
+            color: rgb(17 24 39);
         }
         .dark .nav-link {
-            @apply text-white hover:bg-gray-700 hover:text-white;
+            color: white;
+        }
+        .dark .nav-link:hover {
+            background-color: rgb(55 65 81);
+            color: white;
         }
         .nav-link.active {
-            @apply bg-primary text-gray-900 font-semibold shadow-lg shadow-primary/20;
+            background-color: #f5a623;
+            color: rgb(17 24 39);
+            font-weight: 600;
+            box-shadow: 0 10px 15px -3px rgb(245 166 35 / 0.2);
         }
 
         /* Loading skeleton */
         .skeleton {
-            @apply bg-gradient-to-r from-gray-300 via-gray-200 to-gray-300 bg-[length:200%_100%] animate-shimmer rounded;
+            background: linear-gradient(to right, rgb(209 213 219), rgb(229 231 235), rgb(209 213 219));
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+            border-radius: 0.25rem;
         }
         .dark .skeleton {
-            @apply from-gray-700 via-gray-600 to-gray-700;
+            background: linear-gradient(to right, rgb(55 65 81), rgb(75 85 99), rgb(55 65 81));
+            background-size: 200% 100%;
         }
         .skeleton-text {
-            @apply h-4 skeleton;
+            height: 1rem;
         }
         .skeleton-title {
-            @apply h-6 skeleton;
+            height: 1.5rem;
         }
         .skeleton-card {
-            @apply h-32 skeleton rounded-xl;
+            height: 8rem;
+            border-radius: 0.75rem;
         }
         .skeleton-circle {
-            @apply rounded-full skeleton;
+            border-radius: 9999px;
         }
 
         /* Content transitions */
         .page-content {
-            @apply animate-fade-in;
+            animation: fadeIn 0.3s ease-out;
         }
         .stagger-1 { animation-delay: 0.05s; }
         .stagger-2 { animation-delay: 0.1s; }
@@ -106,7 +139,7 @@
 
         /* Progress bar animation */
         .progress-bar {
-            @apply transition-all duration-500 ease-out;
+            transition: all 0.5s ease-out;
         }
         .progress-bar-animated {
             background: linear-gradient(90deg, #f5a623 0%, #fbbf24 50%, #f5a623 100%);
@@ -133,31 +166,43 @@
 
         /* Card hover effects */
         .card-hover {
-            @apply transition-all duration-200 hover:scale-[1.02] hover:shadow-lg hover:shadow-black/20;
+            transition: all 0.2s;
+        }
+        .card-hover:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.2);
         }
 
         /* Status indicators */
         .status-dot {
-            @apply w-2 h-2 rounded-full;
+            width: 0.5rem;
+            height: 0.5rem;
+            border-radius: 9999px;
         }
         .status-dot.online {
-            @apply bg-green-400 shadow-lg shadow-green-400/50;
+            background-color: rgb(74 222 128);
+            box-shadow: 0 10px 15px -3px rgb(74 222 128 / 0.5);
             animation: pulse 2s infinite;
         }
         .status-dot.scanning {
-            @apply bg-primary shadow-lg shadow-primary/50;
+            background-color: #f5a623;
+            box-shadow: 0 10px 15px -3px rgb(245 166 35 / 0.5);
             animation: pulse 1s infinite;
         }
         .status-dot.offline {
-            @apply bg-red-400;
+            background-color: rgb(248 113 113);
         }
 
         /* Empty state */
         .empty-state {
-            @apply text-center py-12 px-4;
+            text-align: center;
+            padding: 3rem 1rem;
         }
         .empty-state-icon {
-            @apply w-16 h-16 mx-auto mb-4 text-gray-600;
+            width: 4rem;
+            height: 4rem;
+            margin: 0 auto 1rem;
+            color: rgb(75 85 99);
         }
 
         /* Smooth scrollbar */
@@ -166,10 +211,14 @@
             height: 8px;
         }
         ::-webkit-scrollbar-track {
-            @apply bg-gray-800;
+            background-color: rgb(31 41 55);
         }
         ::-webkit-scrollbar-thumb {
-            @apply bg-gray-600 rounded-full hover:bg-gray-500;
+            background-color: rgb(75 85 99);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: rgb(107 114 128);
         }
 
         /* Logo sparkle animation */
