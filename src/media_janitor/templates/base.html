@@ -58,6 +58,14 @@
         }
     </script>
     <style>
+        /* Page background - must be in CSS for dark mode to work reliably */
+        html, body {
+            background-color: white;
+        }
+        html.dark, html.dark body {
+            background-color: rgb(17 24 39);
+        }
+
         /* Base components - light/dark mode support */
         .stat-card {
             background-color: white;
