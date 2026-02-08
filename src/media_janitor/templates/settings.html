@@ -6,7 +6,7 @@
 <div class="flex min-h-[calc(100vh-12rem)] gap-8">
     <!-- Sidebar Navigation -->
     <aside class="w-56 flex-shrink-0">
-        <div class="sticky top-24 bg-gray-800/50 rounded-2xl border border-gray-700/50 overflow-hidden">
+        <div class="sticky top-24 bg-white/50 dark:bg-gray-800/50 rounded-2xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden">
             <!-- Nav Items -->
             <nav class="p-2">
                 <button onclick="showSection('general')" class="settings-nav-item active" data-section="general">
@@ -43,8 +43,8 @@
         <!-- General Section -->
         <section id="section-general" class="settings-section">
             <header class="mb-8">
-                <h1 class="text-2xl font-bold text-white">General</h1>
-                <p class="text-gray-400 mt-1">Basic application settings</p>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">General</h1>
+                <p class="text-gray-600 dark:text-gray-400 mt-1">Basic application settings</p>
             </header>
 
             <div class="space-y-6 max-w-2xl">
@@ -53,8 +53,8 @@
                     <div class="settings-group-content">
                         <div class="flex items-center justify-between">
                             <div>
-                                <label class="text-sm font-medium text-white">Theme</label>
-                                <p class="text-xs text-gray-500 mt-0.5">Choose your preferred color scheme</p>
+                                <label class="text-sm font-medium text-gray-900 dark:text-white">Theme</label>
+                                <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Choose your preferred color scheme</p>
                             </div>
                             <div class="flex gap-2">
                                 <label class="theme-btn">
@@ -85,8 +85,8 @@
                     <div class="settings-group-content">
                         <div class="flex items-center justify-between">
                             <div>
-                                <label class="text-sm font-medium text-white">Timezone</label>
-                                <p class="text-xs text-gray-500 mt-0.5">Used for scheduling and log timestamps</p>
+                                <label class="text-sm font-medium text-gray-900 dark:text-white">Timezone</label>
+                                <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Used for scheduling and log timestamps</p>
                             </div>
                             <select id="timezone" class="settings-select">
                                 <option value="America/New_York">Eastern Time (ET)</option>
@@ -117,8 +117,8 @@
         <!-- Connections Section -->
         <section id="section-connections" class="settings-section hidden">
             <header class="mb-8">
-                <h1 class="text-2xl font-bold text-white">Connections</h1>
-                <p class="text-gray-400 mt-1">Connect to your media servers</p>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Connections</h1>
+                <p class="text-gray-600 dark:text-gray-400 mt-1">Connect to your media servers</p>
             </header>
 
             <div class="space-y-8 max-w-3xl">
@@ -132,14 +132,14 @@
                                 </svg>
                             </div>
                             <div>
-                                <h3 class="font-semibold text-white">Radarr</h3>
+                                <h3 class="font-semibold text-gray-900 dark:text-white">Radarr</h3>
                                 <p class="text-xs text-gray-500">Movie management</p>
                             </div>
                         </div>
                         <button onclick="addInstance('radarr')" class="text-sm text-primary hover:text-yellow-400 font-medium">+ Add Instance</button>
                     </div>
                     <div id="radarr-instances" class="space-y-3"></div>
-                    <div class="mt-4 pt-4 border-t border-gray-700/50 flex justify-end">
+                    <div class="mt-4 pt-4 border-t border-gray-200/50 dark:border-gray-700/50 flex justify-end">
                         <button onclick="saveAllSettings()" class="save-section-btn">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
@@ -159,14 +159,14 @@
                                 </svg>
                             </div>
                             <div>
-                                <h3 class="font-semibold text-white">Sonarr</h3>
+                                <h3 class="font-semibold text-gray-900 dark:text-white">Sonarr</h3>
                                 <p class="text-xs text-gray-500">TV show management</p>
                             </div>
                         </div>
                         <button onclick="addInstance('sonarr')" class="text-sm text-primary hover:text-yellow-400 font-medium">+ Add Instance</button>
                     </div>
                     <div id="sonarr-instances" class="space-y-3"></div>
-                    <div class="mt-4 pt-4 border-t border-gray-700/50 flex justify-end">
+                    <div class="mt-4 pt-4 border-t border-gray-200/50 dark:border-gray-700/50 flex justify-end">
                         <button onclick="saveAllSettings()" class="save-section-btn">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
@@ -185,7 +185,7 @@
                             </svg>
                         </div>
                         <div class="flex-1">
-                            <h3 class="font-semibold text-white">Plex</h3>
+                            <h3 class="font-semibold text-gray-900 dark:text-white">Plex</h3>
                             <p class="text-xs text-gray-500">Library refresh after replacements</p>
                         </div>
                         <label class="toggle">
@@ -209,7 +209,7 @@
                             <span id="plex-status" class="text-sm"></span>
                         </div>
                     </div>
-                    <div class="mt-4 pt-4 border-t border-gray-700/50 flex justify-end">
+                    <div class="mt-4 pt-4 border-t border-gray-200/50 dark:border-gray-700/50 flex justify-end">
                         <button onclick="saveAllSettings()" class="save-section-btn">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
@@ -224,8 +224,8 @@
         <!-- Actions Section -->
         <section id="section-actions" class="settings-section hidden">
             <header class="mb-8">
-                <h1 class="text-2xl font-bold text-white">Actions</h1>
-                <p class="text-gray-400 mt-1">Configure automatic behaviors</p>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Actions</h1>
+                <p class="text-gray-600 dark:text-gray-400 mt-1">Configure automatic behaviors</p>
             </header>
 
             <div class="space-y-6 max-w-2xl">
@@ -240,8 +240,8 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <label class="text-sm font-medium text-blue-400">Dry Run Mode</label>
-                                    <p class="text-xs text-gray-500 mt-0.5">Report issues without making any changes (safe testing)</p>
+                                    <span class="text-sm font-medium text-blue-400">Dry Run Mode</span>
+                                    <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Report issues without making any changes (safe testing)</p>
                                 </div>
                             </div>
                             <label class="toggle">
@@ -257,8 +257,8 @@
                     <div class="settings-group-content space-y-4">
                         <div class="flex items-center justify-between">
                             <div>
-                                <label class="text-sm font-medium text-white">Auto Replace Bad Files</label>
-                                <p class="text-xs text-gray-500 mt-0.5">Delete and re-download files that fail validation</p>
+                                <label class="text-sm font-medium text-gray-900 dark:text-white">Auto Replace Bad Files</label>
+                                <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Delete and re-download files that fail validation</p>
                             </div>
                             <label class="toggle">
                                 <input type="checkbox" id="actions-auto-replace">
@@ -268,8 +268,8 @@
 
                         <div class="flex items-center justify-between">
                             <div>
-                                <label class="text-sm font-medium text-white">Blocklist Bad Releases</label>
-                                <p class="text-xs text-gray-500 mt-0.5">Prevent re-downloading the same bad release</p>
+                                <label class="text-sm font-medium text-gray-900 dark:text-white">Blocklist Bad Releases</label>
+                                <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Prevent re-downloading the same bad release</p>
                             </div>
                             <label class="toggle">
                                 <input type="checkbox" id="actions-blocklist">
@@ -279,8 +279,8 @@
 
                         <div class="flex items-center justify-between">
                             <div>
-                                <label class="text-sm font-medium text-white">Max Replacements Per Day</label>
-                                <p class="text-xs text-gray-500 mt-0.5">Limit bandwidth usage with daily caps</p>
+                                <label class="text-sm font-medium text-gray-900 dark:text-white">Max Replacements Per Day</label>
+                                <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Limit bandwidth usage with daily caps</p>
                             </div>
                             <input type="number" id="actions-max-replacements" class="settings-input w-20 text-center" min="1" max="100">
                         </div>
@@ -292,8 +292,8 @@
                     <div class="settings-group-content">
                         <div class="flex items-center justify-between">
                             <div>
-                                <label class="text-sm font-medium text-white">Auto Delete Duplicates</label>
-                                <p class="text-xs text-gray-500 mt-0.5">Automatically remove lower quality duplicate copies</p>
+                                <label class="text-sm font-medium text-gray-900 dark:text-white">Auto Delete Duplicates</label>
+                                <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Automatically remove lower quality duplicate copies</p>
                             </div>
                             <label class="toggle">
                                 <input type="checkbox" id="actions-auto-delete-duplicates">
@@ -307,15 +307,15 @@
                     <h3 class="settings-group-title">Scanner Settings</h3>
                     <div class="settings-group-content space-y-4">
                         <!-- Recommendations hint -->
-                        <div class="p-3 rounded-lg bg-gray-900/50 border border-gray-700/50 mb-2">
-                            <p class="text-xs text-gray-400 mb-2"><span class="text-primary font-medium">Recommendations:</span> Match files/hr with parallel scans for optimal throughput. Disable Deep Scan if CPU is limited.</p>
-                            <p class="text-xs text-gray-500"><span class="text-gray-400">HDD:</span> 120/2 or 300/5 &nbsp;|&nbsp; <span class="text-gray-400">SSD:</span> 600/10 or 1200/20</p>
+                        <div class="p-3 rounded-lg bg-gray-100/50 dark:bg-gray-900/50 border border-gray-200/50 dark:border-gray-700/50 mb-2">
+                            <p class="text-xs text-gray-600 dark:text-gray-400 mb-2"><span class="text-primary font-medium">Recommendations:</span> Match files/hr with parallel scans for optimal throughput. Disable Deep Scan if CPU is limited.</p>
+                            <p class="text-xs text-gray-500"><span class="text-gray-600 dark:text-gray-400">HDD:</span> 120/2 or 300/5 &nbsp;|&nbsp; <span class="text-gray-600 dark:text-gray-400">SSD:</span> 600/10 or 1200/20</p>
                         </div>
 
                         <div class="flex items-center justify-between">
                             <div>
-                                <label class="text-sm font-medium text-white">Scanner Enabled</label>
-                                <p class="text-xs text-gray-500 mt-0.5">Enable background library scanning</p>
+                                <label class="text-sm font-medium text-gray-900 dark:text-white">Scanner Enabled</label>
+                                <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Enable background library scanning</p>
                             </div>
                             <label class="toggle">
                                 <input type="checkbox" id="scanner-enabled">
@@ -325,8 +325,8 @@
 
                         <div class="flex items-center justify-between">
                             <div>
-                                <label class="text-sm font-medium text-white">Files Per Hour</label>
-                                <p class="text-xs text-gray-500 mt-0.5">Network: 500-1500, Local SSD: 3000-5000, NVMe: 5000+</p>
+                                <label class="text-sm font-medium text-gray-900 dark:text-white">Files Per Hour</label>
+                                <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Network: 500-1500, Local SSD: 3000-5000, NVMe: 5000+</p>
                             </div>
                             <div class="flex items-center gap-3">
                                 <input type="range" id="scanner-files-per-hour-slider" min="100" max="10000" step="100" class="w-32" oninput="document.getElementById('scanner-files-per-hour').value = this.value">
@@ -336,8 +336,8 @@
 
                         <div class="flex items-center justify-between">
                             <div>
-                                <label class="text-sm font-medium text-white">Scan Mode</label>
-                                <p class="text-xs text-gray-500 mt-0.5">Watch Only = scan library once, then only new imports</p>
+                                <label class="text-sm font-medium text-gray-900 dark:text-white">Scan Mode</label>
+                                <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Watch Only = scan library once, then only new imports</p>
                             </div>
                             <select id="scanner-mode" class="settings-select">
                                 <option value="watch_only">Watch Only</option>
@@ -347,16 +347,16 @@
 
                         <div class="flex items-center justify-between">
                             <div>
-                                <label class="text-sm font-medium text-white">Parallel Scans</label>
-                                <p class="text-xs text-gray-500 mt-0.5">Simultaneous validations. HDD: 2-4, SSD: 6-10. Higher = more disk I/O</p>
+                                <label class="text-sm font-medium text-gray-900 dark:text-white">Parallel Scans</label>
+                                <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Simultaneous validations. HDD: 2-4, SSD: 6-10. Higher = more disk I/O</p>
                             </div>
                             <input type="number" id="scanner-concurrency" class="settings-input w-20 text-center" min="1" max="50">
                         </div>
 
                         <div class="flex items-center justify-between">
                             <div>
-                                <label class="text-sm font-medium text-white">Deep Scan</label>
-                                <p class="text-xs text-gray-500 mt-0.5">Decode video samples with ffmpeg. <span class="text-yellow-500">CPU intensive</span> but catches more issues</p>
+                                <label class="text-sm font-medium text-gray-900 dark:text-white">Deep Scan</label>
+                                <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Decode video samples with ffmpeg. <span class="text-yellow-500">CPU intensive</span> but catches more issues</p>
                             </div>
                             <label class="toggle">
                                 <input type="checkbox" id="validation-deep-scan">
@@ -366,8 +366,8 @@
 
                         <div class="flex items-center justify-between">
                             <div>
-                                <label class="text-sm font-medium text-white">Deep Scan Mode</label>
-                                <p class="text-xs text-gray-500 mt-0.5"><span class="text-green-400">Partial</span> = start only (3x faster) | <span class="text-yellow-400">Full</span> = start/middle/end</p>
+                                <label class="text-sm font-medium text-gray-900 dark:text-white">Deep Scan Mode</label>
+                                <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5"><span class="text-green-400">Partial</span> = start only (3x faster) | <span class="text-yellow-400">Full</span> = start/middle/end</p>
                             </div>
                             <select id="validation-deep-scan-mode" class="settings-select">
                                 <option value="partial">Partial (Recommended for network mounts)</option>
@@ -377,24 +377,24 @@
 
                         <div class="flex items-center justify-between">
                             <div>
-                                <label class="text-sm font-medium text-white">Sample Duration</label>
-                                <p class="text-xs text-gray-500 mt-0.5">Seconds to decode per sample. <span class="text-gray-400">Local: 30</span> | <span class="text-blue-400">Network: 5-10</span> (less data to transfer)</p>
+                                <label class="text-sm font-medium text-gray-900 dark:text-white">Sample Duration</label>
+                                <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Seconds to decode per sample. <span class="text-gray-400">Local: 30</span> | <span class="text-blue-400">Network: 5-10</span> (less data to transfer)</p>
                             </div>
                             <input type="number" id="validation-sample-duration" class="settings-input w-20 text-center" min="1" max="60">
                         </div>
 
                         <div class="flex items-center justify-between">
                             <div>
-                                <label class="text-sm font-medium text-white">Decode Timeout</label>
-                                <p class="text-xs text-gray-500 mt-0.5">Max seconds per decode test. <span class="text-gray-400">Local: 30-60</span> | <span class="text-blue-400">Network: 60-120</span> (slower I/O)</p>
+                                <label class="text-sm font-medium text-gray-900 dark:text-white">Decode Timeout</label>
+                                <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Max seconds per decode test. <span class="text-gray-400">Local: 30-60</span> | <span class="text-blue-400">Network: 60-120</span> (slower I/O)</p>
                             </div>
                             <input type="number" id="validation-decode-timeout" class="settings-input w-20 text-center" min="5" max="300">
                         </div>
 
                         <div class="flex items-center justify-between">
                             <div>
-                                <label class="text-sm font-medium text-white">Check Bitrate</label>
-                                <p class="text-xs text-gray-500 mt-0.5">Flag suspiciously low bitrate files. Minimal overhead</p>
+                                <label class="text-sm font-medium text-gray-900 dark:text-white">Check Bitrate</label>
+                                <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Flag suspiciously low bitrate files. Minimal overhead</p>
                             </div>
                             <label class="toggle">
                                 <input type="checkbox" id="validation-check-bitrate">
@@ -404,8 +404,8 @@
 
                         <div class="flex items-center justify-between">
                             <div>
-                                <label class="text-sm font-medium text-white">Replace 3D Movies</label>
-                                <p class="text-xs text-gray-500 mt-0.5">Detect and replace 3D movies with 2D versions. Checks filename, metadata, and aspect ratio</p>
+                                <label class="text-sm font-medium text-gray-900 dark:text-white">Replace 3D Movies</label>
+                                <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Detect and replace 3D movies with 2D versions. Checks filename, metadata, and aspect ratio</p>
                             </div>
                             <label class="toggle">
                                 <input type="checkbox" id="validation-replace-3d">
@@ -429,8 +429,8 @@
         <!-- Notifications Section -->
         <section id="section-notifications" class="settings-section hidden">
             <header class="mb-8">
-                <h1 class="text-2xl font-bold text-white">Notifications</h1>
-                <p class="text-gray-400 mt-1">Configure how you receive alerts</p>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Notifications</h1>
+                <p class="text-gray-600 dark:text-gray-400 mt-1">Configure how you receive alerts</p>
             </header>
 
             <div class="space-y-6 max-w-2xl">
@@ -444,7 +444,7 @@
                                 </svg>
                             </div>
                             <div>
-                                <h3 class="font-semibold text-white">Email</h3>
+                                <h3 class="font-semibold text-gray-900 dark:text-white">Email</h3>
                                 <p class="text-xs text-gray-500">Daily summaries and alerts</p>
                             </div>
                         </div>
@@ -483,7 +483,7 @@
                                 </svg>
                             </div>
                             <div>
-                                <h3 class="font-semibold text-white">Discord</h3>
+                                <h3 class="font-semibold text-gray-900 dark:text-white">Discord</h3>
                                 <p class="text-xs text-gray-500">Webhook notifications</p>
                             </div>
                         </div>
@@ -511,7 +511,7 @@
                                 </svg>
                             </div>
                             <div>
-                                <h3 class="font-semibold text-white">Slack</h3>
+                                <h3 class="font-semibold text-gray-900 dark:text-white">Slack</h3>
                                 <p class="text-xs text-gray-500">Webhook notifications</p>
                             </div>
                         </div>
@@ -539,7 +539,7 @@
                                 </svg>
                             </div>
                             <div>
-                                <h3 class="font-semibold text-white">Telegram</h3>
+                                <h3 class="font-semibold text-gray-900 dark:text-white">Telegram</h3>
                                 <p class="text-xs text-gray-500">Bot notifications</p>
                             </div>
                         </div>
@@ -570,7 +570,7 @@
                                 </svg>
                             </div>
                             <div>
-                                <h3 class="font-semibold text-white">Pushover</h3>
+                                <h3 class="font-semibold text-gray-900 dark:text-white">Pushover</h3>
                                 <p class="text-xs text-gray-500">Mobile push notifications</p>
                             </div>
                         </div>
@@ -601,7 +601,7 @@
                                 </svg>
                             </div>
                             <div>
-                                <h3 class="font-semibold text-white">Gotify</h3>
+                                <h3 class="font-semibold text-gray-900 dark:text-white">Gotify</h3>
                                 <p class="text-xs text-gray-500">Self-hosted notifications</p>
                             </div>
                         </div>
@@ -658,37 +658,37 @@
         border-radius: 0.75rem;
         font-size: 0.875rem;
         font-weight: 500;
-        color: #9ca3af;
         background: transparent;
         border: none;
         cursor: pointer;
         text-align: left;
         transition: all 0.2s;
     }
+    .settings-nav-item {
+        @apply text-gray-500 dark:text-gray-400;
+    }
     .settings-nav-item:hover {
-        color: #fff;
-        background: rgba(55, 65, 81, 0.5);
+        @apply text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-700/50;
     }
     .settings-nav-item.active {
-        color: #fff;
-        background: #374151;
+        @apply text-gray-900 dark:text-white bg-gray-200 dark:bg-gray-700;
     }
     .settings-nav-item.active svg {
         color: #fbbf24;
     }
     .settings-nav-item svg {
-        color: #6b7280;
+        @apply text-gray-400 dark:text-gray-500;
     }
     .settings-nav-item:hover svg {
-        color: #9ca3af;
+        @apply text-gray-600 dark:text-gray-400;
     }
 
     /* Groups */
     .settings-group {
-        @apply bg-gray-800/30 rounded-2xl border border-gray-700/50 overflow-hidden;
+        @apply bg-white/30 dark:bg-gray-800/30 rounded-2xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden;
     }
     .settings-group-title {
-        @apply px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-800/50 border-b border-gray-700/50;
+        @apply px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-100/50 dark:bg-gray-800/50 border-b border-gray-200/50 dark:border-gray-700/50;
     }
     .settings-group-content {
         @apply p-5;
@@ -696,13 +696,13 @@
 
     /* Form Elements */
     .settings-label {
-        @apply block text-xs font-medium text-gray-400 mb-1.5;
+        @apply block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5;
     }
     .settings-input {
-        @apply w-full px-4 py-2.5 rounded-xl bg-gray-900/50 border border-gray-700 text-white text-sm placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all duration-200;
+        @apply w-full px-4 py-2.5 rounded-xl bg-gray-100/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all duration-200;
     }
     .settings-select {
-        @apply px-4 py-2.5 rounded-xl bg-gray-900/50 border border-gray-700 text-white text-sm focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all duration-200 cursor-pointer;
+        @apply px-4 py-2.5 rounded-xl bg-gray-100/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all duration-200 cursor-pointer;
     }
 
     /* Toggle Switch */
@@ -713,11 +713,11 @@
         @apply sr-only;
     }
     .toggle-track {
-        @apply pointer-events-none inline-block h-6 w-11 rounded-full bg-gray-700 transition-colors duration-200;
+        @apply pointer-events-none inline-block h-6 w-11 rounded-full bg-gray-300 dark:bg-gray-700 transition-colors duration-200;
     }
     .toggle-track::before {
         content: '';
-        @apply absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-gray-400 shadow-lg transition-all duration-200;
+        @apply absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white dark:bg-gray-400 shadow-lg transition-all duration-200;
     }
     .toggle input:checked + .toggle-track {
         @apply bg-primary;
@@ -731,20 +731,20 @@
         @apply cursor-pointer;
     }
     .theme-btn > div {
-        @apply flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-800 border border-gray-700 text-gray-300 text-sm transition-all duration-200;
+        @apply flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm transition-all duration-200;
     }
     .theme-btn:hover > div {
-        @apply border-gray-600;
+        @apply border-gray-400 dark:border-gray-600;
     }
 
     /* Preset Buttons */
     .preset-btn {
-        @apply px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-800 text-gray-400 border border-gray-700 hover:bg-gray-700 hover:text-white transition-all duration-200;
+        @apply px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-all duration-200;
     }
 
     /* Instance Rows */
     .instance-row {
-        @apply p-4 bg-gray-900/30 rounded-xl border border-gray-700/50;
+        @apply p-4 bg-gray-100/30 dark:bg-gray-900/30 rounded-xl border border-gray-200/50 dark:border-gray-700/50;
     }
 
     /* Save Section Button */
@@ -786,6 +786,22 @@
         toast.classList.remove('hidden');
         setTimeout(() => toast.classList.add('hidden'), 3000);
     }
+
+    // Apply theme from settings
+    function applyTheme(theme) {
+        if (theme === 'light') {
+            document.documentElement.classList.remove('dark');
+        } else {
+            document.documentElement.classList.add('dark');
+        }
+    }
+
+    // Listen for theme changes
+    document.querySelectorAll('input[name="theme"]').forEach(input => {
+        input.addEventListener('change', (e) => {
+            applyTheme(e.target.value);
+        });
+    });
 
     async function loadConfig() {
         try {
@@ -877,20 +893,20 @@
                         <span id="status-${type}-${idx}" class="text-sm"></span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <button onclick="toggleAdvanced('${type}', ${idx})" class="text-xs text-gray-500 hover:text-gray-300">Path Mappings</button>
+                        <button onclick="toggleAdvanced('${type}', ${idx})" class="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">Path Mappings</button>
                         <button onclick="removeInstance('${type}', ${idx})" class="text-xs text-red-400 hover:text-red-300">Remove</button>
                     </div>
                 </div>
-                <div id="advanced-${type}-${idx}" class="hidden mt-4 pt-4 border-t border-gray-700/50">
+                <div id="advanced-${type}-${idx}" class="hidden mt-4 pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
                     <div class="flex items-center justify-between mb-3">
-                        <span class="text-xs font-medium text-gray-400">Path Mappings</span>
+                        <span class="text-xs font-medium text-gray-600 dark:text-gray-400">Path Mappings</span>
                         <button onclick="addPathMapping('${type}', ${idx})" class="text-xs text-primary hover:text-yellow-400">+ Add Mapping</button>
                     </div>
                     <div class="path-mappings space-y-2">
                         ${(inst.path_mappings || []).map((pm, pmIdx) => `
                             <div class="flex items-center gap-2">
                                 <input type="text" value="${pm.from_path}" class="settings-input flex-1 text-xs" placeholder="Container path" data-field="from_path" data-pm-idx="${pmIdx}">
-                                <svg class="w-4 h-4 text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                                <svg class="w-4 h-4 text-gray-400 dark:text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                                 <input type="text" value="${pm.to_path}" class="settings-input flex-1 text-xs" placeholder="Host path" data-field="to_path" data-pm-idx="${pmIdx}">
                                 <button onclick="removePathMapping('${type}', ${idx}, ${pmIdx})" class="text-gray-500 hover:text-red-400 p-1">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -898,7 +914,7 @@
                             </div>
                         `).join('')}
                     </div>
-                    <p class="text-xs text-gray-600 mt-3">Map container paths to host paths if they differ</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-600 mt-3">Map container paths to host paths if they differ</p>
                 </div>
             </div>
         `).join('');

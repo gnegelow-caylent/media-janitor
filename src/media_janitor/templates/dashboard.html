@@ -19,7 +19,7 @@
                     </svg>
                     <!-- Score in center -->
                     <div class="absolute inset-0 flex flex-col items-center justify-center">
-                        <span id="health-score" class="text-4xl font-bold text-white">--</span>
+                        <span id="health-score" class="text-4xl font-bold text-gray-900 dark:text-white">--</span>
                         <span class="text-xs text-gray-400 uppercase tracking-wider">Health</span>
                     </div>
                 </div>
@@ -38,8 +38,8 @@
                         </svg>
                     </div>
                 </div>
-                <p class="mt-4 text-2xl font-bold text-white" id="stat-total">--</p>
-                <p class="text-sm text-gray-400">Total Files</p>
+                <p class="mt-4 text-2xl font-bold text-gray-900 dark:text-white" id="stat-total">--</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Total Files</p>
             </div>
 
             <div class="stat-card card-hover animate-slide-up stagger-2">
@@ -51,7 +51,7 @@
                     </div>
                 </div>
                 <p class="mt-4 text-2xl font-bold text-green-400" id="stat-valid">--</p>
-                <p class="text-sm text-gray-400">Valid</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Valid</p>
             </div>
 
             <div class="stat-card card-hover animate-slide-up stagger-3">
@@ -63,7 +63,7 @@
                     </div>
                 </div>
                 <p class="mt-4 text-2xl font-bold text-red-400" id="stat-invalid">--</p>
-                <p class="text-sm text-gray-400">Issues Found</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Issues Found</p>
             </div>
 
             <div class="stat-card card-hover animate-slide-up stagger-4">
@@ -75,7 +75,7 @@
                     </div>
                 </div>
                 <p class="mt-4 text-2xl font-bold text-primary" id="stat-replaced">--</p>
-                <p class="text-sm text-gray-400">Replaced Today</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Replaced Today</p>
             </div>
 
             <div class="stat-card card-hover animate-slide-up stagger-4">
@@ -87,7 +87,7 @@
                     </div>
                 </div>
                 <p class="mt-4 text-2xl font-bold text-purple-400" id="stat-wrong">--</p>
-                <p class="text-sm text-gray-400">Wrong Files</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Wrong Files</p>
             </div>
 
             <div class="stat-card card-hover animate-slide-up stagger-4 cursor-pointer" onclick="window.location='/ui/reports'">
@@ -99,7 +99,7 @@
                     </div>
                 </div>
                 <p class="mt-4 text-2xl font-bold text-gray-400" id="stat-missing">--</p>
-                <p class="text-sm text-gray-400">Missing Files</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Missing Files</p>
             </div>
         </div>
     </div>
@@ -126,7 +126,7 @@
                 </svg>
                 Email Report
             </button>
-            <a href="/ui/reports" class="inline-flex items-center px-4 py-2 rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600 text-sm font-medium transition-all hover:scale-105">
+            <a href="/ui/reports" class="inline-flex items-center px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 text-sm font-medium transition-all hover:scale-105">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
@@ -146,31 +146,31 @@
         <div class="flex items-center justify-between mb-4">
             <div class="flex items-center">
                 <div id="scan-indicator" class="w-3 h-3 rounded-full bg-primary mr-3 animate-pulse"></div>
-                <h3 class="text-lg font-medium text-white">Scan Progress</h3>
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white">Scan Progress</h3>
             </div>
-            <span id="scan-status-text" class="text-sm text-gray-400">Initializing...</span>
+            <span id="scan-status-text" class="text-sm text-gray-600 dark:text-gray-400">Initializing...</span>
         </div>
 
         <!-- Progress bar -->
-        <div class="relative h-3 bg-gray-700 rounded-full overflow-hidden mb-4">
+        <div class="relative h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mb-4">
             <div id="progress-bar" class="h-full progress-bar-animated rounded-full" style="width: 0%"></div>
         </div>
 
         <!-- Currently scanning -->
-        <div id="current-file-container" class="bg-gray-700/30 rounded-lg p-3 mb-4">
+        <div id="current-file-container" class="bg-gray-100 dark:bg-gray-700/30 rounded-lg p-3 mb-4">
             <div class="flex items-center">
                 <svg class="w-4 h-4 text-gray-500 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                 </svg>
-                <span class="text-sm text-gray-400">Currently scanning:</span>
-                <span id="current-file" class="text-sm text-white ml-2 truncate">Waiting...</span>
+                <span class="text-sm text-gray-600 dark:text-gray-400">Currently scanning:</span>
+                <span id="current-file" class="text-sm text-gray-900 dark:text-white ml-2 truncate">Waiting...</span>
             </div>
         </div>
 
         <!-- Stats row -->
         <div class="grid grid-cols-4 gap-4 mb-6">
             <div class="text-center">
-                <p class="text-2xl font-bold text-white" id="progress-scanned">0</p>
+                <p class="text-2xl font-bold text-gray-900 dark:text-white" id="progress-scanned">0</p>
                 <p class="text-xs text-gray-500 uppercase">Scanned</p>
             </div>
             <div class="text-center">
@@ -188,9 +188,9 @@
         </div>
 
         <!-- Movies vs TV breakdown -->
-        <div class="grid grid-cols-2 gap-4 pt-4 border-t border-gray-700">
+        <div class="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
             <!-- Movies -->
-            <div class="flex items-center gap-4 p-3 bg-gray-700/30 rounded-lg">
+            <div class="flex items-center gap-4 p-3 bg-gray-100 dark:bg-gray-700/30 rounded-lg">
                 <div class="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center flex-shrink-0">
                     <svg class="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"/>
@@ -198,17 +198,17 @@
                 </div>
                 <div class="flex-1">
                     <div class="flex items-center justify-between mb-1">
-                        <span class="text-sm font-medium text-white">Movies</span>
-                        <span class="text-sm text-gray-400"><span id="movies-scanned">0</span> / <span id="movies-total">0</span></span>
+                        <span class="text-sm font-medium text-gray-900 dark:text-white">Movies</span>
+                        <span class="text-sm text-gray-600 dark:text-gray-400"><span id="movies-scanned">0</span> / <span id="movies-total">0</span></span>
                     </div>
-                    <div class="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                    <div class="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                         <div id="movies-progress" class="h-full bg-orange-400 rounded-full transition-all duration-500" style="width: 0%"></div>
                     </div>
                 </div>
             </div>
 
             <!-- TV Shows -->
-            <div class="flex items-center gap-4 p-3 bg-gray-700/30 rounded-lg">
+            <div class="flex items-center gap-4 p-3 bg-gray-100 dark:bg-gray-700/30 rounded-lg">
                 <div class="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
                     <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
@@ -216,10 +216,10 @@
                 </div>
                 <div class="flex-1">
                     <div class="flex items-center justify-between mb-1">
-                        <span class="text-sm font-medium text-white">TV Episodes</span>
-                        <span class="text-sm text-gray-400"><span id="tv-scanned">0</span> / <span id="tv-total">0</span></span>
+                        <span class="text-sm font-medium text-gray-900 dark:text-white">TV Episodes</span>
+                        <span class="text-sm text-gray-600 dark:text-gray-400"><span id="tv-scanned">0</span> / <span id="tv-total">0</span></span>
                     </div>
-                    <div class="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                    <div class="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                         <div id="tv-progress" class="h-full bg-blue-400 rounded-full transition-all duration-500" style="width: 0%"></div>
                     </div>
                 </div>
@@ -232,7 +232,7 @@
         <!-- Recent Activity -->
         <div class="lg:col-span-2 stat-card">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-medium text-white">Recent Activity</h3>
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white">Recent Activity</h3>
                 <a href="/ui/logs" class="text-sm text-primary hover:text-yellow-400 transition-colors">View all</a>
             </div>
             <div id="activity-container">
@@ -277,45 +277,45 @@
 
         <!-- Connections -->
         <div class="stat-card">
-            <h3 class="text-lg font-medium text-white mb-4">Connections</h3>
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Connections</h3>
             <div class="space-y-4">
                 <!-- Radarr -->
-                <div class="flex items-center p-3 bg-gray-700/30 rounded-lg">
+                <div class="flex items-center p-3 bg-gray-100 dark:bg-gray-700/30 rounded-lg">
                     <div class="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center mr-3">
                         <svg class="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4"/>
                         </svg>
                     </div>
                     <div class="flex-1">
-                        <p class="text-sm font-medium text-white">Radarr</p>
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">Radarr</p>
                         <p class="text-xs text-gray-400" id="radarr-info">Loading...</p>
                     </div>
                     <span id="radarr-status" class="status-dot online"></span>
                 </div>
 
                 <!-- Sonarr -->
-                <div class="flex items-center p-3 bg-gray-700/30 rounded-lg">
+                <div class="flex items-center p-3 bg-gray-100 dark:bg-gray-700/30 rounded-lg">
                     <div class="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center mr-3">
                         <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                         </svg>
                     </div>
                     <div class="flex-1">
-                        <p class="text-sm font-medium text-white">Sonarr</p>
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">Sonarr</p>
                         <p class="text-xs text-gray-400" id="sonarr-info">Loading...</p>
                     </div>
                     <span id="sonarr-status" class="status-dot online"></span>
                 </div>
 
                 <!-- Email -->
-                <div class="flex items-center p-3 bg-gray-700/30 rounded-lg">
+                <div class="flex items-center p-3 bg-gray-100 dark:bg-gray-700/30 rounded-lg">
                     <div class="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center mr-3">
                         <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                         </svg>
                     </div>
                     <div class="flex-1">
-                        <p class="text-sm font-medium text-white">Email</p>
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">Email</p>
                         <p class="text-xs text-gray-400" id="email-info">Loading...</p>
                     </div>
                     <span id="email-status" class="status-dot"></span>
@@ -323,14 +323,14 @@
             </div>
 
             <!-- Storage info -->
-            <div class="mt-6 pt-4 border-t border-gray-700">
+            <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <div class="flex items-center justify-between mb-2">
-                    <span class="text-sm text-gray-400">Library Size</span>
-                    <span id="library-size" class="text-sm font-medium text-white">--</span>
+                    <span class="text-sm text-gray-600 dark:text-gray-400">Library Size</span>
+                    <span id="library-size" class="text-sm font-medium text-gray-900 dark:text-white">--</span>
                 </div>
                 <div class="flex items-center justify-between">
-                    <span class="text-sm text-gray-400">Files Scanned</span>
-                    <span id="files-scanned" class="text-sm font-medium text-white">--</span>
+                    <span class="text-sm text-gray-600 dark:text-gray-400">Files Scanned</span>
+                    <span id="files-scanned" class="text-sm font-medium text-gray-900 dark:text-white">--</span>
                 </div>
             </div>
         </div>
@@ -340,7 +340,7 @@
     <div id="charts-section" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Instance Bar Chart -->
         <div class="stat-card">
-            <h3 class="text-lg font-medium text-white mb-4">Files by Instance</h3>
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Files by Instance</h3>
             <div class="h-48 sm:h-64 relative">
                 <canvas id="instance-chart"></canvas>
             </div>
@@ -349,7 +349,7 @@
         <!-- Quality Charts per Instance -->
         <div class="lg:col-span-2 stat-card">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-medium text-white">Quality by Instance</h3>
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white">Quality by Instance</h3>
                 <a href="/ui/library" class="text-sm text-primary hover:text-yellow-400 transition-colors">View details →</a>
             </div>
             <div id="quality-charts-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -361,7 +361,7 @@
 
 <!-- Toast for actions -->
 <div id="action-toast" class="fixed bottom-4 right-4 hidden z-50">
-    <div class="flex items-center bg-gray-800 border border-gray-700 text-white px-4 py-3 rounded-lg shadow-lg">
+    <div class="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white px-4 py-3 rounded-lg shadow-lg">
         <span id="action-toast-icon" class="mr-3"></span>
         <span id="action-toast-message"></span>
     </div>
@@ -589,12 +589,12 @@
                 const title = log.details?.title || log.details?.file || '';
 
                 list.innerHTML += `
-                    <div class="flex items-start space-x-3 p-2 rounded-lg hover:bg-gray-700/30 transition-colors">
+                    <div class="flex items-start space-x-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/30 transition-colors">
                         <div class="w-8 h-8 rounded-lg ${iconBg} flex items-center justify-center flex-shrink-0">
                             <svg class="w-4 h-4 ${iconColor}" fill="none" stroke="currentColor" viewBox="0 0 24 24">${icon}</svg>
                         </div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-sm text-white">${log.event || 'Event'}</p>
+                            <p class="text-sm text-gray-900 dark:text-white">${log.event || 'Event'}</p>
                             <p class="text-xs text-gray-500 truncate">${title || 'No details'}</p>
                         </div>
                         <span class="text-xs text-gray-500 flex-shrink-0">${time}</span>
@@ -706,12 +706,12 @@
 
                 // Create card for this instance
                 const card = document.createElement('div');
-                card.className = 'bg-gray-700/30 rounded-lg p-4';
+                card.className = 'bg-gray-100 dark:bg-gray-700/30 rounded-lg p-4';
                 card.innerHTML = `
                     <div class="flex items-center mb-3">
                         <div class="w-3 h-3 rounded-full mr-2" style="background: ${accentColor}"></div>
-                        <h4 class="text-sm font-medium text-white">${instance}</h4>
-                        <span class="ml-auto text-xs text-gray-400">${total.toLocaleString()} files</span>
+                        <h4 class="text-sm font-medium text-gray-900 dark:text-white">${instance}</h4>
+                        <span class="ml-auto text-xs text-gray-500">${total.toLocaleString()} files</span>
                     </div>
                     <div class="h-32 sm:h-40 relative">
                         <canvas id="quality-chart-${instance}"></canvas>
