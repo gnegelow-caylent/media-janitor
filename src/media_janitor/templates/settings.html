@@ -9,26 +9,26 @@
         <div class="sticky top-24 bg-white/50 dark:bg-gray-800/50 rounded-2xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden">
             <!-- Nav Items -->
             <nav class="p-2">
-                <button onclick="showSection('general')" class="settings-nav-item active" data-section="general">
+                <button onclick="showSection('general')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-900 dark:text-white bg-gray-200 dark:bg-gray-700 transition-all" data-section="general">
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                     </svg>
                     <span>General</span>
                 </button>
-                <button onclick="showSection('connections')" class="settings-nav-item" data-section="connections">
+                <button onclick="showSection('connections')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-all" data-section="connections">
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"/>
                     </svg>
                     <span>Connections</span>
                 </button>
-                <button onclick="showSection('actions')" class="settings-nav-item" data-section="actions">
+                <button onclick="showSection('actions')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-all" data-section="actions">
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                     </svg>
                     <span>Actions</span>
                 </button>
-                <button onclick="showSection('notifications')" class="settings-nav-item" data-section="notifications">
+                <button onclick="showSection('notifications')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-all" data-section="notifications">
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                     </svg>
@@ -48,27 +48,27 @@
             </header>
 
             <div class="space-y-6 max-w-2xl">
-                <div class="settings-group">
-                    <h3 class="settings-group-title">Appearance</h3>
-                    <div class="settings-group-content">
+                <div class="bg-white/30 dark:bg-gray-800/30 rounded-2xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden">
+                    <h3 class="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-100/50 dark:bg-gray-800/50 border-b border-gray-200/50 dark:border-gray-700/50">Appearance</h3>
+                    <div class="p-5">
                         <div class="flex items-center justify-between">
                             <div>
                                 <label class="text-sm font-medium text-gray-900 dark:text-white">Theme</label>
                                 <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Choose your preferred color scheme</p>
                             </div>
                             <div class="flex gap-2">
-                                <label class="theme-btn">
+                                <label class="cursor-pointer">
                                     <input type="radio" name="theme" value="dark" id="theme-dark" class="sr-only peer">
-                                    <div class="peer-checked:ring-2 peer-checked:ring-primary peer-checked:bg-gray-700">
+                                    <div class="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm transition-all peer-checked:ring-2 peer-checked:ring-primary peer-checked:border-primary">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
                                         </svg>
                                         <span>Dark</span>
                                     </div>
                                 </label>
-                                <label class="theme-btn">
+                                <label class="cursor-pointer">
                                     <input type="radio" name="theme" value="light" id="theme-light" class="sr-only peer">
-                                    <div class="peer-checked:ring-2 peer-checked:ring-primary peer-checked:bg-gray-700">
+                                    <div class="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm transition-all peer-checked:ring-2 peer-checked:ring-primary peer-checked:border-primary">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
                                         </svg>
@@ -80,15 +80,15 @@
                     </div>
                 </div>
 
-                <div class="settings-group">
-                    <h3 class="settings-group-title">Localization</h3>
-                    <div class="settings-group-content">
+                <div class="bg-white/30 dark:bg-gray-800/30 rounded-2xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden">
+                    <h3 class="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-100/50 dark:bg-gray-800/50 border-b border-gray-200/50 dark:border-gray-700/50">Localization</h3>
+                    <div class="p-5">
                         <div class="flex items-center justify-between">
                             <div>
                                 <label class="text-sm font-medium text-gray-900 dark:text-white">Timezone</label>
                                 <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Used for scheduling and log timestamps</p>
                             </div>
-                            <select id="timezone" class="settings-select">
+                            <select id="timezone" class="px-4 py-2.5 rounded-xl bg-gray-100/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all cursor-pointer">
                                 <option value="America/New_York">Eastern Time (ET)</option>
                                 <option value="America/Chicago">Central Time (CT)</option>
                                 <option value="America/Denver">Mountain Time (MT)</option>
@@ -104,7 +104,7 @@
                 </div>
 
                 <div class="mt-6 flex justify-end">
-                    <button onclick="saveAllSettings()" class="save-section-btn">
+                    <button onclick="saveAllSettings()" class="save-btn flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-gray-900 text-sm font-semibold cursor-pointer transition-colors hover:bg-yellow-500">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                         </svg>
@@ -123,7 +123,7 @@
 
             <div class="space-y-8 max-w-3xl">
                 <!-- Radarr -->
-                <div class="settings-group">
+                <div class="bg-white/30 dark:bg-gray-800/30 rounded-2xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg">
@@ -140,7 +140,7 @@
                     </div>
                     <div id="radarr-instances" class="space-y-3"></div>
                     <div class="mt-4 pt-4 border-t border-gray-200/50 dark:border-gray-700/50 flex justify-end">
-                        <button onclick="saveAllSettings()" class="save-section-btn">
+                        <button onclick="saveAllSettings()" class="save-btn flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-gray-900 text-sm font-semibold cursor-pointer transition-colors hover:bg-yellow-500">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                             </svg>
@@ -150,7 +150,7 @@
                 </div>
 
                 <!-- Sonarr -->
-                <div class="settings-group">
+                <div class="bg-white/30 dark:bg-gray-800/30 rounded-2xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
@@ -167,7 +167,7 @@
                     </div>
                     <div id="sonarr-instances" class="space-y-3"></div>
                     <div class="mt-4 pt-4 border-t border-gray-200/50 dark:border-gray-700/50 flex justify-end">
-                        <button onclick="saveAllSettings()" class="save-section-btn">
+                        <button onclick="saveAllSettings()" class="save-btn flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-gray-900 text-sm font-semibold cursor-pointer transition-colors hover:bg-yellow-500">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                             </svg>
@@ -177,7 +177,7 @@
                 </div>
 
                 <!-- Plex -->
-                <div class="settings-group">
+                <div class="bg-white/30 dark:bg-gray-800/30 rounded-2xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden">
                     <div class="flex items-center gap-3 mb-4">
                         <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center shadow-lg">
                             <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
@@ -188,20 +188,20 @@
                             <h3 class="font-semibold text-gray-900 dark:text-white">Plex</h3>
                             <p class="text-xs text-gray-500">Library refresh after replacements</p>
                         </div>
-                        <label class="toggle">
+                        <label class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer">
                             <input type="checkbox" id="plex-enabled">
-                            <span class="toggle-track"></span>
+                            <span class="pointer-events-none inline-block h-6 w-11 rounded-full bg-gray-300 dark:bg-gray-700 transition-colors peer-checked:bg-primary"></span>
                         </label>
                     </div>
-                    <div class="settings-group-content">
+                    <div class="p-5">
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="settings-label">Server URL</label>
-                                <input type="text" id="plex-url" class="settings-input" placeholder="http://your-server:32400">
+                                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Server URL</label>
+                                <input type="text" id="plex-url" class="w-full px-4 py-2.5 rounded-xl bg-gray-100/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all" placeholder="http://your-server:32400">
                             </div>
                             <div>
-                                <label class="settings-label">Token</label>
-                                <input type="password" id="plex-token" class="settings-input" placeholder="Your Plex token">
+                                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Token</label>
+                                <input type="password" id="plex-token" class="w-full px-4 py-2.5 rounded-xl bg-gray-100/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all" placeholder="Your Plex token">
                             </div>
                         </div>
                         <div class="mt-4 flex items-center gap-4">
@@ -210,7 +210,7 @@
                         </div>
                     </div>
                     <div class="mt-4 pt-4 border-t border-gray-200/50 dark:border-gray-700/50 flex justify-end">
-                        <button onclick="saveAllSettings()" class="save-section-btn">
+                        <button onclick="saveAllSettings()" class="save-btn flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-gray-900 text-sm font-semibold cursor-pointer transition-colors hover:bg-yellow-500">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                             </svg>
@@ -230,8 +230,8 @@
 
             <div class="space-y-6 max-w-2xl">
                 <!-- Dry Run Mode - Highlighted -->
-                <div class="settings-group border-blue-500/30 bg-blue-500/5">
-                    <div class="settings-group-content">
+                <div class="bg-blue-500/5 dark:bg-blue-500/10 rounded-2xl border border-blue-500/30 overflow-hidden">
+                    <div class="p-5">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-3">
                                 <div class="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
@@ -244,25 +244,25 @@
                                     <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Report issues without making any changes (safe testing)</p>
                                 </div>
                             </div>
-                            <label class="toggle">
+                            <label class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer">
                                 <input type="checkbox" id="actions-dry-run">
-                                <span class="toggle-track"></span>
+                                <span class="pointer-events-none inline-block h-6 w-11 rounded-full bg-gray-300 dark:bg-gray-700 transition-colors peer-checked:bg-primary"></span>
                             </label>
                         </div>
                     </div>
                 </div>
 
-                <div class="settings-group">
-                    <h3 class="settings-group-title">Replacement Behavior</h3>
-                    <div class="settings-group-content space-y-4">
+                <div class="bg-white/30 dark:bg-gray-800/30 rounded-2xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden">
+                    <h3 class="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-100/50 dark:bg-gray-800/50 border-b border-gray-200/50 dark:border-gray-700/50">Replacement Behavior</h3>
+                    <div class="p-5 space-y-4">
                         <div class="flex items-center justify-between">
                             <div>
                                 <label class="text-sm font-medium text-gray-900 dark:text-white">Auto Replace Bad Files</label>
                                 <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Delete and re-download files that fail validation</p>
                             </div>
-                            <label class="toggle">
+                            <label class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer">
                                 <input type="checkbox" id="actions-auto-replace">
-                                <span class="toggle-track"></span>
+                                <span class="pointer-events-none inline-block h-6 w-11 rounded-full bg-gray-300 dark:bg-gray-700 transition-colors peer-checked:bg-primary"></span>
                             </label>
                         </div>
 
@@ -271,9 +271,9 @@
                                 <label class="text-sm font-medium text-gray-900 dark:text-white">Blocklist Bad Releases</label>
                                 <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Prevent re-downloading the same bad release</p>
                             </div>
-                            <label class="toggle">
+                            <label class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer">
                                 <input type="checkbox" id="actions-blocklist">
-                                <span class="toggle-track"></span>
+                                <span class="pointer-events-none inline-block h-6 w-11 rounded-full bg-gray-300 dark:bg-gray-700 transition-colors peer-checked:bg-primary"></span>
                             </label>
                         </div>
 
@@ -287,25 +287,25 @@
                     </div>
                 </div>
 
-                <div class="settings-group">
-                    <h3 class="settings-group-title">Duplicate Handling</h3>
-                    <div class="settings-group-content">
+                <div class="bg-white/30 dark:bg-gray-800/30 rounded-2xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden">
+                    <h3 class="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-100/50 dark:bg-gray-800/50 border-b border-gray-200/50 dark:border-gray-700/50">Duplicate Handling</h3>
+                    <div class="p-5">
                         <div class="flex items-center justify-between">
                             <div>
                                 <label class="text-sm font-medium text-gray-900 dark:text-white">Auto Delete Duplicates</label>
                                 <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Automatically remove lower quality duplicate copies</p>
                             </div>
-                            <label class="toggle">
+                            <label class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer">
                                 <input type="checkbox" id="actions-auto-delete-duplicates">
-                                <span class="toggle-track"></span>
+                                <span class="pointer-events-none inline-block h-6 w-11 rounded-full bg-gray-300 dark:bg-gray-700 transition-colors peer-checked:bg-primary"></span>
                             </label>
                         </div>
                     </div>
                 </div>
 
-                <div class="settings-group">
-                    <h3 class="settings-group-title">Scanner Settings</h3>
-                    <div class="settings-group-content space-y-4">
+                <div class="bg-white/30 dark:bg-gray-800/30 rounded-2xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden">
+                    <h3 class="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-100/50 dark:bg-gray-800/50 border-b border-gray-200/50 dark:border-gray-700/50">Scanner Settings</h3>
+                    <div class="p-5 space-y-4">
                         <!-- Recommendations hint -->
                         <div class="p-3 rounded-lg bg-gray-100/50 dark:bg-gray-900/50 border border-gray-200/50 dark:border-gray-700/50 mb-2">
                             <p class="text-xs text-gray-600 dark:text-gray-400 mb-2"><span class="text-primary font-medium">Recommendations:</span> Match files/hr with parallel scans for optimal throughput. Disable Deep Scan if CPU is limited.</p>
@@ -317,9 +317,9 @@
                                 <label class="text-sm font-medium text-gray-900 dark:text-white">Scanner Enabled</label>
                                 <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Enable background library scanning</p>
                             </div>
-                            <label class="toggle">
+                            <label class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer">
                                 <input type="checkbox" id="scanner-enabled">
-                                <span class="toggle-track"></span>
+                                <span class="pointer-events-none inline-block h-6 w-11 rounded-full bg-gray-300 dark:bg-gray-700 transition-colors peer-checked:bg-primary"></span>
                             </label>
                         </div>
 
@@ -339,7 +339,7 @@
                                 <label class="text-sm font-medium text-gray-900 dark:text-white">Scan Mode</label>
                                 <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Watch Only = scan library once, then only new imports</p>
                             </div>
-                            <select id="scanner-mode" class="settings-select">
+                            <select id="scanner-mode" class="px-4 py-2.5 rounded-xl bg-gray-100/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all cursor-pointer">
                                 <option value="watch_only">Watch Only</option>
                                 <option value="continuous">Continuous</option>
                             </select>
@@ -358,9 +358,9 @@
                                 <label class="text-sm font-medium text-gray-900 dark:text-white">Deep Scan</label>
                                 <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Decode video samples with ffmpeg. <span class="text-yellow-500">CPU intensive</span> but catches more issues</p>
                             </div>
-                            <label class="toggle">
+                            <label class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer">
                                 <input type="checkbox" id="validation-deep-scan">
-                                <span class="toggle-track"></span>
+                                <span class="pointer-events-none inline-block h-6 w-11 rounded-full bg-gray-300 dark:bg-gray-700 transition-colors peer-checked:bg-primary"></span>
                             </label>
                         </div>
 
@@ -369,7 +369,7 @@
                                 <label class="text-sm font-medium text-gray-900 dark:text-white">Deep Scan Mode</label>
                                 <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5"><span class="text-green-400">Partial</span> = start only (3x faster) | <span class="text-yellow-400">Full</span> = start/middle/end</p>
                             </div>
-                            <select id="validation-deep-scan-mode" class="settings-select">
+                            <select id="validation-deep-scan-mode" class="px-4 py-2.5 rounded-xl bg-gray-100/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all cursor-pointer">
                                 <option value="partial">Partial (Recommended for network mounts)</option>
                                 <option value="full">Full (Local storage only)</option>
                             </select>
@@ -396,9 +396,9 @@
                                 <label class="text-sm font-medium text-gray-900 dark:text-white">Check Bitrate</label>
                                 <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Flag suspiciously low bitrate files. Minimal overhead</p>
                             </div>
-                            <label class="toggle">
+                            <label class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer">
                                 <input type="checkbox" id="validation-check-bitrate">
-                                <span class="toggle-track"></span>
+                                <span class="pointer-events-none inline-block h-6 w-11 rounded-full bg-gray-300 dark:bg-gray-700 transition-colors peer-checked:bg-primary"></span>
                             </label>
                         </div>
 
@@ -407,16 +407,16 @@
                                 <label class="text-sm font-medium text-gray-900 dark:text-white">Replace 3D Movies</label>
                                 <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Detect and replace 3D movies with 2D versions. Checks filename, metadata, and aspect ratio</p>
                             </div>
-                            <label class="toggle">
+                            <label class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer">
                                 <input type="checkbox" id="validation-replace-3d">
-                                <span class="toggle-track"></span>
+                                <span class="pointer-events-none inline-block h-6 w-11 rounded-full bg-gray-300 dark:bg-gray-700 transition-colors peer-checked:bg-primary"></span>
                             </label>
                         </div>
                     </div>
                 </div>
 
                 <div class="mt-6 flex justify-end">
-                    <button onclick="saveAllSettings()" class="save-section-btn">
+                    <button onclick="saveAllSettings()" class="save-btn flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-gray-900 text-sm font-semibold cursor-pointer transition-colors hover:bg-yellow-500">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                         </svg>
@@ -435,7 +435,7 @@
 
             <div class="space-y-6 max-w-2xl">
                 <!-- Email -->
-                <div class="settings-group">
+                <div class="bg-white/30 dark:bg-gray-800/30 rounded-2xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500 to-pink-500 flex items-center justify-center shadow-lg">
@@ -448,23 +448,23 @@
                                 <p class="text-xs text-gray-500">Daily summaries and alerts</p>
                             </div>
                         </div>
-                        <label class="toggle">
+                        <label class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer">
                             <input type="checkbox" id="email-enabled">
-                            <span class="toggle-track"></span>
+                            <span class="pointer-events-none inline-block h-6 w-11 rounded-full bg-gray-300 dark:bg-gray-700 transition-colors peer-checked:bg-primary"></span>
                         </label>
                     </div>
-                    <div class="settings-group-content">
+                    <div class="p-5">
                         <div class="flex gap-2 mb-4">
-                            <button onclick="setupGmail()" class="preset-btn">Gmail</button>
-                            <button onclick="setupOutlook()" class="preset-btn">Outlook</button>
+                            <button onclick="setupGmail()" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-all">Gmail</button>
+                            <button onclick="setupOutlook()" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-all">Outlook</button>
                         </div>
                         <div class="grid grid-cols-2 gap-3">
-                            <input type="text" id="email-smtp-host" class="settings-input" placeholder="SMTP Server">
-                            <input type="number" id="email-smtp-port" class="settings-input" placeholder="Port">
-                            <input type="text" id="email-smtp-user" class="settings-input" placeholder="Username">
-                            <input type="password" id="email-smtp-password" class="settings-input" placeholder="Password">
-                            <input type="email" id="email-from" class="settings-input" placeholder="From address">
-                            <input type="email" id="email-to" class="settings-input" placeholder="To address">
+                            <input type="text" id="email-smtp-host" class="w-full px-4 py-2.5 rounded-xl bg-gray-100/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all" placeholder="SMTP Server">
+                            <input type="number" id="email-smtp-port" class="w-full px-4 py-2.5 rounded-xl bg-gray-100/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all" placeholder="Port">
+                            <input type="text" id="email-smtp-user" class="w-full px-4 py-2.5 rounded-xl bg-gray-100/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all" placeholder="Username">
+                            <input type="password" id="email-smtp-password" class="w-full px-4 py-2.5 rounded-xl bg-gray-100/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all" placeholder="Password">
+                            <input type="email" id="email-from" class="w-full px-4 py-2.5 rounded-xl bg-gray-100/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all" placeholder="From address">
+                            <input type="email" id="email-to" class="w-full px-4 py-2.5 rounded-xl bg-gray-100/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all" placeholder="To address">
                         </div>
                         <div class="mt-4 flex items-center gap-4">
                             <button onclick="testEmail()" class="text-sm text-primary hover:text-yellow-400 font-medium">Send Test Email</button>
@@ -474,7 +474,7 @@
                 </div>
 
                 <!-- Discord -->
-                <div class="settings-group">
+                <div class="bg-white/30 dark:bg-gray-800/30 rounded-2xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
@@ -487,13 +487,13 @@
                                 <p class="text-xs text-gray-500">Webhook notifications</p>
                             </div>
                         </div>
-                        <label class="toggle">
+                        <label class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer">
                             <input type="checkbox" id="discord-enabled">
-                            <span class="toggle-track"></span>
+                            <span class="pointer-events-none inline-block h-6 w-11 rounded-full bg-gray-300 dark:bg-gray-700 transition-colors peer-checked:bg-primary"></span>
                         </label>
                     </div>
-                    <div class="settings-group-content">
-                        <input type="text" id="discord-webhook" class="settings-input" placeholder="https://discord.com/api/webhooks/...">
+                    <div class="p-5">
+                        <input type="text" id="discord-webhook" class="w-full px-4 py-2.5 rounded-xl bg-gray-100/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all" placeholder="https://discord.com/api/webhooks/...">
                         <div class="mt-3 flex items-center gap-4">
                             <button onclick="testNotification('discord')" class="text-sm text-primary hover:text-yellow-400 font-medium">Send Test</button>
                             <span id="discord-test-result" class="text-sm"></span>
@@ -502,7 +502,7 @@
                 </div>
 
                 <!-- Slack -->
-                <div class="settings-group">
+                <div class="bg-white/30 dark:bg-gray-800/30 rounded-2xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg">
@@ -515,13 +515,13 @@
                                 <p class="text-xs text-gray-500">Webhook notifications</p>
                             </div>
                         </div>
-                        <label class="toggle">
+                        <label class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer">
                             <input type="checkbox" id="slack-enabled">
-                            <span class="toggle-track"></span>
+                            <span class="pointer-events-none inline-block h-6 w-11 rounded-full bg-gray-300 dark:bg-gray-700 transition-colors peer-checked:bg-primary"></span>
                         </label>
                     </div>
-                    <div class="settings-group-content">
-                        <input type="text" id="slack-webhook" class="settings-input" placeholder="https://hooks.slack.com/services/...">
+                    <div class="p-5">
+                        <input type="text" id="slack-webhook" class="w-full px-4 py-2.5 rounded-xl bg-gray-100/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all" placeholder="https://hooks.slack.com/services/...">
                         <div class="mt-3 flex items-center gap-4">
                             <button onclick="testNotification('slack')" class="text-sm text-primary hover:text-yellow-400 font-medium">Send Test</button>
                             <span id="slack-test-result" class="text-sm"></span>
@@ -530,7 +530,7 @@
                 </div>
 
                 <!-- Telegram -->
-                <div class="settings-group">
+                <div class="bg-white/30 dark:bg-gray-800/30 rounded-2xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center shadow-lg">
@@ -543,15 +543,15 @@
                                 <p class="text-xs text-gray-500">Bot notifications</p>
                             </div>
                         </div>
-                        <label class="toggle">
+                        <label class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer">
                             <input type="checkbox" id="telegram-enabled">
-                            <span class="toggle-track"></span>
+                            <span class="pointer-events-none inline-block h-6 w-11 rounded-full bg-gray-300 dark:bg-gray-700 transition-colors peer-checked:bg-primary"></span>
                         </label>
                     </div>
-                    <div class="settings-group-content">
+                    <div class="p-5">
                         <div class="grid grid-cols-2 gap-3">
-                            <input type="password" id="telegram-bot-token" class="settings-input" placeholder="Bot Token">
-                            <input type="text" id="telegram-chat-id" class="settings-input" placeholder="Chat ID">
+                            <input type="password" id="telegram-bot-token" class="w-full px-4 py-2.5 rounded-xl bg-gray-100/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all" placeholder="Bot Token">
+                            <input type="text" id="telegram-chat-id" class="w-full px-4 py-2.5 rounded-xl bg-gray-100/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all" placeholder="Chat ID">
                         </div>
                         <div class="mt-3 flex items-center gap-4">
                             <button onclick="testNotification('telegram')" class="text-sm text-primary hover:text-yellow-400 font-medium">Send Test</button>
@@ -561,7 +561,7 @@
                 </div>
 
                 <!-- Pushover -->
-                <div class="settings-group">
+                <div class="bg-white/30 dark:bg-gray-800/30 rounded-2xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center shadow-lg">
@@ -574,15 +574,15 @@
                                 <p class="text-xs text-gray-500">Mobile push notifications</p>
                             </div>
                         </div>
-                        <label class="toggle">
+                        <label class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer">
                             <input type="checkbox" id="pushover-enabled">
-                            <span class="toggle-track"></span>
+                            <span class="pointer-events-none inline-block h-6 w-11 rounded-full bg-gray-300 dark:bg-gray-700 transition-colors peer-checked:bg-primary"></span>
                         </label>
                     </div>
-                    <div class="settings-group-content">
+                    <div class="p-5">
                         <div class="grid grid-cols-2 gap-3">
-                            <input type="password" id="pushover-user-key" class="settings-input" placeholder="User Key">
-                            <input type="password" id="pushover-api-token" class="settings-input" placeholder="API Token">
+                            <input type="password" id="pushover-user-key" class="w-full px-4 py-2.5 rounded-xl bg-gray-100/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all" placeholder="User Key">
+                            <input type="password" id="pushover-api-token" class="w-full px-4 py-2.5 rounded-xl bg-gray-100/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all" placeholder="API Token">
                         </div>
                         <div class="mt-3 flex items-center gap-4">
                             <button onclick="testNotification('pushover')" class="text-sm text-primary hover:text-yellow-400 font-medium">Send Test</button>
@@ -592,7 +592,7 @@
                 </div>
 
                 <!-- Gotify -->
-                <div class="settings-group">
+                <div class="bg-white/30 dark:bg-gray-800/30 rounded-2xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center shadow-lg">
@@ -605,15 +605,15 @@
                                 <p class="text-xs text-gray-500">Self-hosted notifications</p>
                             </div>
                         </div>
-                        <label class="toggle">
+                        <label class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer">
                             <input type="checkbox" id="gotify-enabled">
-                            <span class="toggle-track"></span>
+                            <span class="pointer-events-none inline-block h-6 w-11 rounded-full bg-gray-300 dark:bg-gray-700 transition-colors peer-checked:bg-primary"></span>
                         </label>
                     </div>
-                    <div class="settings-group-content">
+                    <div class="p-5">
                         <div class="grid grid-cols-2 gap-3">
-                            <input type="text" id="gotify-server-url" class="settings-input" placeholder="Server URL">
-                            <input type="password" id="gotify-app-token" class="settings-input" placeholder="App Token">
+                            <input type="text" id="gotify-server-url" class="w-full px-4 py-2.5 rounded-xl bg-gray-100/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all" placeholder="Server URL">
+                            <input type="password" id="gotify-app-token" class="w-full px-4 py-2.5 rounded-xl bg-gray-100/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all" placeholder="App Token">
                         </div>
                         <div class="mt-3 flex items-center gap-4">
                             <button onclick="testNotification('gotify')" class="text-sm text-primary hover:text-yellow-400 font-medium">Send Test</button>
@@ -623,7 +623,7 @@
                 </div>
 
                 <div class="mt-6 flex justify-end">
-                    <button onclick="saveAllSettings()" class="save-section-btn">
+                    <button onclick="saveAllSettings()" class="save-btn flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-gray-900 text-sm font-semibold cursor-pointer transition-colors hover:bg-yellow-500">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                         </svg>
@@ -642,187 +642,20 @@
     </div>
 </div>
 
-<style type="text/tailwindcss">
-    /* Navigation - Vertical List */
-    nav {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-    }
-    .settings-nav-item {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        width: 100%;
-        padding: 0.75rem 1rem;
-        border-radius: 0.75rem;
-        font-size: 0.875rem;
-        font-weight: 500;
-        background: transparent;
-        border: none;
-        cursor: pointer;
-        text-align: left;
-        transition: all 0.2s;
-        @apply text-gray-500;
-    }
-    .dark .settings-nav-item {
-        @apply text-gray-400;
-    }
-    .settings-nav-item:hover {
-        @apply text-gray-900 bg-gray-100;
-    }
-    .dark .settings-nav-item:hover {
-        @apply text-white bg-gray-700/50;
-    }
-    .settings-nav-item.active {
-        @apply text-gray-900 bg-gray-200;
-    }
-    .dark .settings-nav-item.active {
-        @apply text-white bg-gray-700;
-    }
-    .settings-nav-item.active svg {
-        color: #fbbf24;
-    }
-    .settings-nav-item svg {
-        @apply text-gray-400;
-    }
-    .dark .settings-nav-item svg {
-        @apply text-gray-500;
-    }
-    .settings-nav-item:hover svg {
-        @apply text-gray-600;
-    }
-    .dark .settings-nav-item:hover svg {
-        @apply text-gray-400;
-    }
-
-    /* Groups */
-    .settings-group {
-        @apply bg-white/30 rounded-2xl border border-gray-200/50 overflow-hidden;
-    }
-    .dark .settings-group {
-        @apply bg-gray-800/30 border-gray-700/50;
-    }
-    .settings-group-title {
-        @apply px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-100/50 border-b border-gray-200/50;
-    }
-    .dark .settings-group-title {
-        @apply bg-gray-800/50 border-gray-700/50;
-    }
-    .settings-group-content {
-        @apply p-5;
-    }
-
-    /* Form Elements */
-    .settings-label {
-        @apply block text-xs font-medium text-gray-600 mb-1.5;
-    }
-    .dark .settings-label {
-        @apply text-gray-400;
-    }
-    .settings-input {
-        @apply w-full px-4 py-2.5 rounded-xl bg-gray-100/50 border border-gray-300 text-gray-900 text-sm placeholder-gray-400 focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all duration-200;
-    }
-    .dark .settings-input {
-        @apply bg-gray-900/50 border-gray-700 text-white placeholder-gray-500;
-    }
-    .settings-select {
-        @apply px-4 py-2.5 rounded-xl bg-gray-100/50 border border-gray-300 text-gray-900 text-sm focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all duration-200 cursor-pointer;
-    }
-    .dark .settings-select {
-        @apply bg-gray-900/50 border-gray-700 text-white;
-    }
-
-    /* Toggle Switch */
-    .toggle {
-        @apply relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer;
-    }
-    .toggle input {
-        @apply sr-only;
-    }
-    .toggle-track {
-        @apply pointer-events-none inline-block h-6 w-11 rounded-full bg-gray-300 transition-colors duration-200;
-    }
-    .dark .toggle-track {
-        @apply bg-gray-700;
-    }
-    .toggle-track::before {
-        content: '';
-        @apply absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-lg transition-all duration-200;
-    }
-    .dark .toggle-track::before {
-        @apply bg-gray-400;
-    }
-    .toggle input:checked + .toggle-track {
-        @apply bg-primary;
-    }
-    .toggle input:checked + .toggle-track::before {
-        @apply translate-x-5 bg-white;
-    }
-
-    /* Theme Buttons */
-    .theme-btn {
-        @apply cursor-pointer;
-    }
-    .theme-btn > div {
-        @apply flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 border border-gray-300 text-gray-700 text-sm transition-all duration-200;
-    }
-    .dark .theme-btn > div {
-        @apply bg-gray-800 border-gray-700 text-gray-300;
-    }
-    .theme-btn:hover > div {
-        @apply border-gray-400;
-    }
-    .dark .theme-btn:hover > div {
-        @apply border-gray-600;
-    }
-
-    /* Preset Buttons */
-    .preset-btn {
-        @apply px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-100 text-gray-600 border border-gray-300 hover:bg-gray-200 hover:text-gray-900 transition-all duration-200;
-    }
-    .dark .preset-btn {
-        @apply bg-gray-800 text-gray-400 border-gray-700 hover:bg-gray-700 hover:text-white;
-    }
-
-    /* Instance Rows */
-    .instance-row {
-        @apply p-4 bg-gray-100/30 rounded-xl border border-gray-200/50;
-    }
-    .dark .instance-row {
-        @apply bg-gray-900/30 border-gray-700/50;
-    }
-
-    /* Save Section Button */
-    .save-section-btn {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 1rem;
-        border-radius: 0.5rem;
-        background: #fbbf24;
-        color: #111827;
-        font-size: 0.875rem;
-        font-weight: 600;
-        border: none;
-        cursor: pointer;
-        transition: background 0.2s;
-    }
-    .save-section-btn:hover {
-        background: #f59e0b;
-    }
-</style>
 {% endblock %}
 
 {% block scripts %}
 <script>
     let currentConfig = {};
 
+    const NAV_INACTIVE = 'w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-all';
+    const NAV_ACTIVE = 'w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-900 dark:text-white bg-gray-200 dark:bg-gray-700 transition-all';
+
     function showSection(name) {
         document.querySelectorAll('.settings-section').forEach(el => el.classList.add('hidden'));
-        document.querySelectorAll('.settings-nav-item').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('[data-section]').forEach(el => el.className = NAV_INACTIVE);
         document.getElementById(`section-${name}`).classList.remove('hidden');
-        document.querySelector(`[data-section="${name}"]`).classList.add('active');
+        document.querySelector(`[data-section="${name}"]`).className = NAV_ACTIVE;
     }
 
     function showToast(message, isError = false) {
@@ -918,11 +751,11 @@
             return;
         }
         container.innerHTML = instances.map((inst, idx) => `
-            <div class="instance-row" data-instance="${type}-${idx}">
+            <div class="p-4 bg-gray-100/30 dark:bg-gray-900/30 rounded-xl border border-gray-200/50 dark:border-gray-700/50" data-instance="${type}-${idx}">
                 <div class="grid grid-cols-3 gap-3 mb-3">
-                    <input type="text" value="${inst.name}" class="settings-input" placeholder="Name" data-field="name">
-                    <input type="text" value="${inst.url}" class="settings-input" placeholder="URL" data-field="url">
-                    <input type="password" value="${inst.api_key}" class="settings-input" placeholder="API Key" data-field="api_key">
+                    <input type="text" value="${inst.name}" class="w-full px-4 py-2.5 rounded-xl bg-gray-100/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all" placeholder="Name" data-field="name">
+                    <input type="text" value="${inst.url}" class="w-full px-4 py-2.5 rounded-xl bg-gray-100/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all" placeholder="URL" data-field="url">
+                    <input type="password" value="${inst.api_key}" class="w-full px-4 py-2.5 rounded-xl bg-gray-100/50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all" placeholder="API Key" data-field="api_key">
                 </div>
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
@@ -1198,7 +1031,7 @@
 
     async function saveAllSettings() {
         // Disable all save buttons and show loading state
-        const saveButtons = document.querySelectorAll('.save-section-btn');
+        const saveButtons = document.querySelectorAll('.save-btn');
         saveButtons.forEach(btn => {
             btn.disabled = true;
             btn.dataset.originalText = btn.innerHTML;
