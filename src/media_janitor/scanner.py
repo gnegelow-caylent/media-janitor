@@ -191,6 +191,18 @@ class Scanner:
                 random.shuffle(movies)
                 random.shuffle(tv)
 
+            # For partial refreshes, preserve items from other sources still in queue
+            if source == "tv":
+                # Keep existing movies in queue
+                existing_movies = [item for item in self._scan_queue if item.arr_type == ArrType.RADARR]
+                movies = existing_movies  # Use existing movies, not newly fetched (which would be empty)
+                self.log.info("Partial TV refresh, preserving movies in queue", movies_preserved=len(movies))
+            elif source == "movies":
+                # Keep existing TV in queue
+                existing_tv = [item for item in self._scan_queue if item.arr_type == ArrType.SONARR]
+                tv = existing_tv  # Use existing TV, not newly fetched (which would be empty)
+                self.log.info("Partial movies refresh, preserving TV in queue", tv_preserved=len(tv))
+
             # Interleave: for every 1 movie, scan ~10 TV (proportional to library size)
             # This ensures both get scanned even with large TV libraries
             interleaved = []
@@ -207,7 +219,8 @@ class Scanner:
                         ti += 1
 
             self._scan_queue = interleaved
-            self._last_full_refresh = datetime.now()
+            if source == "all":
+                self._last_full_refresh = datetime.now()
 
             # Build media cache for fast path lookups (avoid re-fetching all media)
             self._media_cache = {
@@ -305,10 +318,40 @@ class Scanner:
         if self._initial_scan_complete:
             return True
 
+        # Must have queue empty AND have done a refresh
         if len(self._scan_queue) == 0 and self._last_full_refresh is not None:
+            # Verify we actually scanned all files, not just emptied the queue
+            stats = self.state.get_stats()
+            movies_scanned = stats.get("movies_scanned", 0)
+            movies_total = stats.get("movies_total", 0)
+            tv_scanned = stats.get("tv_scanned", 0)
+            tv_total = stats.get("tv_total", 0)
+
+            # Only mark complete if we've scanned at least as many as exist in the library
+            # (scanned can be > total if files were deleted after scanning)
+            if movies_total > 0 and movies_scanned < movies_total:
+                self.log.warning(
+                    "Queue empty but movies not fully scanned",
+                    movies_scanned=movies_scanned,
+                    movies_total=movies_total,
+                )
+                return False
+
+            if tv_total > 0 and tv_scanned < tv_total:
+                self.log.warning(
+                    "Queue empty but TV not fully scanned",
+                    tv_scanned=tv_scanned,
+                    tv_total=tv_total,
+                )
+                return False
+
             self.state.mark_scan_completed()
             self._initial_scan_complete = True
-            self.log.info("Initial library scan completed!")
+            self.log.info(
+                "Initial library scan completed!",
+                movies_scanned=movies_scanned,
+                tv_scanned=tv_scanned,
+            )
             return True
 
         return False
