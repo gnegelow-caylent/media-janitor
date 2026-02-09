@@ -149,15 +149,25 @@ async def _handle_arr_webhook(
     # Extract file info from payload and create MediaItem for cache
     file_path = None
     media_item = None
-    instance_name = payload.get("instanceName", "")
+    webhook_instance_name = payload.get("instanceName", "")
 
     # Find the appropriate client for path translation
+    # Use the configured instance name, not the webhook's instance name
     client = None
+    instance_name = None
     if _janitor:
         for c in _janitor.scanner.get_all_clients():
-            if c.arr_type == arr_type and (not instance_name or c.instance.name == instance_name):
+            if c.arr_type == arr_type and (not webhook_instance_name or c.instance.name == webhook_instance_name):
                 client = c
+                instance_name = c.instance.name  # Use configured name
                 break
+        # If no exact match, try to find any client of the right type
+        if not client:
+            for c in _janitor.scanner.get_all_clients():
+                if c.arr_type == arr_type:
+                    client = c
+                    instance_name = c.instance.name  # Use configured name
+                    break
 
     if arr_type == ArrType.RADARR:
         movie = payload.get("movie", {})
