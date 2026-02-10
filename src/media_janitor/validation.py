@@ -375,12 +375,13 @@ async def validate_file(file_path: str, config: ValidationConfig) -> ValidationR
         }.get(tier, 500)
 
         if result.video_bitrate_kbps < min_bitrate:
-            result.warnings.append(
-                f"Bitrate {result.video_bitrate_kbps}kbps is low for {tier} "
+            result.valid = False
+            result.errors.append(
+                f"Bitrate {result.video_bitrate_kbps}kbps is below minimum for {tier} "
                 f"(minimum: {min_bitrate}kbps)"
             )
-            log.info(
-                "Low bitrate detected",
+            log.warning(
+                "Low bitrate - file needs replacement",
                 bitrate=result.video_bitrate_kbps,
                 tier=tier,
                 minimum=min_bitrate,

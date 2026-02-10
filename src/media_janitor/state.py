@@ -155,9 +155,6 @@ class StateManager:
                 "media_type": media_type,
                 "timestamp": datetime.now().isoformat(),
             })
-            # Keep only last 1000 missing files
-            if len(self._state["missing_files"]) > 1000:
-                self._state["missing_files"] = self._state["missing_files"][-1000:]
 
             # Save periodically
             if len(self._state["missing_files"]) % 50 == 0:
