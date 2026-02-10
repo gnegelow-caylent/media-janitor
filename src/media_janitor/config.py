@@ -40,9 +40,15 @@ class ValidationConfig(BaseModel):
     max_duration_hours: int = 12
 
     check_bitrate: bool = True
+    # Base bitrate thresholds (for x264/AVC - older codec)
     min_bitrate_720p: int = 1500
     min_bitrate_1080p: int = 3000
     min_bitrate_4k: int = 8000
+    # Codec efficiency multipliers (modern codecs need less bitrate for same quality)
+    # Applied to base thresholds above
+    codec_bitrate_multiplier_hevc: float = 0.6  # x265/HEVC is ~40% more efficient
+    codec_bitrate_multiplier_av1: float = 0.5   # AV1 is ~50% more efficient
+    codec_bitrate_multiplier_vp9: float = 0.6   # VP9 similar to HEVC
 
     deep_scan_enabled: bool = True
     # "full" = test start/middle/end, "partial" = test start only (faster)

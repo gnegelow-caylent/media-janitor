@@ -364,25 +364,46 @@ async def validate_file(file_path: str, config: ValidationConfig) -> ValidationR
             result.warnings.append(f"Duration is very short: {probe.duration:.1f}s")
             log.info("Suspiciously short duration", duration_seconds=probe.duration)
 
-    # Step 4: Bitrate sanity check
+    # Step 4: Bitrate sanity check (codec-aware)
     if config.check_bitrate and result.width and result.height and result.video_bitrate_kbps:
         tier = get_resolution_tier(result.width, result.height)
-        min_bitrate = {
+
+        # Base thresholds (for x264/AVC)
+        base_min_bitrate = {
             "4k": config.min_bitrate_4k,
             "1080p": config.min_bitrate_1080p,
             "720p": config.min_bitrate_720p,
             "sd": 500,
         }.get(tier, 500)
 
+        # Apply codec efficiency multiplier - modern codecs need less bitrate
+        codec = (result.codec or "").lower()
+        if codec in ("hevc", "h265", "x265"):
+            multiplier = getattr(config, 'codec_bitrate_multiplier_hevc', 0.6)
+            codec_type = "HEVC"
+        elif codec in ("av1", "av01"):
+            multiplier = getattr(config, 'codec_bitrate_multiplier_av1', 0.5)
+            codec_type = "AV1"
+        elif codec in ("vp9", "vp09"):
+            multiplier = getattr(config, 'codec_bitrate_multiplier_vp9', 0.6)
+            codec_type = "VP9"
+        else:
+            # x264/AVC/MPEG4/other older codecs use base threshold
+            multiplier = 1.0
+            codec_type = codec.upper() if codec else "unknown"
+
+        min_bitrate = int(base_min_bitrate * multiplier)
+
         if result.video_bitrate_kbps < min_bitrate:
             result.valid = False
             result.errors.append(
-                f"Bitrate {result.video_bitrate_kbps}kbps is below minimum for {tier} "
+                f"Bitrate {result.video_bitrate_kbps}kbps is below minimum for {tier} {codec_type} "
                 f"(minimum: {min_bitrate}kbps)"
             )
             log.warning(
                 "Low bitrate - file needs replacement",
                 bitrate=result.video_bitrate_kbps,
+                codec=codec_type,
                 tier=tier,
                 minimum=min_bitrate,
             )
