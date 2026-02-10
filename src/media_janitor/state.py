@@ -74,6 +74,9 @@ class StateManager:
         if "scanned_files" not in self._state:
             self._state["scanned_files"] = {}
 
+        # Check if this is a new file (not previously scanned)
+        is_new_file = file_path not in self._state["scanned_files"]
+
         self._state["scanned_files"][file_path] = {
             "timestamp": datetime.now().isoformat(),
             "valid": valid,
@@ -87,8 +90,14 @@ class StateManager:
         # Track separate counts for movies and TV
         if media_type == "movie":
             self._state["movies_scanned"] = self._state.get("movies_scanned", 0) + 1
+            # If new file (e.g., from webhook), also increment total to keep in sync
+            if is_new_file:
+                self._state["movies_total"] = self._state.get("movies_total", 0) + 1
         elif media_type == "tv":
             self._state["tv_scanned"] = self._state.get("tv_scanned", 0) + 1
+            # If new file (e.g., from webhook), also increment total to keep in sync
+            if is_new_file:
+                self._state["tv_total"] = self._state.get("tv_total", 0) + 1
 
         # Save periodically (every 10 scans)
         if self._state["total_scanned"] % 10 == 0:
