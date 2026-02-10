@@ -8,11 +8,18 @@ radarr:
   - name: "radarr"
     url: "http://YOUR_SERVER_IP:7878"
     api_key: "YOUR_RADARR_API_KEY"
-    # Path mappings translate Radarr's container paths to actual filesystem paths
-    # Find your root folders in Radarr -> Settings -> Media Management
+    # Path mappings translate Radarr's container paths to Media Janitor's paths
+    # Find your root folders in Radarr -> Settings -> Media Management -> Root Folders
+    # Each root folder in Radarr needs a corresponding mapping here
+    # TIP: If paths are identical (e.g., both containers see /movies), no mapping needed
     path_mappings:
       - from_path: "/movies"          # Path as Radarr sees it
-        to_path: "/media/movies"      # Path as media-janitor sees it
+        to_path: "/media/movies"      # Path as Media Janitor sees it
+      # Add more mappings if you have multiple root folders:
+      # - from_path: "/google"
+      #   to_path: "/media/google"
+      # - from_path: "/kids"
+      #   to_path: "/media/kids"
 
 # =============================================================================
 # Sonarr Instances (TV Shows)

@@ -76,7 +76,20 @@ class ArrClient:
                 self.log.debug("Path translated", original=path, translated=translated)
                 return translated
 
-        # No mapping found, return as-is
+        # No mapping found, return as-is (warn once per unique prefix)
+        # Extract root folder (first path component) for the warning
+        parts = path.split("/")
+        root = f"/{parts[1]}" if len(parts) > 1 else path
+        if not hasattr(self, "_warned_roots"):
+            self._warned_roots: set[str] = set()
+        if root not in self._warned_roots:
+            self._warned_roots.add(root)
+            if self.path_mappings:
+                self.log.warning(
+                    "No path mapping found for root folder - file may be inaccessible",
+                    root=root,
+                    configured_mappings=[m.from_path for m in self.path_mappings],
+                )
         return path
 
     async def _get(self, endpoint: str, params: dict | None = None) -> Any:
