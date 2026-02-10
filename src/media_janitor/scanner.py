@@ -391,6 +391,15 @@ class Scanner:
             "refresh_current_instance": self._refresh_current_instance,
         }
 
+    def reset(self):
+        """Reset scanner state for a fresh start."""
+        self._scan_queue.clear()
+        self._media_cache.clear()
+        self._media_cache_by_instance.clear()
+        self._initial_scan_complete = False
+        self._last_full_refresh = None
+        self.log.info("Scanner reset")
+
     def get_client_for_item(self, item: MediaItem) -> ArrClient | None:
         """Get the appropriate client for a media item."""
         if item.arr_type == ArrType.RADARR:
