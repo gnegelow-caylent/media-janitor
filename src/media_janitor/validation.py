@@ -334,6 +334,15 @@ async def validate_file(file_path: str, config: ValidationConfig) -> ValidationR
         elif "bit_rate" in probe.format_info:
             # Use overall bitrate as approximation
             result.video_bitrate_kbps = int(probe.format_info["bit_rate"]) // 1000
+        elif probe.duration and probe.duration > 0:
+            # Calculate bitrate from file size and duration (common for MKV files)
+            try:
+                file_size = Path(file_path).stat().st_size
+                # bitrate = (file_size_bytes * 8) / duration_seconds / 1000 for kbps
+                result.video_bitrate_kbps = int((file_size * 8) / probe.duration / 1000)
+                log.debug("Calculated bitrate from file size", bitrate=result.video_bitrate_kbps)
+            except (OSError, IOError):
+                pass  # Can't get file size, skip bitrate check
 
     # Step 2: 3D detection (if enabled)
     if config.replace_3d:
