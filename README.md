@@ -33,7 +33,7 @@ Access the web interface at `http://your-server:9000`
 | Wrong duration | File claims 300h instead of 30m |
 | Truncated files | ffmpeg decode test fails |
 | Encoding errors | ffmpeg reports errors during sample decode |
-| Low bitrate | Below minimum for resolution (720p/1080p/4K) |
+| Low bitrate | Below minimum for resolution and codec (HEVC/AV1 use lower thresholds) |
 | Path mismatches | Filename doesn't match expected title (triggers replacement) |
 | Duplicates | Same content in multiple qualities |
 
@@ -146,6 +146,8 @@ path_mappings:
 
 Find your paths in Radarr/Sonarr → Settings → Media Management → Root Folders.
 
+**Missing Mapping Warnings**: The dashboard will show a warning banner if files are found with paths that don't have corresponding mappings configured. This helps identify configuration issues early.
+
 ## Configuration Reference
 
 ### Radarr/Sonarr Instances
@@ -209,15 +211,30 @@ validation:
   max_duration_hours: 12
 
   check_bitrate: true
-  min_bitrate_720p: 1500     # kbps
-  min_bitrate_1080p: 3000    # kbps
-  min_bitrate_4k: 8000       # kbps
+  min_bitrate_720p: 1500     # kbps (base threshold for H.264)
+  min_bitrate_1080p: 3000    # kbps (base threshold for H.264)
+  min_bitrate_4k: 8000       # kbps (base threshold for H.264)
+
+  # Codec efficiency multipliers (modern codecs need less bitrate)
+  codec_bitrate_multiplier_hevc: 0.6  # HEVC/H.265/x265 uses 60% of base
+  codec_bitrate_multiplier_av1: 0.5   # AV1 uses 50% of base
+  codec_bitrate_multiplier_vp9: 0.6   # VP9 uses 60% of base
 
   deep_scan_enabled: true
   sample_duration_seconds: 30
 
   full_decode_enabled: false  # Very slow, use sparingly
 ```
+
+**Codec-Aware Bitrate Thresholds**: Modern codecs like HEVC and AV1 achieve better quality at lower bitrates. A 1080p HEVC file at 1800kbps is roughly equivalent to H.264 at 3000kbps. The multipliers adjust the minimum thresholds accordingly:
+
+| Codec | 720p Min | 1080p Min | 4K Min |
+|-------|----------|-----------|--------|
+| H.264/x264 | 1500 kbps | 3000 kbps | 8000 kbps |
+| HEVC/x265 | 900 kbps | 1800 kbps | 4800 kbps |
+| AV1 | 750 kbps | 1500 kbps | 4000 kbps |
+
+**Bitrate Detection**: If ffprobe doesn't report bitrate (common with MKV files), Media Janitor calculates it from file size and duration.
 
 ### Action Settings
 
@@ -369,7 +386,7 @@ logging:
 |----------|--------|-------------|
 | `/scan/trigger` | POST | Trigger a background scan batch |
 | `/scan/refresh?source=movies` | POST | Refresh library list |
-| `/state/clear` | POST | Clear all state (forces full re-scan, resets daily counter) |
+| `/state/clear` | POST | Clear all state (forces full re-scan, resets daily counter, clears queue and cache) |
 
 ### Logs
 
