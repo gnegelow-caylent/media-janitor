@@ -48,8 +48,39 @@ class Janitor:
         """Initialize the janitor and all components."""
         self.log.info("Initializing janitor")
         await self.scanner.initialize()
-        # Refresh both movies and TV at startup
-        await self.scanner.refresh_library("all")
+
+        # Refresh both movies and TV at startup with retry logic
+        # Radarr/Sonarr may not be ready immediately after container startup
+        max_retries = 5
+        retry_delay = 10  # seconds
+        for attempt in range(max_retries):
+            files_queued = await self.scanner.refresh_library("all")
+            stats = self.state.get_stats()
+
+            # Check if we got any data - if library is truly empty, totals will be 0
+            # but if Radarr/Sonarr just aren't responding, we should retry
+            if stats.get("movies_total", 0) > 0 or stats.get("tv_total", 0) > 0:
+                self.log.info(
+                    "Library refresh successful",
+                    movies_total=stats.get("movies_total", 0),
+                    tv_total=stats.get("tv_total", 0),
+                    queued=files_queued,
+                )
+                break
+            elif attempt < max_retries - 1:
+                self.log.warning(
+                    "Library refresh returned no data, Radarr/Sonarr may not be ready",
+                    attempt=attempt + 1,
+                    max_retries=max_retries,
+                    retry_in_seconds=retry_delay,
+                )
+                await asyncio.sleep(retry_delay)
+            else:
+                self.log.warning(
+                    "Library refresh returned no data after all retries",
+                    attempts=max_retries,
+                )
+
         self.log.info("Janitor initialized")
 
     async def reload_config(self, new_config: Config):

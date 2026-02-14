@@ -124,6 +124,8 @@ class Scanner:
         all_media: list[MediaItem] = []
         movies_total = 0
         tv_total = 0
+        got_movies_data = False
+        got_tv_data = False
 
         try:
             if source in ("all", "movies"):
@@ -132,6 +134,8 @@ class Scanner:
                         self._refresh_current_instance = client.instance.name
                         self.log.info("Fetching from Radarr", instance=client.instance.name)
                         media = await client.get_all_media()
+                        if media:
+                            got_movies_data = True
                         movies_total += len(media)
                         all_media.extend(media)
                     except Exception as e:
@@ -143,22 +147,38 @@ class Scanner:
                         self._refresh_current_instance = client.instance.name
                         self.log.info("Fetching from Sonarr", instance=client.instance.name)
                         media = await client.get_all_media()
+                        if media:
+                            got_tv_data = True
                         tv_total += len(media)
                         all_media.extend(media)
                     except Exception as e:
                         self.log.error("Failed to fetch from Sonarr", instance=client.instance.name, error=str(e))
 
-            # Update library totals in state
+            # Update library totals in state - but preserve existing totals if API returned empty
+            # This prevents losing totals if Radarr/Sonarr aren't ready during startup
             self._refresh_phase = "processing"
             self._refresh_current_instance = None
+            current_stats = self.state.get_stats()
+
             if source == "all":
-                self.state.set_library_totals(movies_total, tv_total)
+                # Only update each total if we got data for that source
+                new_movies_total = movies_total if got_movies_data else current_stats.get("movies_total", 0)
+                new_tv_total = tv_total if got_tv_data else current_stats.get("tv_total", 0)
+                if not got_movies_data and current_stats.get("movies_total", 0) > 0:
+                    self.log.warning("Radarr returned empty, preserving previous movies total", preserved_total=current_stats.get("movies_total", 0))
+                if not got_tv_data and current_stats.get("tv_total", 0) > 0:
+                    self.log.warning("Sonarr returned empty, preserving previous TV total", preserved_total=current_stats.get("tv_total", 0))
+                self.state.set_library_totals(new_movies_total, new_tv_total)
             elif source == "movies":
-                current_stats = self.state.get_stats()
-                self.state.set_library_totals(movies_total, current_stats.get("tv_total", 0))
+                new_movies_total = movies_total if got_movies_data else current_stats.get("movies_total", 0)
+                if not got_movies_data and current_stats.get("movies_total", 0) > 0:
+                    self.log.warning("Radarr returned empty, preserving previous movies total", preserved_total=current_stats.get("movies_total", 0))
+                self.state.set_library_totals(new_movies_total, current_stats.get("tv_total", 0))
             elif source == "tv":
-                current_stats = self.state.get_stats()
-                self.state.set_library_totals(current_stats.get("movies_total", 0), tv_total)
+                new_tv_total = tv_total if got_tv_data else current_stats.get("tv_total", 0)
+                if not got_tv_data and current_stats.get("tv_total", 0) > 0:
+                    self.log.warning("Sonarr returned empty, preserving previous TV total", preserved_total=current_stats.get("tv_total", 0))
+                self.state.set_library_totals(current_stats.get("movies_total", 0), new_tv_total)
 
             # Get already scanned paths from persistent state
             scanned_paths = self.state.get_scanned_paths()
