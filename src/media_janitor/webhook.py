@@ -858,6 +858,16 @@ async def refresh_library(
     return {"status": "ok", "files_to_scan": count, "source": source}
 
 
+@app.post("/state/reset-replacements")
+async def reset_replacements_today():
+    """Reset only the daily replacement counter (does NOT clear scan progress)."""
+    if not _janitor:
+        return {"status": "error", "message": "Janitor not initialized"}
+
+    _janitor.reset_replacement_count()
+    return {"status": "ok", "message": "Daily replacement counter reset to 0"}
+
+
 @app.post("/state/clear")
 async def clear_state():
     """Clear all scan state (forces full re-scan)."""
