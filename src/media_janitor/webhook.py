@@ -81,9 +81,14 @@ def init_webhook_app(config: Config, janitor: Janitor) -> FastAPI:
 
         class ApiKeyMiddleware(BaseHTTPMiddleware):
             async def dispatch(self, request, call_next):
-                # Skip auth for health checks and static files
+                # Skip auth for browser-accessible pages, static files, and health checks
                 path = request.url.path
-                if path in ("/health", "/health/") or path.startswith("/static/"):
+                if (
+                    path in ("/", "/health", "/health/")
+                    or path.startswith("/static/")
+                    or path.startswith("/ui/")
+                    or path.startswith("/auth/")
+                ):
                     return await call_next(request)
 
                 # Check API key from multiple sources
