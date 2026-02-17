@@ -47,6 +47,8 @@ class StateManager:
                     "State loaded",
                     scanned_files=len(self._state.get("scanned_files", {})),
                 )
+                # Check if daily counter needs reset (new day since last run)
+                self._check_daily_reset()
             except Exception as e:
                 self.log.error("Failed to load state, starting fresh", error=str(e))
 
@@ -58,6 +60,22 @@ class StateManager:
                 json.dump(self._state, f, indent=2, default=str)
         except Exception as e:
             self.log.error("Failed to save state", error=str(e))
+
+    def _check_daily_reset(self):
+        """Reset daily counter if date has changed. Called on load and periodically."""
+        today = datetime.now().date().isoformat()
+        stored_date = self._state.get("replacements_date")
+        if stored_date != today:
+            old_count = self._state.get("replacements_today", 0)
+            self._state["replacements_today"] = 0
+            self._state["replacements_date"] = today
+            self._save()
+            self.log.info(
+                "Daily replacement counter reset",
+                old_date=stored_date,
+                new_date=today,
+                old_count=old_count,
+            )
 
     def is_scanned(self, file_path: str) -> bool:
         """Check if a file has been scanned."""
@@ -237,21 +255,12 @@ class StateManager:
 
     def get_replacements_today(self) -> int:
         """Get the number of replacements made today, resetting if date changed."""
-        today = datetime.now().date().isoformat()
-        if self._state.get("replacements_date") != today:
-            # New day - reset counter
-            self._state["replacements_today"] = 0
-            self._state["replacements_date"] = today
-            self._save()
+        self._check_daily_reset()
         return self._state.get("replacements_today", 0)
 
     def increment_replacements_today(self):
         """Increment the daily replacement counter."""
-        today = datetime.now().date().isoformat()
-        if self._state.get("replacements_date") != today:
-            # New day - reset counter first
-            self._state["replacements_today"] = 0
-            self._state["replacements_date"] = today
+        self._check_daily_reset()
         self._state["replacements_today"] = self._state.get("replacements_today", 0) + 1
         self._save()
 
