@@ -133,6 +133,18 @@ class Janitor:
         """Reset the daily replacement counter (called when state is cleared)."""
         self.state.reset_replacements_today()
 
+    async def daily_counter_reset(self):
+        """Reset the daily replacement counter and immediately process queued files."""
+        self.log.info("Midnight reset: resetting daily replacement counter")
+        self.state.reset_replacements_today()
+
+        # Immediately trigger a background scan so files that were rate-limited
+        # ("queued") yesterday get processed right away instead of waiting for
+        # the next scheduled scan interval.
+        if self.config.scanner.enabled:
+            self.log.info("Midnight reset: triggering background scan for queued files")
+            await self.run_background_scan()
+
     async def validate_and_process(
         self,
         file_path: str,
