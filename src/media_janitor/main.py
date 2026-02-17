@@ -93,6 +93,14 @@ async def run_scheduler(janitor: Janitor, config: Config):
             id="tv_refresh",
         )
 
+    # Daily replacement counter reset at midnight
+    # Ensures the counter resets even if no scans/webhooks/dashboard polls trigger it
+    scheduler.add_job(
+        janitor.state.reset_replacements_today,
+        CronTrigger(hour=0, minute=0),
+        id="daily_counter_reset",
+    )
+
     scheduler.start()
     return scheduler
 

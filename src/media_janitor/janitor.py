@@ -34,6 +34,7 @@ class Janitor:
 
         # Initialize state manager first
         self.state = StateManager()
+        self._replace_lock = asyncio.Lock()
 
         # Plex client (optional)
         self.plex: PlexClient | None = None
@@ -237,18 +238,23 @@ class Janitor:
             self.notifications.record_result(scan_result)
             return scan_result
 
-        # Check rate limit - DON'T mark as scanned so it retries next day
-        if not self._check_rate_limit():
-            log.warning("Rate limit reached, queuing for next day", title=title)
-            scan_result.action_taken = "queued"
-            self.notifications.record_result(scan_result)
-            return scan_result
+        # Lock to prevent concurrent tasks from all passing the rate limit check
+        # before any of them increment the counter (race condition)
+        async with self._replace_lock:
+            # Check rate limit - DON'T mark as scanned so it retries next day
+            if not self._check_rate_limit():
+                log.warning("Rate limit reached, queuing for next day", title=title)
+                scan_result.action_taken = "queued"
+                self.notifications.record_result(scan_result)
+                return scan_result
 
-        # Attempt replacement
+            # Increment BEFORE the actual replacement so concurrent tasks see the updated count
+            self._increment_replacement_count()
+
+        # Attempt replacement (outside lock to avoid blocking other tasks during slow I/O)
         replaced = await self._replace_file(item, client, validation_result)
         if replaced:
             scan_result.action_taken = "replaced"
-            self._increment_replacement_count()
             # Remove from scanned list so new file will be scanned
             reason = "; ".join(validation_result.errors[:2]) if validation_result.errors else "Unknown"
             self.scanner.mark_replaced(
@@ -259,6 +265,11 @@ class Janitor:
                 media_type=media_type,
             )
         else:
+            # Replacement failed -- decrement counter since we already incremented
+            self.state._state["replacements_today"] = max(
+                0, self.state._state.get("replacements_today", 1) - 1
+            )
+            self.state._save()
             # Mark as scanned if replacement failed (don't keep retrying)
             self.scanner.mark_scanned(file_path, False, media_type)
             scan_result.action_taken = "flagged"
