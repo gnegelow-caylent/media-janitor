@@ -23,7 +23,9 @@ Access the web interface at `http://your-server:9000`
 - **Library** - Browse movies and TV shows with quality info
 - **Reports** - Path mismatches, duplicates, codec breakdown, HDR content, quality by instance
 - **Logs** - Real-time log viewer with filtering
-- **Settings** - Configure everything from the browser (General, Connections, Actions, Notifications)
+- **Settings** - Configure everything from the browser (General, Security, Connections, Actions, Notifications)
+
+> **Note**: The web UI pages do not require an API key. Authentication is only required for API endpoints and webhooks (see [Authentication](#authentication) below).
 
 ## What It Detects
 
@@ -120,17 +122,19 @@ In **Radarr** → Settings → Connect → Add → Webhook:
 - Name: `media-janitor`
 - On Import: ✓
 - On Upgrade: ✓
-- URL: `http://YOUR_UNRAID_IP:9000/webhook/radarr`
+- URL: `http://YOUR_UNRAID_IP:9000/webhook/radarr?apikey=YOUR_API_KEY`
 
 In **Sonarr** → Settings → Connect → Add → Webhook:
 - Name: `media-janitor`
 - On Import: ✓
 - On Upgrade: ✓
-- URL: `http://YOUR_UNRAID_IP:9000/webhook/sonarr`
+- URL: `http://YOUR_UNRAID_IP:9000/webhook/sonarr?apikey=YOUR_API_KEY`
+
+> **Note**: If you have an API key configured (see [Authentication](#authentication)), append `?apikey=YOUR_API_KEY` to the webhook URLs. Without an API key set, the URLs work without it.
 
 ### 5. Access Web UI
 
-Open `http://YOUR_UNRAID_IP:9000` in your browser.
+Open `http://YOUR_UNRAID_IP:9000` in your browser. No API key is required to browse the UI.
 
 ## Path Mappings
 
@@ -249,8 +253,11 @@ actions:
 
 **Rate Limiting**: The `max_replacements_per_day` counter:
 - Persists across container restarts (stored in state file)
-- Resets automatically at midnight
+- Resets automatically at midnight via scheduled cron job
+- Files that were rate-limited ("queued") are automatically processed immediately after the midnight reset
+- Concurrent replacements are serialized to prevent exceeding the daily limit
 - Resets when you clear state via "Restart Full Scan" in the UI
+- Can be manually reset via the `/state/reset-replacements` endpoint
 
 ### Notifications
 
@@ -324,6 +331,30 @@ ui:
   timezone: "America/New_York"
 ```
 
+### Authentication
+
+```yaml
+webhook:
+  enabled: true
+  host: "0.0.0.0"
+  port: 9000
+  api_key: "your-secret-key-here"  # Leave empty to disable auth
+```
+
+When an API key is configured, all API endpoints and webhooks require authentication. The key can be provided via:
+
+- **Header**: `X-Api-Key: your-key`
+- **Bearer token**: `Authorization: Bearer your-key`
+- **Query parameter**: `?apikey=your-key` (useful for webhook URLs in Radarr/Sonarr)
+
+**Excluded from auth** (no key needed):
+- Web UI pages (`/`, `/ui/*`)
+- Plex auth flow (`/auth/*`)
+- Static files (`/static/*`)
+- Health check (`/health`)
+
+You can generate and manage the API key from the Web UI at **Settings → General → Security**.
+
 ### Logging
 
 ```yaml
@@ -334,15 +365,15 @@ logging:
 
 ## API Endpoints
 
-### Web UI
+### Web UI (no auth required)
 
 | Endpoint | Description |
 |----------|-------------|
 | `/` | Dashboard |
-| `/library` | Browse library |
-| `/reports` | View reports |
-| `/logs` | Log viewer |
-| `/settings` | Configuration |
+| `/ui/library` | Browse library |
+| `/ui/reports` | View reports |
+| `/ui/logs` | Log viewer |
+| `/ui/settings` | Configuration |
 
 ### Health & Status
 
@@ -386,6 +417,7 @@ logging:
 |----------|--------|-------------|
 | `/scan/trigger` | POST | Trigger a background scan batch |
 | `/scan/refresh?source=movies` | POST | Refresh library list |
+| `/state/reset-replacements` | POST | Reset only the daily replacement counter (preserves scan progress) |
 | `/state/clear` | POST | Clear all state (forces full re-scan, resets daily counter, clears queue and cache) |
 
 ### Logs
@@ -409,7 +441,7 @@ Gmail requires an App Password for SMTP:
 
 Check scanner progress:
 ```bash
-curl http://YOUR_SERVER:9000/status
+curl -H "X-Api-Key: YOUR_API_KEY" http://YOUR_SERVER:9000/status
 ```
 
 View recent logs:
@@ -424,10 +456,11 @@ Or use the Web UI at `/logs` for a better experience.
 1. **Startup**: Loads movies from Radarr (fast), queues them for scanning
 2. **Background scan**: Validates files with ffprobe at configured rate
 3. **TV schedule**: Loads TV episodes at scheduled time (default 3am) using efficient bulk API
-4. **Webhooks**: New imports are validated immediately
+4. **Webhooks**: New imports are validated immediately (requires API key if auth is enabled)
 5. **Auto-replace**: Bad files (including wrong files in folders) are deleted, blocklisted, and re-searched
-6. **Notifications**: Get alerted via Discord, Slack, Telegram, etc.
-7. **Completion**: Once initial scan is done, only webhooks trigger validation
+6. **Rate limiting**: Replacements are capped per day; queued files are processed automatically after midnight reset
+7. **Notifications**: Get alerted via Discord, Slack, Telegram, etc.
+8. **Completion**: Once initial scan is done, only webhooks trigger validation
 
 ## Troubleshooting
 
@@ -435,7 +468,7 @@ Or use the Web UI at `/logs` for a better experience.
 
 Check status via Web UI dashboard or:
 ```bash
-curl http://YOUR_SERVER:9000/status
+curl -H "X-Api-Key: YOUR_API_KEY" http://YOUR_SERVER:9000/status
 ```
 
 If `initial_scan_done: true` with `mode: watch_only`, scanning has completed. Only webhooks will trigger validation.
@@ -451,8 +484,13 @@ docker exec media-janitor ls -la /mnt/remotes/
 
 Test the endpoint:
 ```bash
-curl -X POST http://YOUR_SERVER:9000/webhook/test -H "Content-Type: application/json" -d '{}'
+curl -X POST http://YOUR_SERVER:9000/webhook/test \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Key: YOUR_API_KEY" \
+  -d '{}'
 ```
+
+If you get a `401 Unauthorized` error, make sure the API key is correct. For Radarr/Sonarr webhook URLs, append `?apikey=YOUR_API_KEY` to the URL.
 
 Check Radarr/Sonarr webhook test button and logs.
 

@@ -181,7 +181,12 @@ webhook:
   host: "0.0.0.0"
   port: 9000
   # API key for authentication (optional but recommended)
-  # If set, all requests must include X-Api-Key header or ?apikey= parameter
+  # If set, API endpoints and webhooks require authentication via:
+  #   - X-Api-Key header
+  #   - Authorization: Bearer header
+  #   - ?apikey= query parameter (useful for Radarr/Sonarr webhook URLs)
+  # Web UI pages (/, /ui/*), static files, and health checks are always accessible
+  # You can also generate/manage this key from the Web UI at Settings -> General -> Security
   # Leave empty to disable authentication
   api_key: ""
 
