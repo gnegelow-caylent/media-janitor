@@ -74,9 +74,42 @@ def init_webhook_app(config: Config, janitor: Janitor) -> FastAPI:
     _config = config
     _janitor = janitor
 
+    # API key authentication middleware
+    if config.webhook.api_key:
+        from starlette.middleware.base import BaseHTTPMiddleware
+        from fastapi.responses import JSONResponse
+
+        class ApiKeyMiddleware(BaseHTTPMiddleware):
+            async def dispatch(self, request, call_next):
+                # Skip auth for health checks and static files
+                path = request.url.path
+                if path in ("/health", "/health/") or path.startswith("/static/"):
+                    return await call_next(request)
+
+                # Check API key from multiple sources
+                api_key = (
+                    request.headers.get("X-Api-Key")
+                    or request.headers.get("Authorization", "").removeprefix("Bearer ").strip()
+                    or request.query_params.get("apikey")
+                )
+
+                if api_key != config.webhook.api_key:
+                    return JSONResponse(
+                        status_code=401,
+                        content={"detail": "Invalid or missing API key"},
+                    )
+
+                return await call_next(request)
+
+        app.add_middleware(ApiKeyMiddleware)
+
     # Include web UI router
     from .web_ui import router as ui_router
     app.include_router(ui_router)
+
+    # Make API key available to templates
+    from .web_ui import templates as ui_templates
+    ui_templates.env.globals["api_key"] = config.webhook.api_key or ""
 
     return app
 

@@ -3,7 +3,7 @@
 import asyncio
 import secrets
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import httpx
@@ -77,7 +77,7 @@ async def create_pin() -> tuple[str, PlexPin]:
 
     pin_id = data["id"]
     pin_code = data["code"]
-    expires_at = datetime.utcnow() + timedelta(seconds=data.get("expiresIn", 900))
+    expires_at = datetime.now(timezone.utc) + timedelta(seconds=data.get("expiresIn", 900))
 
     # Build the auth URL
     auth_url = (
@@ -120,7 +120,7 @@ async def check_pin(session_id: str) -> PlexUser | None:
         return None
 
     # Check if expired
-    if datetime.utcnow() > pin.expires_at:
+    if datetime.now(timezone.utc) > pin.expires_at:
         log.info("PIN expired", session_id=session_id[:8])
         del _pending_pins[session_id]
         return None
@@ -246,7 +246,7 @@ async def get_user_servers(auth_token: str) -> list[dict]:
 
 def cleanup_expired_pins():
     """Remove expired PINs from memory."""
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     expired = [sid for sid, pin in _pending_pins.items() if now > pin.expires_at]
     for sid in expired:
         del _pending_pins[sid]

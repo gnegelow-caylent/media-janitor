@@ -151,7 +151,10 @@ async def run_app(config: Config):
             logger.error("Background initialization failed", error=str(e))
 
     # Start background init
-    asyncio.create_task(background_init())
+    init_task = asyncio.create_task(background_init())
+    init_task.add_done_callback(
+        lambda t: t.result() if not t.cancelled() and t.exception() is None else None
+    )
 
     # Initialize and run webhook server
     if config.webhook.enabled:

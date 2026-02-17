@@ -83,6 +83,7 @@ class WebhookConfig(BaseModel):
     enabled: bool = True
     host: str = "0.0.0.0"
     port: int = 9000
+    api_key: str = ""  # If set, all API requests require this key via X-Api-Key header or ?apikey= param
 
 
 class ActionsConfig(BaseModel):

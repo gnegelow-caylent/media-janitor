@@ -292,6 +292,10 @@ async def get_config():
         if instance.get("api_key"):
             instance["api_key"] = mask_secret(instance["api_key"])
 
+    # Mask webhook API key
+    if config.get("webhook", {}).get("api_key"):
+        config.setdefault("webhook", {})["api_key"] = mask_secret(config["webhook"]["api_key"])
+
     # Mask notification secrets
     notifications = config.get("notifications", {})
     if notifications.get("discord", {}).get("webhook_url"):
@@ -353,6 +357,10 @@ async def save_config(request: Request):
                         if existing_inst.get("name") == inst.get("name") or existing_inst.get("url") == inst.get("url"):
                             inst["api_key"] = existing_inst.get("api_key", "")
                             break
+
+        # Preserve webhook API key if masked (only if webhook was in the update)
+        if "webhook" in updates and is_masked(updates.get("webhook", {}).get("api_key", "")):
+            new_config.setdefault("webhook", {})["api_key"] = existing.get("webhook", {}).get("api_key", "")
 
         # Preserve Plex token if masked (only if plex was in the update)
         if "plex" in updates and is_masked(updates.get("plex", {}).get("token", "")):
@@ -631,28 +639,3 @@ async def test_email():
 
     except Exception as e:
         return {"success": False, "error": str(e)}
-
-
-# =============================================================================
-# Additional Report APIs
-# =============================================================================
-
-
-@router.get("/api/library/duplicates")
-async def get_duplicates():
-    """Find potential duplicate files."""
-    # This will be implemented to detect duplicates
-    return {"duplicates": [], "message": "Coming soon"}
-
-
-@router.get("/api/library/codecs")
-async def get_codec_breakdown():
-    """Get codec breakdown of library."""
-    # This will be implemented to show codec stats
-    return {"codecs": {}, "message": "Coming soon"}
-
-
-@router.get("/api/library/hdr")
-async def get_hdr_breakdown():
-    """Get HDR breakdown of library."""
-    return {"hdr": {}, "message": "Coming soon"}

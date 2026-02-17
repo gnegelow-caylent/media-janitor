@@ -1,6 +1,8 @@
 """Persistent state management for scan progress."""
 
 import json
+import os
+import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -53,11 +55,24 @@ class StateManager:
                 self.log.error("Failed to load state, starting fresh", error=str(e))
 
     def _save(self):
-        """Save state to disk."""
+        """Save state to disk atomically."""
         try:
             self.state_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.state_file, "w") as f:
-                json.dump(self._state, f, indent=2, default=str)
+            # Write to temp file first, then atomic rename to avoid corruption
+            fd, tmp_path = tempfile.mkstemp(
+                dir=self.state_file.parent, suffix=".tmp"
+            )
+            try:
+                with os.fdopen(fd, "w") as f:
+                    json.dump(self._state, f, indent=2, default=str)
+                os.replace(tmp_path, self.state_file)
+            except Exception:
+                # Clean up temp file on failure
+                try:
+                    os.unlink(tmp_path)
+                except OSError:
+                    pass
+                raise
         except Exception as e:
             self.log.error("Failed to save state", error=str(e))
 
@@ -138,6 +153,7 @@ class StateManager:
             reason: Reason for replacement
             media_type: "movie", "tv", or "unknown"
         """
+        self._check_daily_reset()
         if file_path in self._state.get("scanned_files", {}):
             del self._state["scanned_files"][file_path]
         self._state["total_replaced"] = self._state.get("total_replaced", 0) + 1
@@ -216,6 +232,7 @@ class StateManager:
 
     def get_stats(self) -> dict:
         """Get scan statistics."""
+        self._check_daily_reset()
         scanned_files = self._state.get("scanned_files", {})
         valid_count = sum(1 for f in scanned_files.values() if f.get("valid", True))
         # Use total_invalid counter (includes replaced files) not just current scanned_files

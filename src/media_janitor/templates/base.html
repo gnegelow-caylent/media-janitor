@@ -15,7 +15,38 @@
         })();
     </script>
     <meta charset="UTF-8">
+    <meta name="api-key" content="{{ api_key }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        // Auto-include API key in all fetch requests if configured
+        (function() {
+            const meta = document.querySelector('meta[name="api-key"]');
+            const apiKey = meta ? meta.content : '';
+            if (apiKey) {
+                const originalFetch = window.fetch;
+                window.fetch = function(url, options = {}) {
+                    options.headers = options.headers || {};
+                    if (options.headers instanceof Headers) {
+                        if (!options.headers.has('X-Api-Key')) {
+                            options.headers.set('X-Api-Key', apiKey);
+                        }
+                    } else {
+                        options.headers = { 'X-Api-Key': apiKey, ...options.headers };
+                    }
+                    return originalFetch(url, options);
+                };
+            }
+        })();
+    </script>
+    <script>
+        // HTML escaping utility to prevent XSS
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            const div = document.createElement('div');
+            div.textContent = String(str);
+            return div.innerHTML;
+        }
+    </script>
     <title>{% block title %}Media Janitor{% endblock %}</title>
 
     <!-- Favicon - using logo.svg content -->

@@ -180,6 +180,10 @@ webhook:
   enabled: true
   host: "0.0.0.0"
   port: 9000
+  # API key for authentication (optional but recommended)
+  # If set, all requests must include X-Api-Key header or ?apikey= parameter
+  # Leave empty to disable authentication
+  api_key: ""
 
 # =============================================================================
 # Logging

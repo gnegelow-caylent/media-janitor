@@ -103,15 +103,15 @@
                 const time = log.timestamp ? new Date(log.timestamp).toLocaleTimeString() : '-';
                 const details = Object.entries(log.details || {})
                     .filter(([k, v]) => v)
-                    .map(([k, v]) => `<span class="text-gray-500">${k}:</span> ${String(v).substring(0, 50)}`)
+                    .map(([k, v]) => `<span class="text-gray-500">${escapeHtml(k)}:</span> ${escapeHtml(String(v).substring(0, 50))}`)
                     .join(', ');
 
                 tbody.innerHTML += `
                     <tr class="hover:bg-gray-100/30 dark:hover:bg-gray-700/30">
                         <td class="px-4 py-2 text-gray-500 dark:text-gray-400 whitespace-nowrap">${time}</td>
-                        <td class="px-4 py-2"><span class="px-2 py-0.5 rounded ${levelClass}">${log.level}</span></td>
-                        <td class="px-4 py-2 text-gray-500 dark:text-gray-400">${log.component || '-'}</td>
-                        <td class="px-4 py-2 text-gray-900 dark:text-white">${log.event || '-'}</td>
+                        <td class="px-4 py-2"><span class="px-2 py-0.5 rounded ${levelClass}">${escapeHtml(log.level)}</span></td>
+                        <td class="px-4 py-2 text-gray-500 dark:text-gray-400">${escapeHtml(log.component || '-')}</td>
+                        <td class="px-4 py-2 text-gray-900 dark:text-white">${escapeHtml(log.event || '-')}</td>
                         <td class="px-4 py-2 text-gray-500 dark:text-gray-400 truncate max-w-md">${details || '-'}</td>
                     </tr>
                 `;

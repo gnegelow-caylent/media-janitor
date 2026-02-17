@@ -220,7 +220,7 @@
                     break;
             }
         } catch (e) {
-            showModal('Error', `<p class="text-red-400">Failed to load report: ${e.message}</p>`);
+            showModal('Error', `<p class="text-red-400">Failed to load report: ${escapeHtml(e.message)}</p>`);
         } finally {
             hideLoading();
         }
@@ -245,13 +245,13 @@
                     <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-4">
                         <div class="flex justify-between items-start">
                             <div>
-                                <p class="text-gray-900 dark:text-white font-medium">${m.title} (${m.year || 'Unknown year'})</p>
-                                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Expected: ${m.expected_folder}</p>
-                                <p class="text-sm text-red-400 mt-1">Actual: ${m.actual_filename}</p>
+                                <p class="text-gray-900 dark:text-white font-medium">${escapeHtml(m.title)} (${escapeHtml(m.year) || 'Unknown year'})</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Expected: ${escapeHtml(m.expected_folder)}</p>
+                                <p class="text-sm text-red-400 mt-1">Actual: ${escapeHtml(m.actual_filename)}</p>
                             </div>
-                            <span class="text-xs bg-yellow-600 text-white px-2 py-1 rounded">${m.mismatch_type}</span>
+                            <span class="text-xs bg-yellow-600 text-white px-2 py-1 rounded">${escapeHtml(m.mismatch_type)}</span>
                         </div>
-                        <p class="text-xs text-gray-500 mt-2 truncate">${m.file_path}</p>
+                        <p class="text-xs text-gray-500 mt-2 truncate">${escapeHtml(m.file_path)}</p>
                     </div>
                 `;
             });
@@ -292,9 +292,9 @@
                 const sizeClass = f.size_bytes < 100000000 ? 'text-red-400' : 'text-yellow-400';
                 content += `
                     <tr>
-                        <td class="px-4 py-2 text-sm text-gray-900 dark:text-white">${f.title}</td>
-                        <td class="px-4 py-2 text-sm ${sizeClass} font-mono">${f.size_human}</td>
-                        <td class="px-4 py-2 text-sm text-gray-600 dark:text-gray-400">${f.quality || '-'}</td>
+                        <td class="px-4 py-2 text-sm text-gray-900 dark:text-white">${escapeHtml(f.title)}</td>
+                        <td class="px-4 py-2 text-sm ${sizeClass} font-mono">${escapeHtml(f.size_human)}</td>
+                        <td class="px-4 py-2 text-sm text-gray-600 dark:text-gray-400">${escapeHtml(f.quality) || '-'}</td>
                     </tr>
                 `;
             });
@@ -317,7 +317,7 @@
             content = `
                 <div class="mb-4">
                     <p class="text-yellow-400">Found ${data.count} items with multiple copies</p>
-                    <p class="text-gray-600 dark:text-gray-400 text-sm">Potential space savings: <span class="text-green-400 font-bold">${data.total_potential_savings_human}</span></p>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">Potential space savings: <span class="text-green-400 font-bold">${escapeHtml(data.total_potential_savings_human)}</span></p>
                 </div>
                 <div class="space-y-4">
             `;
@@ -326,10 +326,10 @@
                 content += `
                     <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-4">
                         <div class="flex justify-between items-start mb-2">
-                            <p class="text-gray-900 dark:text-white font-medium">${d.title} (${d.year || 'Unknown year'})</p>
-                            <span class="text-xs bg-green-600 text-white px-2 py-1 rounded">Save ${d.potential_savings_human}</span>
+                            <p class="text-gray-900 dark:text-white font-medium">${escapeHtml(d.title)} (${escapeHtml(d.year) || 'Unknown year'})</p>
+                            <span class="text-xs bg-green-600 text-white px-2 py-1 rounded">Save ${escapeHtml(d.potential_savings_human)}</span>
                         </div>
-                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">${d.copies} copies, total ${d.total_size_human}</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">${d.copies} copies, total ${escapeHtml(d.total_size_human)}</p>
                         <div class="space-y-1">
                 `;
 
@@ -338,8 +338,8 @@
                     const label = i === 0 ? '<span class="text-xs text-green-400 ml-2">(keep)</span>' : '<span class="text-xs text-red-400 ml-2">(remove)</span>';
                     content += `
                         <div class="${bgClass} rounded p-2 text-sm">
-                            <span class="text-gray-700 dark:text-gray-300">${f.quality || 'Unknown'}</span>
-                            <span class="text-gray-500 ml-2">${f.size_human}</span>
+                            <span class="text-gray-700 dark:text-gray-300">${escapeHtml(f.quality) || 'Unknown'}</span>
+                            <span class="text-gray-500 ml-2">${escapeHtml(f.size_human)}</span>
                             ${label}
                         </div>
                     `;
@@ -383,7 +383,7 @@
             content += `
                 <div>
                     <div class="flex justify-between text-sm mb-1">
-                        <span class="text-gray-700 dark:text-gray-300">${codec}</span>
+                        <span class="text-gray-700 dark:text-gray-300">${escapeHtml(codec)}</span>
                         <span class="text-gray-600 dark:text-gray-400">${count} (${pct}%)</span>
                     </div>
                     <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
@@ -406,7 +406,7 @@
             content += `
                 <div>
                     <div class="flex justify-between text-sm mb-1">
-                        <span class="text-gray-700 dark:text-gray-300">.${container}</span>
+                        <span class="text-gray-700 dark:text-gray-300">.${escapeHtml(container)}</span>
                         <span class="text-gray-600 dark:text-gray-400">${count} (${pct}%)</span>
                     </div>
                     <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
@@ -443,7 +443,7 @@
             content += `
                 <div>
                     <div class="flex justify-between text-sm mb-1">
-                        <span class="text-gray-700 dark:text-gray-300">${hdr}</span>
+                        <span class="text-gray-700 dark:text-gray-300">${escapeHtml(hdr)}</span>
                         <span class="text-gray-600 dark:text-gray-400">${count} (${pct}%)</span>
                     </div>
                     <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
@@ -478,14 +478,14 @@
                     <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-4">
                         <div class="flex justify-between items-start">
                             <div>
-                                <p class="text-gray-900 dark:text-white font-medium">${r.title || 'Unknown'}</p>
-                                <p class="text-sm text-red-400 mt-1">${r.reason || 'Unknown reason'}</p>
+                                <p class="text-gray-900 dark:text-white font-medium">${escapeHtml(r.title) || 'Unknown'}</p>
+                                <p class="text-sm text-red-400 mt-1">${escapeHtml(r.reason) || 'Unknown reason'}</p>
                             </div>
                             <div class="flex items-center gap-2">
                                 ${typeTag}${wrongFileTag}
                             </div>
                         </div>
-                        <p class="text-xs text-gray-500 mt-2 truncate">${r.path}</p>
+                        <p class="text-xs text-gray-500 mt-2 truncate">${escapeHtml(r.path)}</p>
                         <p class="text-xs text-gray-500 dark:text-gray-600 mt-1">${new Date(r.timestamp).toLocaleString()}</p>
                     </div>
                 `;
@@ -529,8 +529,8 @@
                     const filename = m.path.split('/').pop();
                     content += `
                         <div class="bg-gray-100 dark:bg-gray-700 rounded p-2">
-                            <p class="text-sm text-gray-900 dark:text-white truncate">${filename}</p>
-                            <p class="text-xs text-gray-500 truncate">${m.path}</p>
+                            <p class="text-sm text-gray-900 dark:text-white truncate">${escapeHtml(filename)}</p>
+                            <p class="text-xs text-gray-500 truncate">${escapeHtml(m.path)}</p>
                         </div>
                     `;
                 });
@@ -547,8 +547,8 @@
                     const filename = m.path.split('/').pop();
                     content += `
                         <div class="bg-gray-100 dark:bg-gray-700 rounded p-2">
-                            <p class="text-sm text-gray-900 dark:text-white truncate">${filename}</p>
-                            <p class="text-xs text-gray-500 truncate">${m.path}</p>
+                            <p class="text-sm text-gray-900 dark:text-white truncate">${escapeHtml(filename)}</p>
+                            <p class="text-xs text-gray-500 truncate">${escapeHtml(m.path)}</p>
                         </div>
                     `;
                 });
@@ -573,7 +573,7 @@
 
         if (!response.ok) {
             const error = await response.json();
-            showModal('Upgrade Opportunities', `<p class="text-yellow-400">${error.detail || 'Plex integration required. Configure Plex in Settings.'}</p>`);
+            showModal('Upgrade Opportunities', `<p class="text-yellow-400">${escapeHtml(error.detail) || 'Plex integration required. Configure Plex in Settings.'}</p>`);
             return;
         }
 
@@ -594,9 +594,9 @@
                     <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-4">
                         <div class="flex justify-between items-start">
                             <div>
-                                <p class="text-gray-900 dark:text-white font-medium">${u.title}</p>
-                                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Current: <span class="text-yellow-400">${u.current_quality}</span></p>
-                                <p class="text-sm text-gray-600 dark:text-gray-400">Suggested: <span class="text-green-400">${u.suggested_quality}</span></p>
+                                <p class="text-gray-900 dark:text-white font-medium">${escapeHtml(u.title)}</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Current: <span class="text-yellow-400">${escapeHtml(u.current_quality)}</span></p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Suggested: <span class="text-green-400">${escapeHtml(u.suggested_quality)}</span></p>
                             </div>
                             <div class="text-right">
                                 <p class="text-xs text-gray-500">${u.view_count} views</p>
@@ -617,7 +617,7 @@
 
         if (!response.ok) {
             const error = await response.json();
-            showModal('Orphan Files', `<p class="text-yellow-400">${error.detail || 'Plex integration required. Configure Plex in Settings.'}</p>`);
+            showModal('Orphan Files', `<p class="text-yellow-400">${escapeHtml(error.detail) || 'Plex integration required. Configure Plex in Settings.'}</p>`);
             return;
         }
 
@@ -641,8 +641,8 @@
                 data.plex_only.slice(0, 20).forEach(p => {
                     content += `
                         <div class="bg-gray-100 dark:bg-gray-700 rounded p-2">
-                            <p class="text-sm text-gray-900 dark:text-white">${p.title}</p>
-                            <p class="text-xs text-gray-500 truncate">${p.file_path || 'Unknown path'}</p>
+                            <p class="text-sm text-gray-900 dark:text-white">${escapeHtml(p.title)}</p>
+                            <p class="text-xs text-gray-500 truncate">${escapeHtml(p.file_path) || 'Unknown path'}</p>
                         </div>
                     `;
                 });
@@ -662,8 +662,8 @@
                 data.arr_only.slice(0, 20).forEach(a => {
                     content += `
                         <div class="bg-gray-100 dark:bg-gray-700 rounded p-2">
-                            <p class="text-sm text-gray-900 dark:text-white">${a.title}</p>
-                            <p class="text-xs text-gray-500 truncate">${a.file_path || 'Unknown path'}</p>
+                            <p class="text-sm text-gray-900 dark:text-white">${escapeHtml(a.title)}</p>
+                            <p class="text-xs text-gray-500 truncate">${escapeHtml(a.file_path) || 'Unknown path'}</p>
                         </div>
                     `;
                 });
@@ -684,7 +684,7 @@
 
         if (!response.ok) {
             const error = await response.json();
-            showModal('Playback Issues', `<p class="text-yellow-400">${error.detail || 'Plex integration required. Configure Plex in Settings.'}</p>`);
+            showModal('Playback Issues', `<p class="text-yellow-400">${escapeHtml(error.detail) || 'Plex integration required. Configure Plex in Settings.'}</p>`);
             return;
         }
 
@@ -707,11 +707,11 @@
                     <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-4">
                         <div class="flex justify-between items-start">
                             <div>
-                                <p class="text-gray-900 dark:text-white font-medium">${i.title}</p>
+                                <p class="text-gray-900 dark:text-white font-medium">${escapeHtml(i.title)}</p>
                                 <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Stopped at ${progressPct}%</p>
                             </div>
                             <div class="text-right">
-                                <p class="text-xs text-gray-500">${i.user || 'Unknown user'}</p>
+                                <p class="text-xs text-gray-500">${escapeHtml(i.user) || 'Unknown user'}</p>
                             </div>
                         </div>
                         <div class="w-full bg-gray-300 dark:bg-gray-600 rounded-full h-2 mt-2">

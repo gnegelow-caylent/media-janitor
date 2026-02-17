@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from enum import Enum
+import re
 from typing import Any
 
 import httpx
@@ -225,7 +226,6 @@ class ArrClient:
             # Note: episodefile doesn't tell us which episode number, so we need to parse from path
             # For now, try to extract from relativePath which usually has SxxExx pattern
             rel_path = ef.get("relativePath", "")
-            import re
             match = re.search(r'S(\d+)E(\d+)', rel_path, re.IGNORECASE)
             if match:
                 parsed_season = int(match.group(1))
@@ -382,31 +382,6 @@ class ArrClient:
 
         except Exception as e:
             self.log.error("Failed to trigger search", title=item.title, error=str(e))
-            return False
-
-    async def _fallback_search(self, item: MediaItem) -> bool:
-        """Fall back to standard search command if release API fails."""
-        self.log.info("Falling back to standard search", title=item.title)
-        try:
-            if self.arr_type == ArrType.RADARR:
-                await self._post(
-                    "command",
-                    {"name": "MoviesSearch", "movieIds": [item.id]},
-                )
-            else:
-                episode_id = item.episode_id
-                if not episode_id:
-                    episode_id = await self._get_episode_id_by_info(
-                        item.series_id, item.season_number, item.episode_number
-                    )
-                if episode_id:
-                    await self._post(
-                        "command",
-                        {"name": "EpisodeSearch", "episodeIds": [episode_id]},
-                    )
-            return True
-        except Exception as e:
-            self.log.error("Fallback search also failed", title=item.title, error=str(e))
             return False
 
     async def _get_episode_id_by_info(
