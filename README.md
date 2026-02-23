@@ -225,10 +225,24 @@ validation:
   codec_bitrate_multiplier_vp9: 0.6   # VP9 uses 60% of base
 
   deep_scan_enabled: true
-  sample_duration_seconds: 30
+  deep_scan_mode: "partial"    # "partial" (start only) or "full" (start/middle/end)
+  sample_duration_seconds: 10  # Seconds to decode per sample point
+  decode_timeout_seconds: 60   # Timeout for each decode test
 
   full_decode_enabled: false  # Very slow, use sparingly
 ```
+
+**Deep Scan Modes**:
+- **partial**: Test start of file only (faster, recommended for network mounts)
+- **full**: Test start, middle, and end of file (3x slower but more thorough)
+
+**Recommended Settings by Storage Type**:
+
+| Setting | Local SSD | Local HDD | Network Mount |
+|---------|-----------|-----------|---------------|
+| `sample_duration_seconds` | 30 | 15-20 | 5-10 |
+| `decode_timeout_seconds` | 30 | 45-60 | 60-120 |
+| `deep_scan_mode` | full | partial | partial |
 
 **Codec-Aware Bitrate Thresholds**: Modern codecs like HEVC and AV1 achieve better quality at lower bitrates. A 1080p HEVC file at 1800kbps is roughly equivalent to H.264 at 3000kbps. The multipliers adjust the minimum thresholds accordingly:
 
@@ -395,6 +409,10 @@ logging:
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/report/library?source=movies` | GET | Library stats |
+| `/report/library/email` | POST | Email library report |
+| `/report/replaced` | GET | Replacement history |
+| `/report/missing` | GET | Files not found on disk |
+| `/report/missing/clear` | POST | Clear missing files list |
 | `/report/mismatches?source=movies` | GET | Path mismatches |
 | `/report/duplicates?source=movies` | GET | Duplicate content |
 | `/report/codecs?source=movies` | GET | Codec and HDR breakdown |
@@ -410,6 +428,16 @@ logging:
 | `/api/test-connection` | POST | Test Radarr/Sonarr connection |
 | `/api/test-plex` | POST | Test Plex connection |
 | `/api/test-notification` | POST | Test notification service |
+| `/api/test-email` | POST | Test email configuration |
+
+### Authentication
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/auth/plex/start` | GET | Start Plex OAuth flow |
+| `/auth/plex/check` | GET | Check Plex auth status |
+| `/auth/user` | GET | Get current authenticated user |
+| `/auth/logout` | POST | Logout current user |
 
 ### Manual Actions
 
@@ -522,9 +550,20 @@ docker stop media-janitor && docker rm media-janitor
 
 > **Note**: Scan progress, replacement history, and daily counters persist across updates when the `/data/state` volume is mounted correctly.
 
-## Unraid Community Applications
+## Unraid Installation
 
-An XML template is included for Unraid CA. See `unraid/media-janitor.xml` in the repository.
+### Option 1: Add Template Repository (Recommended)
+
+Add this repo directly in Unraid without waiting for Community Applications approval:
+
+1. Go to **Settings → Docker → Template Repositories**
+2. Add: `https://github.com/gnegelow-caylent/media-janitor`
+3. Click **Save**
+4. Go to **Apps** tab and search "media-janitor"
+
+### Option 2: Community Applications
+
+An XML template has been submitted to Unraid Community Applications. Once approved, you can install directly from the Apps tab.
 
 ## Plex Integration Features
 
