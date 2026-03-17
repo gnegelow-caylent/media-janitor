@@ -620,7 +620,7 @@ async def search_missing_item(request: Request):
                 return {"status": "error", "message": "series_id or episode_id required for TV"}
 
         # Execute the search command
-        result = await client._post("command", json_data=command)
+        result = await client._post("command", data=command)
 
         if result:
             logger.info("Triggered search for missing item", title=title, instance=instance, item_id=item_id)
