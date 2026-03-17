@@ -319,12 +319,12 @@
                     <p class="text-yellow-400">Found ${data.count} items with multiple copies</p>
                     <p class="text-gray-600 dark:text-gray-400 text-sm">Potential space savings: <span class="text-green-400 font-bold">${escapeHtml(data.total_potential_savings_human)}</span></p>
                 </div>
-                <div class="space-y-4">
+                <div class="space-y-4" id="duplicates-list">
             `;
 
-            data.duplicates.slice(0, 20).forEach(d => {
+            data.duplicates.slice(0, 20).forEach((d, dIdx) => {
                 content += `
-                    <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-4">
+                    <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-4" id="dup-group-${dIdx}">
                         <div class="flex justify-between items-start mb-2">
                             <p class="text-gray-900 dark:text-white font-medium">${escapeHtml(d.title)} (${escapeHtml(d.year) || 'Unknown year'})</p>
                             <span class="text-xs bg-green-600 text-white px-2 py-1 rounded">Save ${escapeHtml(d.potential_savings_human)}</span>
@@ -335,14 +335,31 @@
 
                 d.files.forEach((f, i) => {
                     const bgClass = i === 0 ? 'bg-gray-200 dark:bg-gray-600' : 'bg-gray-50 dark:bg-gray-800';
-                    const label = i === 0 ? '<span class="text-xs text-green-400 ml-2">(keep)</span>' : '<span class="text-xs text-red-400 ml-2">(remove)</span>';
-                    content += `
-                        <div class="${bgClass} rounded p-2 text-sm">
-                            <span class="text-gray-700 dark:text-gray-300">${escapeHtml(f.quality) || 'Unknown'}</span>
-                            <span class="text-gray-500 ml-2">${escapeHtml(f.size_human)}</span>
-                            ${label}
-                        </div>
-                    `;
+                    const fileId = `dup-${dIdx}-${i}`;
+                    if (i === 0) {
+                        content += `
+                            <div class="${bgClass} rounded p-2 text-sm flex justify-between items-center" id="${fileId}">
+                                <div>
+                                    <span class="text-gray-700 dark:text-gray-300">${escapeHtml(f.quality) || 'Unknown'}</span>
+                                    <span class="text-gray-500 ml-2">${escapeHtml(f.size_human)}</span>
+                                    <span class="text-xs text-green-400 ml-2">(keep)</span>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        content += `
+                            <div class="${bgClass} rounded p-2 text-sm flex justify-between items-center" id="${fileId}">
+                                <div>
+                                    <span class="text-gray-700 dark:text-gray-300">${escapeHtml(f.quality) || 'Unknown'}</span>
+                                    <span class="text-gray-500 ml-2">${escapeHtml(f.size_human)}</span>
+                                </div>
+                                <button onclick="deleteDuplicateFile('${fileId}', '${escapeHtml(f.file_path).replace(/'/g, "\\'")}', '${escapeHtml(f.size_human)}')"
+                                        class="px-2 py-1 bg-red-600 hover:bg-red-500 text-white text-xs rounded">
+                                    Delete
+                                </button>
+                            </div>
+                        `;
+                    }
                 });
 
                 content += `
@@ -359,6 +376,42 @@
         }
 
         showModal('Duplicate Content', content);
+    }
+
+    async function deleteDuplicateFile(elementId, filePath, sizeHuman) {
+        if (!confirm(`Delete this duplicate file?\n\n${filePath}\n\nSize: ${sizeHuman}`)) {
+            return;
+        }
+
+        const btn = event.target;
+        btn.disabled = true;
+        btn.textContent = 'Deleting...';
+
+        try {
+            const response = await fetch('/api/delete-file', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ file_path: filePath })
+            });
+            const result = await response.json();
+
+            if (result.status === 'ok') {
+                // Remove the file row from UI
+                const row = document.getElementById(elementId);
+                if (row) {
+                    row.style.opacity = '0.5';
+                    row.innerHTML = `<span class="text-green-400">Deleted - saved ${sizeHuman}</span>`;
+                }
+            } else {
+                alert('Delete failed: ' + (result.message || 'Unknown error'));
+                btn.disabled = false;
+                btn.textContent = 'Delete';
+            }
+        } catch (e) {
+            alert('Delete failed: ' + e.message);
+            btn.disabled = false;
+            btn.textContent = 'Delete';
+        }
     }
 
     async function loadCodecsReport() {

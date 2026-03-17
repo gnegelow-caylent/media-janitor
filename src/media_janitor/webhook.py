@@ -510,6 +510,65 @@ async def clear_missing_report():
     return {"status": "ok", "message": "Legacy missing files state cleared"}
 
 
+@app.post("/api/delete-file")
+async def delete_file(request: Request):
+    """
+    Delete a media file from disk.
+
+    Used for cleaning up duplicates - deletes the file directly without
+    touching Radarr/Sonarr (since a better copy already exists).
+    """
+    if not _janitor:
+        return {"status": "error", "message": "Janitor not initialized"}
+
+    try:
+        body = await request.json()
+        file_path = body.get("file_path")
+
+        if not file_path:
+            return {"status": "error", "message": "file_path is required"}
+
+        path = Path(file_path)
+
+        if not path.exists():
+            return {"status": "error", "message": "File not found"}
+
+        if not path.is_file():
+            return {"status": "error", "message": "Path is not a file"}
+
+        # Safety check - only allow deleting media files
+        allowed_extensions = {'.mkv', '.mp4', '.avi', '.m4v', '.mov', '.wmv', '.m2ts', '.ts'}
+        if path.suffix.lower() not in allowed_extensions:
+            return {"status": "error", "message": f"Cannot delete non-media file: {path.suffix}"}
+
+        # Get file size before deletion for reporting
+        file_size = path.stat().st_size
+
+        # Delete the file
+        path.unlink()
+        logger.info("Deleted duplicate file", path=file_path, size=file_size)
+
+        # Try to remove empty parent directory
+        try:
+            parent = path.parent
+            if parent.is_dir() and not any(parent.iterdir()):
+                parent.rmdir()
+                logger.info("Removed empty directory", path=str(parent))
+        except Exception:
+            pass  # Ignore errors removing parent dir
+
+        return {
+            "status": "ok",
+            "message": "File deleted",
+            "deleted_path": file_path,
+            "deleted_size": file_size,
+        }
+
+    except Exception as e:
+        logger.error("Failed to delete file", error=str(e))
+        return {"status": "error", "message": str(e)}
+
+
 @app.get("/report/mismatches")
 async def get_mismatch_report(
     source: str = Query(default="movies", description="Source: movies (fast) or tv (slow)"),
