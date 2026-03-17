@@ -68,7 +68,11 @@ def normalize_title(title: str) -> str:
     """Normalize a title for comparison (lowercase, remove punctuation)."""
     # Remove common punctuation and normalize
     normalized = title.lower()
-    normalized = re.sub(r"[':.,!?&\-\(\)]", "", normalized)
+    # Replace dots/underscores with spaces first to preserve word boundaries
+    # (matches how extract_title_from_filename handles filenames)
+    normalized = normalized.replace(".", " ").replace("_", " ")
+    # Remove other punctuation (not dots - already replaced above)
+    normalized = re.sub(r"[':,!?&\-\(\)]", "", normalized)
     normalized = re.sub(r"\s+", " ", normalized).strip()
     return normalized
 

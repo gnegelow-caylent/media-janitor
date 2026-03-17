@@ -435,57 +435,79 @@ async def get_missing_report(
     """
     Get list of files that exist in Radarr/Sonarr but not on disk.
 
-    These are files that may have been deleted or moved outside of arr management.
+    Generated fresh each time by checking cached media against filesystem.
+    This ensures accurate results without stale entries from old scans.
     """
     if not _janitor:
         return {"status": "error", "message": "Janitor not initialized"}
 
-    missing = _janitor.state.get_missing_files()
-    # Reverse to show most recent first
-    missing = list(reversed(missing))
+    # Generate fresh from cached media - check each file's existence now
+    movies_missing = []
+    tv_missing = []
 
-    # Separate by media type
-    movies = [m for m in missing if m.get("media_type") == "movie"]
-    tv = [m for m in missing if m.get("media_type") == "tv"]
+    # Check movies from cache
+    movies_cache = _janitor.scanner.get_cached_media("movies")
+    for item in movies_cache:
+        if item.file_path and not Path(item.file_path).exists():
+            movies_missing.append({
+                "path": item.file_path,
+                "title": item.title,
+                "year": item.year,
+                "media_type": "movie",
+                "instance": item.arr_instance,
+            })
+
+    # Check TV from cache
+    tv_cache = _janitor.scanner.get_cached_media("tv")
+    for item in tv_cache:
+        if item.file_path and not Path(item.file_path).exists():
+            tv_missing.append({
+                "path": item.file_path,
+                "title": item.title,
+                "media_type": "tv",
+                "instance": item.arr_instance,
+            })
+
+    total_missing = len(movies_missing) + len(tv_missing)
 
     if format == "text":
         lines = [
             "=" * 70,
             "MISSING FILES REPORT",
-            f"Total: {len(missing)} files (Movies: {len(movies)}, TV: {len(tv)})",
+            f"Total: {total_missing} files (Movies: {len(movies_missing)}, TV: {len(tv_missing)})",
             "=" * 70,
             "",
             "These files exist in Radarr/Sonarr but not on disk.",
             "Consider removing them from your arr apps or re-downloading.",
             "",
         ]
-        if movies:
+        if movies_missing:
             lines.append("--- MOVIES ---")
-            for m in movies[:100]:
-                lines.append(f"  {m.get('path', 'Unknown')}")
-        if tv:
+            for m in movies_missing[:100]:
+                lines.append(f"  {m.get('title', 'Unknown')} - {m.get('path', 'Unknown')}")
+        if tv_missing:
             lines.append("\n--- TV EPISODES ---")
-            for m in tv[:200]:
+            for m in tv_missing[:200]:
                 lines.append(f"  {m.get('path', 'Unknown')}")
         return PlainTextResponse(content="\n".join(lines))
     else:
         return {
-            "count": len(missing),
-            "movies_count": len(movies),
-            "tv_count": len(tv),
-            "movies": movies[:100],
-            "tv": tv[:200],
+            "count": total_missing,
+            "movies_count": len(movies_missing),
+            "tv_count": len(tv_missing),
+            "movies": movies_missing[:100],
+            "tv": tv_missing[:200],
         }
 
 
 @app.post("/report/missing/clear")
 async def clear_missing_report():
-    """Clear the missing files report."""
+    """Clear the legacy missing files state (no longer used, report is now generated fresh)."""
     if not _janitor:
         return {"status": "error", "message": "Janitor not initialized"}
 
     _janitor.state.clear_missing_files()
-    return {"status": "ok", "message": "Missing files report cleared"}
+    return {"status": "ok", "message": "Legacy missing files state cleared"}
 
 
 @app.get("/report/mismatches")
