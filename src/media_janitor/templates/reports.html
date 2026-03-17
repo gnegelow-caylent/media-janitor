@@ -559,12 +559,7 @@
                 <div class="mb-4">
                     <p class="text-yellow-400">Found ${data.count} missing files</p>
                     <p class="text-sm text-gray-600 dark:text-gray-400">Movies: ${data.movies_count} | TV Episodes: ${data.tv_count}</p>
-                    <p class="text-sm text-gray-500 mt-2">These files exist in Radarr/Sonarr but not on disk. Consider removing them from your arr apps or re-downloading.</p>
-                </div>
-                <div class="flex justify-end mb-4">
-                    <button onclick="clearMissingReport()" class="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-500">
-                        Clear Report
-                    </button>
+                    <p class="text-sm text-gray-500 mt-2">Click "Search" to trigger a download in Radarr/Sonarr.</p>
                 </div>
             `;
 
@@ -572,14 +567,21 @@
                 content += `
                     <div class="mb-6">
                         <h4 class="text-gray-900 dark:text-white font-medium mb-3">Movies (${data.movies_count})</h4>
-                        <div class="space-y-2 max-h-48 overflow-y-auto">
+                        <div class="space-y-2 max-h-64 overflow-y-auto">
                 `;
-                data.movies.forEach(m => {
-                    const filename = m.path.split('/').pop();
+                data.movies.forEach((m, idx) => {
+                    const title = m.title || m.path.split('/').pop();
+                    const year = m.year ? ` (${m.year})` : '';
                     content += `
-                        <div class="bg-gray-100 dark:bg-gray-700 rounded p-2">
-                            <p class="text-sm text-gray-900 dark:text-white truncate">${escapeHtml(filename)}</p>
-                            <p class="text-xs text-gray-500 truncate">${escapeHtml(m.path)}</p>
+                        <div class="bg-gray-100 dark:bg-gray-700 rounded p-2 flex justify-between items-center" id="missing-movie-${idx}">
+                            <div class="flex-1 min-w-0 mr-2">
+                                <p class="text-sm text-gray-900 dark:text-white truncate">${escapeHtml(title)}${year}</p>
+                                <p class="text-xs text-gray-500 truncate">${escapeHtml(m.instance)}</p>
+                            </div>
+                            <button onclick="searchMissingItem('missing-movie-${idx}', ${JSON.stringify(m).replace(/"/g, '&quot;')})"
+                                    class="px-2 py-1 bg-blue-600 hover:bg-blue-500 text-white text-xs rounded whitespace-nowrap">
+                                Search
+                            </button>
                         </div>
                     `;
                 });
@@ -590,14 +592,20 @@
                 content += `
                     <div>
                         <h4 class="text-gray-900 dark:text-white font-medium mb-3">TV Episodes (${data.tv_count})</h4>
-                        <div class="space-y-2 max-h-64 overflow-y-auto">
+                        <div class="space-y-2 max-h-80 overflow-y-auto">
                 `;
-                data.tv.forEach(m => {
+                data.tv.forEach((m, idx) => {
                     const filename = m.path.split('/').pop();
                     content += `
-                        <div class="bg-gray-100 dark:bg-gray-700 rounded p-2">
-                            <p class="text-sm text-gray-900 dark:text-white truncate">${escapeHtml(filename)}</p>
-                            <p class="text-xs text-gray-500 truncate">${escapeHtml(m.path)}</p>
+                        <div class="bg-gray-100 dark:bg-gray-700 rounded p-2 flex justify-between items-center" id="missing-tv-${idx}">
+                            <div class="flex-1 min-w-0 mr-2">
+                                <p class="text-sm text-gray-900 dark:text-white truncate">${escapeHtml(filename)}</p>
+                                <p class="text-xs text-gray-500 truncate">${escapeHtml(m.instance)}</p>
+                            </div>
+                            <button onclick="searchMissingItem('missing-tv-${idx}', ${JSON.stringify(m).replace(/"/g, '&quot;')})"
+                                    class="px-2 py-1 bg-blue-600 hover:bg-blue-500 text-white text-xs rounded whitespace-nowrap">
+                                Search
+                            </button>
                         </div>
                     `;
                 });
@@ -606,6 +614,39 @@
         }
 
         showModal('Missing Files', content);
+    }
+
+    async function searchMissingItem(elementId, item) {
+        const btn = event.target;
+        btn.disabled = true;
+        btn.textContent = 'Searching...';
+
+        try {
+            const response = await fetch('/api/search-missing', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(item)
+            });
+            const result = await response.json();
+
+            if (result.status === 'ok') {
+                const row = document.getElementById(elementId);
+                if (row) {
+                    row.style.opacity = '0.5';
+                    btn.textContent = 'Queued';
+                    btn.classList.remove('bg-blue-600', 'hover:bg-blue-500');
+                    btn.classList.add('bg-green-600');
+                }
+            } else {
+                alert('Search failed: ' + (result.message || 'Unknown error'));
+                btn.disabled = false;
+                btn.textContent = 'Search';
+            }
+        } catch (e) {
+            alert('Search failed: ' + e.message);
+            btn.disabled = false;
+            btn.textContent = 'Search';
+        }
     }
 
     async function clearMissingReport() {

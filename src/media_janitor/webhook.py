@@ -455,6 +455,7 @@ async def get_missing_report(
                 "year": item.year,
                 "media_type": "movie",
                 "instance": item.arr_instance,
+                "item_id": item.id,
             })
 
     # Check TV from cache
@@ -466,6 +467,11 @@ async def get_missing_report(
                 "title": item.title,
                 "media_type": "tv",
                 "instance": item.arr_instance,
+                "item_id": item.id,
+                "series_id": item.series_id,
+                "episode_id": item.episode_id,
+                "season": item.season_number,
+                "episode": item.episode_number,
             })
 
     total_missing = len(movies_missing) + len(tv_missing)
@@ -566,6 +572,64 @@ async def delete_file(request: Request):
 
     except Exception as e:
         logger.error("Failed to delete file", error=str(e))
+        return {"status": "error", "message": str(e)}
+
+
+@app.post("/api/search-missing")
+async def search_missing_item(request: Request):
+    """
+    Trigger a search in Radarr/Sonarr for a missing item.
+
+    This tells the arr app to search indexers and download the content.
+    """
+    if not _janitor:
+        return {"status": "error", "message": "Janitor not initialized"}
+
+    try:
+        body = await request.json()
+        media_type = body.get("media_type")
+        instance = body.get("instance")
+        item_id = body.get("item_id")
+        title = body.get("title", "Unknown")
+
+        if not media_type or not instance or not item_id:
+            return {"status": "error", "message": "media_type, instance, and item_id are required"}
+
+        # Find the correct client for this instance
+        client = None
+        for c in _janitor.scanner._radarr_clients + _janitor.scanner._sonarr_clients:
+            if c.instance.name == instance:
+                client = c
+                break
+
+        if not client:
+            return {"status": "error", "message": f"Instance '{instance}' not found"}
+
+        # Trigger search via Radarr/Sonarr command API
+        if media_type == "movie":
+            command = {"name": "MoviesSearch", "movieIds": [item_id]}
+        else:
+            # For TV, we need series_id for a series search or episode_id for episode search
+            series_id = body.get("series_id")
+            episode_id = body.get("episode_id")
+            if episode_id:
+                command = {"name": "EpisodeSearch", "episodeIds": [episode_id]}
+            elif series_id:
+                command = {"name": "SeriesSearch", "seriesId": series_id}
+            else:
+                return {"status": "error", "message": "series_id or episode_id required for TV"}
+
+        # Execute the search command
+        result = await client._post("command", json_data=command)
+
+        if result:
+            logger.info("Triggered search for missing item", title=title, instance=instance, item_id=item_id)
+            return {"status": "ok", "message": f"Search triggered for {title}"}
+        else:
+            return {"status": "error", "message": "Failed to trigger search"}
+
+    except Exception as e:
+        logger.error("Failed to search for missing item", error=str(e))
         return {"status": "error", "message": str(e)}
 
 
