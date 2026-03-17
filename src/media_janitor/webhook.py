@@ -1152,6 +1152,107 @@ async def clear_state():
 
 
 # =============================================================================
+# Diagnostics
+# =============================================================================
+
+
+@app.get("/debug/paths")
+async def debug_paths():
+    """
+    Debug endpoint to diagnose path mapping issues.
+
+    Shows what paths are configured, whether they exist in the container,
+    and sample paths from the cache to help identify misconfigurations.
+    """
+    if not _janitor or not _config:
+        return {"status": "error", "message": "Janitor not initialized"}
+
+    results = {
+        "configured_mappings": [],
+        "path_checks": [],
+        "sample_paths": {"movies": [], "tv": []},
+        "mounts_found": [],
+    }
+
+    # Check configured path mappings for each arr instance
+    for r in _config.radarr:
+        for pm in r.path_mappings:
+            to_path = Path(pm.to_path)
+            results["configured_mappings"].append({
+                "instance": r.name,
+                "from_path": pm.from_path,
+                "to_path": pm.to_path,
+                "to_path_exists": to_path.exists(),
+                "to_path_is_dir": to_path.is_dir() if to_path.exists() else False,
+            })
+
+    for s in _config.sonarr:
+        for pm in s.path_mappings:
+            to_path = Path(pm.to_path)
+            results["configured_mappings"].append({
+                "instance": s.name,
+                "from_path": pm.from_path,
+                "to_path": pm.to_path,
+                "to_path_exists": to_path.exists(),
+                "to_path_is_dir": to_path.is_dir() if to_path.exists() else False,
+            })
+
+    # Get sample paths from cache
+    movies_cache = _janitor.scanner.get_cached_media("movies")
+    tv_cache = _janitor.scanner.get_cached_media("tv")
+
+    for item in movies_cache[:5]:
+        if item.file_path:
+            fp = Path(item.file_path)
+            results["sample_paths"]["movies"].append({
+                "title": item.title,
+                "path": item.file_path,
+                "exists": fp.exists(),
+                "parent_exists": fp.parent.exists(),
+            })
+
+    for item in tv_cache[:5]:
+        if item.file_path:
+            fp = Path(item.file_path)
+            results["sample_paths"]["tv"].append({
+                "title": item.title,
+                "path": item.file_path,
+                "exists": fp.exists(),
+                "parent_exists": fp.parent.exists(),
+            })
+
+    # Check common mount points
+    common_paths = [
+        "/mnt/remotes",
+        "/mnt/remotes/192.168.1.2_video",
+        "/mnt/remotes/192.168.1.5_video",
+        "/media",
+        "/media1",
+        "/media2",
+        "/data",
+    ]
+
+    for cp in common_paths:
+        p = Path(cp)
+        if p.exists():
+            try:
+                contents = list(p.iterdir())[:10]
+                results["mounts_found"].append({
+                    "path": cp,
+                    "is_dir": p.is_dir(),
+                    "contents": [str(c.name) for c in contents],
+                })
+            except PermissionError:
+                results["mounts_found"].append({
+                    "path": cp,
+                    "is_dir": p.is_dir(),
+                    "contents": ["<permission denied>"],
+                })
+
+    return results
+
+
+# =============================================================================
 # Logs
 # =============================================================================
 
