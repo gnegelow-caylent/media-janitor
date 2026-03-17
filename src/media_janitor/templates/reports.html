@@ -322,7 +322,7 @@
                 <div class="space-y-4" id="duplicates-list">
             `;
 
-            data.duplicates.slice(0, 20).forEach((d, dIdx) => {
+            data.duplicates.forEach((d, dIdx) => {
                 content += `
                     <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-4" id="dup-group-${dIdx}">
                         <div class="flex justify-between items-start mb-2">
@@ -367,10 +367,6 @@
                     </div>
                 `;
             });
-
-            if (data.count > 20) {
-                content += `<p class="text-gray-600 dark:text-gray-400 text-sm mt-4">Showing top 20 of ${data.count} duplicates</p>`;
-            }
 
             content += '</div>';
         }
