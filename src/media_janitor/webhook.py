@@ -633,6 +633,72 @@ async def search_missing_item(request: Request):
         return {"status": "error", "message": str(e)}
 
 
+@app.post("/api/fix-mismatch")
+async def fix_mismatch(request: Request):
+    """
+    Fix a path mismatch by deleting the wrong file and triggering a search.
+
+    This deletes the file via Radarr/Sonarr API (keeping it tracked) and
+    triggers a search to download the correct file.
+    """
+    if not _janitor:
+        return {"status": "error", "message": "Janitor not initialized"}
+
+    try:
+        body = await request.json()
+        file_path = body.get("file_path")
+        file_id = body.get("file_id")
+        item_id = body.get("item_id")
+        instance = body.get("arr_instance")
+        media_type = body.get("media_type")
+        title = body.get("title", "Unknown")
+
+        if not all([file_path, file_id, instance]):
+            return {"status": "error", "message": "file_path, file_id, and arr_instance are required"}
+
+        # Find the correct client
+        client = None
+        for c in _janitor.scanner._radarr_clients + _janitor.scanner._sonarr_clients:
+            if c.instance.name == instance:
+                client = c
+                break
+
+        if not client:
+            return {"status": "error", "message": f"Instance '{instance}' not found"}
+
+        # Delete the file via arr API
+        deleted = await client.delete_file(file_id)
+        if not deleted:
+            return {"status": "error", "message": "Failed to delete file"}
+
+        logger.info("Deleted mismatched file", title=title, file_path=file_path)
+
+        # Trigger search for replacement
+        if media_type == "movie":
+            command = {"name": "MoviesSearch", "movieIds": [item_id]}
+        else:
+            series_id = body.get("series_id")
+            episode_id = body.get("episode_id")
+            if episode_id:
+                command = {"name": "EpisodeSearch", "episodeIds": [episode_id]}
+            elif series_id:
+                command = {"name": "SeriesSearch", "seriesId": series_id}
+            else:
+                # Fallback - just delete, can't search without IDs
+                return {"status": "ok", "message": f"Deleted {title}, but couldn't trigger search (no series/episode ID)"}
+
+        result = await client._post("command", data=command)
+        if result:
+            logger.info("Triggered search after mismatch fix", title=title)
+            return {"status": "ok", "message": f"Deleted and searching for {title}"}
+        else:
+            return {"status": "ok", "message": f"Deleted {title}, but search trigger failed"}
+
+    except Exception as e:
+        logger.error("Failed to fix mismatch", error=str(e))
+        return {"status": "error", "message": str(e)}
+
+
 @app.get("/report/mismatches")
 async def get_mismatch_report(
     source: str = Query(default="movies", description="Source: movies (fast) or tv (slow)"),
@@ -667,21 +733,36 @@ async def get_mismatch_report(
 
         return PlainTextResponse(content="\n".join(lines))
     else:
+        # Enrich with item IDs needed for fix action
+        enriched = []
+        for m in mismatches:
+            # Find the item in cache to get IDs
+            item_data = {
+                "title": m.title,
+                "year": m.year,
+                "expected_folder": m.expected_folder,
+                "actual_filename": m.actual_filename,
+                "file_path": m.file_path,
+                "folder_path": m.folder_path,
+                "arr_instance": m.arr_instance,
+                "mismatch_type": m.mismatch_type,
+            }
+            # Look up the item in cache to get IDs
+            for src in ["movies", "tv"]:
+                cache = _janitor.scanner.get_cached_media(src)
+                for item in cache:
+                    if item.file_path == m.file_path:
+                        item_data["item_id"] = item.id
+                        item_data["file_id"] = item.file_id
+                        item_data["media_type"] = "movie" if src == "movies" else "tv"
+                        item_data["series_id"] = item.series_id
+                        item_data["episode_id"] = item.episode_id
+                        break
+            enriched.append(item_data)
+
         return {
-            "count": len(mismatches),
-            "mismatches": [
-                {
-                    "title": m.title,
-                    "year": m.year,
-                    "expected_folder": m.expected_folder,
-                    "actual_filename": m.actual_filename,
-                    "file_path": m.file_path,
-                    "folder_path": m.folder_path,
-                    "arr_instance": m.arr_instance,
-                    "mismatch_type": m.mismatch_type,
-                }
-                for m in mismatches
-            ],
+            "count": len(enriched),
+            "mismatches": enriched,
         }
 
 
