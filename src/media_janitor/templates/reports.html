@@ -624,51 +624,55 @@
         const data = await response.json();
 
         let content = '';
-        const totalOrphans = data.plex_only.length + data.arr_only.length;
+        const plexOnly = data.in_plex_not_arr || { count: 0, files: [] };
+        const arrOnly = data.in_arr_not_plex || { count: 0, files: [] };
+        const totalOrphans = plexOnly.count + arrOnly.count;
 
         if (totalOrphans === 0) {
             content = '<p class="text-green-400">No orphan files found! Libraries are in sync.</p>';
         } else {
             content = '<div class="space-y-6">';
 
-            if (data.plex_only.length > 0) {
+            if (plexOnly.count > 0) {
                 content += `
                     <div>
-                        <h4 class="text-gray-900 dark:text-white font-medium mb-3">In Plex Only (${data.plex_only.length})</h4>
+                        <h4 class="text-gray-900 dark:text-white font-medium mb-3">In Plex Only (${plexOnly.count.toLocaleString()})</h4>
                         <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">These files are in Plex but not tracked by Radarr/Sonarr</p>
                         <div class="space-y-2 max-h-48 overflow-y-auto">
                 `;
-                data.plex_only.slice(0, 20).forEach(p => {
+                plexOnly.files.slice(0, 20).forEach(p => {
+                    const filename = p.split('/').pop();
                     content += `
                         <div class="bg-gray-100 dark:bg-gray-700 rounded p-2">
-                            <p class="text-sm text-gray-900 dark:text-white">${escapeHtml(p.title)}</p>
-                            <p class="text-xs text-gray-500 truncate">${escapeHtml(p.file_path) || 'Unknown path'}</p>
+                            <p class="text-sm text-gray-900 dark:text-white">${escapeHtml(filename)}</p>
+                            <p class="text-xs text-gray-500 truncate">${escapeHtml(p)}</p>
                         </div>
                     `;
                 });
-                if (data.plex_only.length > 20) {
-                    content += `<p class="text-xs text-gray-500">...and ${data.plex_only.length - 20} more</p>`;
+                if (plexOnly.count > 20) {
+                    content += `<p class="text-xs text-gray-500">...and ${(plexOnly.count - 20).toLocaleString()} more</p>`;
                 }
                 content += '</div></div>';
             }
 
-            if (data.arr_only.length > 0) {
+            if (arrOnly.count > 0) {
                 content += `
                     <div>
-                        <h4 class="text-gray-900 dark:text-white font-medium mb-3">In Radarr/Sonarr Only (${data.arr_only.length})</h4>
+                        <h4 class="text-gray-900 dark:text-white font-medium mb-3">In Radarr/Sonarr Only (${arrOnly.count.toLocaleString()})</h4>
                         <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">These files are tracked but not in Plex</p>
                         <div class="space-y-2 max-h-48 overflow-y-auto">
                 `;
-                data.arr_only.slice(0, 20).forEach(a => {
+                arrOnly.files.slice(0, 20).forEach(a => {
+                    const filename = a.split('/').pop();
                     content += `
                         <div class="bg-gray-100 dark:bg-gray-700 rounded p-2">
-                            <p class="text-sm text-gray-900 dark:text-white">${escapeHtml(a.title)}</p>
-                            <p class="text-xs text-gray-500 truncate">${escapeHtml(a.file_path) || 'Unknown path'}</p>
+                            <p class="text-sm text-gray-900 dark:text-white">${escapeHtml(filename)}</p>
+                            <p class="text-xs text-gray-500 truncate">${escapeHtml(a)}</p>
                         </div>
                     `;
                 });
-                if (data.arr_only.length > 20) {
-                    content += `<p class="text-xs text-gray-500">...and ${data.arr_only.length - 20} more</p>`;
+                if (arrOnly.count > 20) {
+                    content += `<p class="text-xs text-gray-500">...and ${(arrOnly.count - 20).toLocaleString()} more</p>`;
                 }
                 content += '</div></div>';
             }
