@@ -694,11 +694,28 @@ async def get_duplicates_report(
     Find duplicate content (same movie/show in multiple qualities).
 
     This helps identify wasted space from having the same content multiple times.
+    Verifies files exist on disk before reporting.
     """
     if not _janitor:
         return {"status": "error", "message": "Janitor not initialized"}
 
-    duplicates = await find_duplicates(_janitor.scanner, source)
+    raw_duplicates = await find_duplicates(_janitor.scanner, source)
+
+    # Filter to only files that actually exist on disk
+    duplicates = []
+    for d in raw_duplicates:
+        existing_files = [f for f in d.files if Path(f.file_path).exists()]
+        # Only keep groups with 2+ files (still duplicates after filtering)
+        if len(existing_files) >= 2:
+            # Recalculate sizes
+            total_size = sum(f.size_bytes for f in existing_files)
+            best_size = existing_files[0].size_bytes  # Largest file (already sorted)
+            savings = total_size - best_size
+            # Create updated duplicate group
+            d.files = existing_files
+            d.total_size_bytes = total_size
+            d.potential_savings_bytes = savings
+            duplicates.append(d)
 
     if format == "text":
         lines = [
