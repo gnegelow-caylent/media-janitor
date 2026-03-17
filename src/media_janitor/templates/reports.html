@@ -597,10 +597,22 @@
 
         let content = '';
 
-        if (data.count === 0) {
-            content = '<p class="text-green-400">No missing files found! All files in Radarr/Sonarr exist on disk.</p>';
+        // Show path mapping warning if present
+        if (data.path_mapping_warning) {
+            content += `
+                <div class="mb-4 p-3 bg-yellow-900/50 border border-yellow-600 rounded">
+                    <p class="text-yellow-400 text-sm">${escapeHtml(data.path_mapping_warning)}</p>
+                    <p class="text-xs text-gray-400 mt-1">Configure path_mapping in your config.yaml if Media Janitor uses different paths than Radarr/Sonarr.</p>
+                </div>
+            `;
+        }
+
+        if (data.count === 0 && !data.path_mapping_issues) {
+            content += '<p class="text-green-400">No missing files found! All files in Radarr/Sonarr exist on disk.</p>';
+        } else if (data.count === 0 && data.path_mapping_issues) {
+            content += '<p class="text-green-400">No missing files found in accessible paths.</p>';
         } else {
-            content = `
+            content += `
                 <div class="mb-4">
                     <p class="text-yellow-400">Found ${data.count} missing files</p>
                     <p class="text-sm text-gray-600 dark:text-gray-400">Movies: ${data.movies_count} | TV Episodes: ${data.tv_count}</p>

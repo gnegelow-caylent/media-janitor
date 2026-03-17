@@ -442,13 +442,21 @@ async def get_missing_report(
         return {"status": "error", "message": "Janitor not initialized"}
 
     # Generate fresh from cached media - check each file's existence now
+    # Only report as missing if parent directory exists (we can access the path)
+    # but the file itself doesn't. If parent doesn't exist, it's a path mapping issue.
     movies_missing = []
     tv_missing = []
+    path_mapping_issues = 0
 
     # Check movies from cache
     movies_cache = _janitor.scanner.get_cached_media("movies")
     for item in movies_cache:
-        if item.file_path and not Path(item.file_path).exists():
+        if not item.file_path:
+            continue
+        file_path = Path(item.file_path)
+        parent_exists = file_path.parent.exists()
+        if parent_exists and not file_path.exists():
+            # Parent exists but file doesn't = truly missing
             movies_missing.append({
                 "path": item.file_path,
                 "title": item.title,
@@ -457,11 +465,19 @@ async def get_missing_report(
                 "instance": item.arr_instance,
                 "item_id": item.id,
             })
+        elif not parent_exists:
+            # Parent doesn't exist = path mapping issue, not missing
+            path_mapping_issues += 1
 
     # Check TV from cache
     tv_cache = _janitor.scanner.get_cached_media("tv")
     for item in tv_cache:
-        if item.file_path and not Path(item.file_path).exists():
+        if not item.file_path:
+            continue
+        file_path = Path(item.file_path)
+        parent_exists = file_path.parent.exists()
+        if parent_exists and not file_path.exists():
+            # Parent exists but file doesn't = truly missing
             tv_missing.append({
                 "path": item.file_path,
                 "title": item.title,
@@ -473,6 +489,8 @@ async def get_missing_report(
                 "season": item.season_number,
                 "episode": item.episode_number,
             })
+        elif not parent_exists:
+            path_mapping_issues += 1
 
     total_missing = len(movies_missing) + len(tv_missing)
 
@@ -497,13 +515,17 @@ async def get_missing_report(
                 lines.append(f"  {m.get('path', 'Unknown')}")
         return PlainTextResponse(content="\n".join(lines))
     else:
-        return {
+        response = {
             "count": total_missing,
             "movies_count": len(movies_missing),
             "tv_count": len(tv_missing),
             "movies": movies_missing[:100],
             "tv": tv_missing[:200],
         }
+        if path_mapping_issues > 0:
+            response["path_mapping_issues"] = path_mapping_issues
+            response["path_mapping_warning"] = f"{path_mapping_issues} files skipped - paths not accessible (check path mappings in config)"
+        return response
 
 
 @app.post("/report/missing/clear")
