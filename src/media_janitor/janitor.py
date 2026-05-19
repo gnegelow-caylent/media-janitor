@@ -93,6 +93,17 @@ class Janitor:
         # Update scanner settings
         self.scanner.config = new_config
 
+        # Update webhook module's config reference for API key hot-reload
+        from . import webhook
+        webhook._config = new_config
+
+        # Update template API key global for UI
+        try:
+            from .web_ui import templates as ui_templates
+            ui_templates.env.globals["api_key"] = new_config.webhook.api_key or ""
+        except Exception:
+            pass  # Templates may not be initialized in all contexts
+
         # Only reinitialize arr clients if arr config actually changed
         arr_config_changed = (
             [r.model_dump() for r in old_config.radarr] != [r.model_dump() for r in new_config.radarr] or

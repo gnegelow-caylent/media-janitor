@@ -74,39 +74,44 @@ def init_webhook_app(config: Config, janitor: Janitor) -> FastAPI:
     _config = config
     _janitor = janitor
 
-    # API key authentication middleware
-    if config.webhook.api_key:
-        from starlette.middleware.base import BaseHTTPMiddleware
-        from fastapi.responses import JSONResponse
+    # API key authentication middleware - always add, checks _config dynamically
+    from starlette.middleware.base import BaseHTTPMiddleware
+    from fastapi.responses import JSONResponse
 
-        class ApiKeyMiddleware(BaseHTTPMiddleware):
-            async def dispatch(self, request, call_next):
-                # Skip auth for browser-accessible pages, static files, and health checks
-                path = request.url.path
-                if (
-                    path in ("/", "/health", "/health/")
-                    or path.startswith("/static/")
-                    or path.startswith("/ui/")
-                    or path.startswith("/auth/")
-                ):
-                    return await call_next(request)
-
-                # Check API key from multiple sources
-                api_key = (
-                    request.headers.get("X-Api-Key")
-                    or request.headers.get("Authorization", "").removeprefix("Bearer ").strip()
-                    or request.query_params.get("apikey")
-                )
-
-                if api_key != config.webhook.api_key:
-                    return JSONResponse(
-                        status_code=401,
-                        content={"detail": "Invalid or missing API key"},
-                    )
-
+    class ApiKeyMiddleware(BaseHTTPMiddleware):
+        async def dispatch(self, request, call_next):
+            # Skip auth for browser-accessible pages, static files, and health checks
+            path = request.url.path
+            if (
+                path in ("/", "/health", "/health/")
+                or path.startswith("/static/")
+                or path.startswith("/ui/")
+                or path.startswith("/auth/")
+            ):
                 return await call_next(request)
 
-        app.add_middleware(ApiKeyMiddleware)
+            # Check if API key auth is enabled (use global _config for hot-reload support)
+            required_key = _config.webhook.api_key if _config else None
+            if not required_key:
+                # No API key configured, allow request
+                return await call_next(request)
+
+            # Check API key from multiple sources
+            api_key = (
+                request.headers.get("X-Api-Key")
+                or request.headers.get("Authorization", "").removeprefix("Bearer ").strip()
+                or request.query_params.get("apikey")
+            )
+
+            if api_key != required_key:
+                return JSONResponse(
+                    status_code=401,
+                    content={"detail": "Invalid or missing API key"},
+                )
+
+            return await call_next(request)
+
+    app.add_middleware(ApiKeyMiddleware)
 
     # Include web UI router
     from .web_ui import router as ui_router
